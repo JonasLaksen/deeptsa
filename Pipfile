@@ -8,6 +8,11 @@ verify_ssl = true
 [packages]
 numpy = "*"
 tensorflow = "*"
+keras = "*"
+sklearn = "*"
+pandas = "*"
+nltk = "*"
+re = "*"
 
 [requires]
 python_version = "3.6"
