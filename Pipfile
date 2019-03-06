@@ -12,6 +12,7 @@ keras = "*"
 sklearn = "*"
 pandas = "*"
 nltk = "*"
+pytrends = "*"
 
 [requires]
 python_version = "3.6"
