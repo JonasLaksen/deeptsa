@@ -32,10 +32,10 @@ if __name__ == '__main__':
 
     data = data[data['stock'] == 'AAPL']
 
-    feature_list = ['positive', 'negative', 'neutral', 'trendscore']
+    feature_list = ['prev_price_0', 'positive', 'negative', 'neutral', 'trendscore']
 
     n_features = len(feature_list)
-    layer_sizes = [37, 37]
+    layer_sizes = [11]
     model = build_network(n_features=n_features, layer_sizes=layer_sizes, stateful=False)
 
 
@@ -60,15 +60,15 @@ if __name__ == '__main__':
 
     pred_model.fit(X.reshape(1, X.shape[0], X.shape[1]), y.reshape(1, len(y), 1), batch_size=1, epochs=1, shuffle=False)
 
-    result = pred_model.predict(X_test.reshape(1, X_test.shape[0], X_test.shape[1]))
+    result = pred_model.predict(X.reshape(1, X.shape[0], X.shape[1]))
     print(result)
-    print(y_test)
+    print(y)
 
     result = min_max_scaler_y.inverse_transform(result[0]).reshape(-1)
-    y_test = min_max_scaler_y.inverse_transform(y_test).reshape(-1)
+    y_test = min_max_scaler_y.inverse_transform(y).reshape(-1)
 
-    pd.DataFrame({'Actual': result}).plot(label='Actual', c='b')
-    pd.DataFrame({'Predicted': y_test})['Predicted'].plot(label='Predicted', c='r', linestyle='--')
+    pd.DataFrame({'Predicted': result}).plot(label='Predicted', c='b')
+    pd.DataFrame({'Actual': y_test})['Actual'].plot(label='Actual', c='r', linestyle='--')
 
     plt.show()
 
