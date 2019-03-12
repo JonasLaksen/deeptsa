@@ -12,6 +12,7 @@ keras = "*"
 sklearn = "*"
 pandas = "*"
 nltk = "*"
+matplotlib = "*"
 
 [requires]
 python_version = "3.6"

@@ -1,11 +1,13 @@
 from keras import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Conv1D, MaxPooling1D
 
 
 def create_model(x_train,  y_train):
     model = Sequential()
-    model.add(Dense(12, input_dim=x_train.shape[1], activation='relu'))
-    model.add(Dense(8, activation='relu'))
+    model.add(Conv1D(64, 5, input_dim=x_train.shape[1], activation='relu'))
+    model.add(MaxPooling1D(pool_size=4))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dense(16, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
 
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
