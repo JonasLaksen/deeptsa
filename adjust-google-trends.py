@@ -1,7 +1,8 @@
 import pandas as pd
 
 if __name__ == '__main__':
-    stock_list = ['GOOG', 'AAPL', 'TSLA', 'TWTR', 'DIS']
+    # stock_list = ['FB', 'AMZN', 'KO', 'PFE', 'WMT', 'HD', 'BIDU', 'QCOM', 'NFLX', 'NVDA', 'AMD', 'INTC']
+    stock_list = ['NVDA', 'AMD', 'INTC']
 
     for stock in stock_list:
         trends_all = pd.read_csv('trends_data/' + stock + '_trends_all.csv')
