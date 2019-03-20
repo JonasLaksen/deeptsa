@@ -23,7 +23,7 @@ def data_from_stock(stock, show_plot=False):
     trends_data = pd.read_csv(f'data/{stock}trends.csv')
     trends_data["date"] = pd.to_datetime(trends_data["date"])
     trends_data = trends_data.set_index("date")
-    trends_data["trendscore"] = trends_data[stock]
+    trends_data["trendscore"] = trends_data[stock + ' stock']
 
 
     joined_data = price_data.join(sentiment_data, on="date")[["volume", "positive","negative", "neutral", "price",
