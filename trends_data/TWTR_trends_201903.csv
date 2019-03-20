@@ -1,4 +1,18 @@
-date,TWTR,isPartial
+date,TWTR stock,isPartial
 2019-03-01,100,False
-2019-03-02,65,False
-2019-03-03,38,False
+2019-03-02,27,False
+2019-03-03,6,False
+2019-03-04,87,False
+2019-03-05,87,False
+2019-03-06,63,False
+2019-03-07,87,False
+2019-03-08,82,False
+2019-03-09,16,False
+2019-03-10,18,False
+2019-03-11,68,False
+2019-03-12,78,False
+2019-03-13,76,False
+2019-03-14,75,False
+2019-03-15,66,False
+2019-03-16,19,False
+2019-03-17,12,False

@@ -6,8 +6,8 @@ import calendar
 if __name__ == '__main__':
     pytrends = TrendReq(hl='en-US', tz=60)
 
-    stock = 'NVDA'
-    kw_list = [stock]
+    stock = 'TWTR'
+    kw_list = [stock + ' stock']
 
 
     pytrends.build_payload(kw_list=kw_list, cat=0, timeframe='all', geo='', gprop='')

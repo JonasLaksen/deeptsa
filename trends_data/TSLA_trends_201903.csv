@@ -1,4 +1,18 @@
-date,TSLA,isPartial
+date,TSLA stock,isPartial
 2019-03-01,100,False
-2019-03-02,44,False
-2019-03-03,31,False
+2019-03-02,23,False
+2019-03-03,11,False
+2019-03-04,66,False
+2019-03-05,86,False
+2019-03-06,55,False
+2019-03-07,58,False
+2019-03-08,49,False
+2019-03-09,17,False
+2019-03-10,11,False
+2019-03-11,48,False
+2019-03-12,49,False
+2019-03-13,51,False
+2019-03-14,57,False
+2019-03-15,73,False
+2019-03-16,13,False
+2019-03-17,10,False
