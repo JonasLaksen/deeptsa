@@ -34,17 +34,20 @@ def group_by_stock(data, n_features):
         except:
             group_by_dict[row[0]] = [row[1:]]
 
-    data = list(map(lambda x: np.array(group_by_dict[x]), group_by_dict.keys()))
+    data = list(map(lambda x: np.array(group_by_dict[x])[:-50], group_by_dict.keys()))
+    test_data = list(map(lambda x: np.array(group_by_dict[x])[-50:], group_by_dict.keys()))
+
 
     max_length = np.max([x.shape[0] for x in data])
     for i in range(len(data)):
         data[i] = np.append(data[i], np.zeros((max_length - data[i].shape[0], n_features)), axis=0)
 
-    return np.array(data)
+    return np.array(data), np.array(test_data)
 
 if __name__ == '__main__':
     data = pd.read_csv('dataset.csv', index_col=0)
     data = data.dropna()
+
     # data = data[data['stock'] == 'AAPL']
 
     feature_list = ['positive', 'negative', 'neutral', 'open', 'high', 'low', 'volume', 'price']
@@ -60,23 +63,28 @@ if __name__ == '__main__':
     X = np.append(data['stock'].values.reshape(-1, 1), X, axis=1)
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
 
-    X = group_by_stock(X, n_features)
-    y = group_by_stock(y, 1)
+    X, X_test = group_by_stock(X, n_features)
+    y, y_test = group_by_stock(y, 1)
 
     model.fit(X, y, batch_size=1, epochs=1, shuffle=False)
 
     pred_model = build_network(n_features=n_features, layer_sizes=layer_sizes, batch_size=1,stateful=True)
 
-    pred_model.set_weights(model.get_weights())
 
-    pred_model.fit(X, y, batch_size=1, epochs=100, shuffle=False)
+    pred_model.set_weights(model.get_weights())
 
     stock_id = 12
 
-    result = model.predict(X[stock_id].reshape(1, X[stock_id].shape[0], X[stock_id].shape[1]))
+    X_reshaped = X[stock_id].reshape(1, X[stock_id].shape[0], X[stock_id].shape[1])
+    y_reshaped = y[stock_id].reshape(1, y[stock_id].shape[0], y[stock_id].shape[1])
+
+    pred_model.fit(X_reshaped, y_reshaped, batch_size=1, epochs=1, shuffle=False)
+
+
+    result = pred_model.predict(X_test[stock_id].reshape(1, X_test[stock_id].shape[0], X_test[stock_id].shape[1]))
 
     result = min_max_scaler_y.inverse_transform(result[0]).reshape(-1)
-    y_test = min_max_scaler_y.inverse_transform(y[stock_id]).reshape(-1)
+    y_test = min_max_scaler_y.inverse_transform(y_test[stock_id]).reshape(-1)
 
     pd.DataFrame({'Predicted': result}).plot(label='Predicted', c='b')
     pd.DataFrame({'Actual': y_test})['Actual'].plot(label='Actual', c='r', linestyle='--')

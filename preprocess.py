@@ -30,5 +30,6 @@ def data_from_stock(stock, show_plot=False):
                                                               "open", "high", "low"]]
     joined_data = joined_data.join(trends_data, on="date", how="inner")
     joined_data['stock'] = stock.upper()
-    return joined_data[["stock", "volume", "positive", "negative", "neutral", "trendscore", "price",
+    joined_data = joined_data[["stock", "volume", "positive", "negative", "neutral", "trendscore", "price",
                         "open", "high", "low"]]
+    return joined_data.reindex(index=joined_data.index[::-1])
