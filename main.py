@@ -1,8 +1,6 @@
 from preprocess import data_from_stock
 import pandas as pd
-
-stock_list = ['AAPL', 'AMD', 'AMZN', 'BIDU', 'DIS', 'FB', 'GOOG', 'HD', 'INTC', 'KO', 'NFLX', 'NVDA', 'PFE', 'QCOM',
-              'TSLA', 'TWTR', 'WMT']
+from constants import stock_list
 
 dfs = list(map(lambda x: data_from_stock(x), stock_list))
 
