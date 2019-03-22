@@ -7,7 +7,7 @@ def plot_correlation(data, x_name, y_name):
 
 
 if __name__ == '__main__':
-    data = pd.read_csv('dataset_v2.csv')
-    data = data[data['stock'] == 'TWTR']
-    plot_correlation(data, 'trendscore', 'price')
+    data = pd.read_csv('dataset.csv')
+    data = data[data['stock'] == 'FB']
+    plot_correlation(data, 'negative', 'next_price')
     plt.show()
