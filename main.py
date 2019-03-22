@@ -1,7 +1,10 @@
 from preprocess import data_from_stock
 import pandas as pd
 
-dfs = [data_from_stock('GOOG'), data_from_stock('AAPL'), data_from_stock('DIS'), data_from_stock('TSLA'), data_from_stock('TWTR')]
+stock_list = ['AAPL', 'AMD', 'AMZN', 'BIDU', 'DIS', 'FB', 'GOOG', 'HD', 'INTC', 'KO', 'NFLX', 'NVDA', 'PFE', 'QCOM',
+              'TSLA', 'TWTR', 'WMT']
+
+dfs = list(map(lambda x: data_from_stock(x), stock_list))
 
 def add_prev_feature(df, feature, n):
     for i in range(n):
