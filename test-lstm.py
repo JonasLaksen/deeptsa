@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 def build_network(n_features, layer_sizes, stateful):
 
     model = keras.Sequential()
-
     for i, layer_size in enumerate(layer_sizes):
         if i==0:
             model.add(keras.layers.LSTM(layer_size, return_sequences=True, stateful=stateful,batch_input_shape=(1, None, n_features)))
