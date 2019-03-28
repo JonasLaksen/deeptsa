@@ -13,6 +13,9 @@ for df in dfs:
     for feature in ['price','volume','trendscore','positive','negative','neutral']:
         add_prev_feature(df, feature, 2)
 
+    df['change'] = df['next_price'] - df['price']
+    df['change_percent'] = (df['next_price'] - df['price'])/df['price']
+
 dfs = map(lambda x: x[1:-2], dfs)
 
 #print(dfs[0][:5])
