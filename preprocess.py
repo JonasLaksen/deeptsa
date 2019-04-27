@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from constants import stock_list
 
 #Returns X, y
 def data_from_stock(stock, show_plot=False):
@@ -33,3 +34,22 @@ def data_from_stock(stock, show_plot=False):
     joined_data = joined_data[["stock", "volume", "positive", "negative", "neutral", "trendscore", "price",
                         "open", "high", "low"]]
     return joined_data.reindex(index=joined_data.index[::-1])
+
+
+def add_prev_feature(df, feature, n):
+    for i in range(n):
+        df[f'prev_{feature}_{i}'] = df[feature].shift(-(i+1))
+
+def write_to_dataset_file():
+    dfs = list(map(lambda x: data_from_stock(x), stock_list))
+    for df in dfs:
+        df['next_price'] = df['price'].shift(1)
+        for feature in ['price','volume','trendscore','positive','negative','neutral']:
+            add_prev_feature(df, feature, 2)
+
+        df['change'] = df['next_price'] - df['price']
+        df['change_percent'] = (df['next_price'] - df['price'])/df['price']
+
+    dfs = map(lambda x: x[1:-2], dfs)
+    pd.concat(dfs).to_csv('dataset.csv')
+
