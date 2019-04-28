@@ -13,4 +13,4 @@ class Encoder(Model):
         init_c = Embedding(num_stocks + 1, cell_size)(encoder_inputs)
         init_c = encoder_reshape(init_c)
 
-        super(Encoder, self).__init__(encoder_inputs, [init_h, init_c])
+        super(Encoder, self).__init__(encoder_inputs, [init_h, init_c], name='Encoder')
