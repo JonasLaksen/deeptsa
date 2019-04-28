@@ -14,10 +14,10 @@ class SpecializedNetwork(Model):
         decoder = Decoder(n_features, layer_sizes, stateful, batch_size)
         next_price, state_h, state_c = decoder([X, state_h, state_c])
 
-        copy_weights_layers = [4, 5, 6, 7]
+        copy_weights_layers = [4, 5, 6, 7, 8, 9, 10]
         for i, layer_i in enumerate(copy_weights_layers):
             decoder.layers[layer_i].set_weights(gen_model.layers[i + 1].get_weights())
 
-        super(SpecializedNetwork, self).__init__([X, stock_id], next_price)
+        super(SpecializedNetwork, self).__init__([X, stock_id], next_price, name='Specialized')
         self.encoder = encoder
         self.decoder = decoder

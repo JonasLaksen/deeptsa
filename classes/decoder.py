@@ -1,5 +1,5 @@
 from keras import Model, Input
-from keras.layers import Masking, LSTM, Dense
+from keras.layers import Masking, LSTM, Dense, Dropout
 
 
 class Decoder(Model):
@@ -7,13 +7,13 @@ class Decoder(Model):
         X = Input(batch_shape=(batch_size, None, n_features))
         h_input, c_input = Input(shape=(layer_sizes[0],)), Input(shape=(layer_sizes[0],))
 
-        masked = Masking(mask_value=0., batch_input_shape=(batch_size, None, n_features))
-        output = masked(X)
+        output = Masking(mask_value=0., batch_input_shape=(batch_size, None, n_features))(X)
         state_h, state_c = h_input, c_input
 
         for size in layer_sizes:
-            lstm = LSTM(size, return_sequences=True, return_state=True, stateful=stateful, dropout=.2)
+            lstm = LSTM(size, return_sequences=True, return_state=True, stateful=stateful)
             output, state_h, state_c = lstm(output, initial_state=[state_h, state_c])
+            output = Dropout(.4)(output)
 
         next_price = Dense(1, activation='linear')(output)
-        super(Decoder, self).__init__([X, h_input, c_input], [next_price, state_h, state_c])
+        super(Decoder, self).__init__([X, h_input, c_input], [next_price, state_h, state_c], name='Decoder')

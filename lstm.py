@@ -9,6 +9,7 @@ from keras.callbacks import ModelCheckpoint, TensorBoard
 from keras.engine.saving import load_model
 from keras.losses import MAE
 from keras.optimizers import Adam
+from keras.utils import plot_model
 from sklearn import preprocessing
 
 from classes.gen_network import GeneralizedNetwork
@@ -77,6 +78,7 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
         gen_model = GeneralizedNetwork(n_features=n_features, layer_sizes=layer_sizes, batch_size=batch_size,
                                        stateful=False)
     if mode == 'gen' or both:
+        plot_model(gen_model, 'model_plots/gen.png')
         gen_model.compile(optimizer=Adam(0.001), loss=MAE)
         gen_model.fit(X, y, batch_size=batch_size, epochs=gen_epochs, shuffle=False,
                       callbacks=[
@@ -105,13 +107,12 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
             spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(y), layer_sizes=layer_sizes,
                                             stateful=False, gen_model=gen_model, batch_size=batch_size)
 
+        plot_model(spec_model, 'model_plots/spec.png')
         spec_model.compile(optimizer=Adam(0.001), loss=MAE)
 
         X_stock_list = np.arange(len(X)).reshape((len(X), 1, 1))
         spec_model.fit([X, X_stock_list], y, batch_size=batch_size, epochs=spec_epochs, shuffle=False,
                        callbacks=[
-                           # Save model every 10th epoch
-                           ModelCheckpoint('model/spec.h5', period=10),
                            # Write to logfile to see graph in TensorBoard
                            TensorBoard(log_dir='logs/spec/{}'.format(datetime.now()))])
 
@@ -129,4 +130,4 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
     plt.show()
 
 
-main('spec', True, gen_epochs=1, spec_epochs=1, load_gen=True, load_spec=False)
+main('gen', both=True, gen_epochs=1, spec_epochs=1, load_gen=True, load_spec=False)
