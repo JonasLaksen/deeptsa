@@ -1,8 +1,9 @@
 from keras import Model, Input
 from keras.layers import Masking
 
-from models.decoder import Decoder
+from models.bidir_lstm import BidirLSTM
 from models.encoder import Encoder
+from models.stacked_lstm import StackedLSTM
 
 
 class SpecializedNetwork(Model):
@@ -13,7 +14,7 @@ class SpecializedNetwork(Model):
 
         X = Input(batch_shape=(batch_size, None, n_features), name='X')
         masked_X = Masking(mask_value=0., batch_input_shape=(batch_size, None, n_features), name='Masked_X')(X)
-        decoder = Decoder(n_features, layer_sizes, stateful, batch_size)
+        decoder = BidirLSTM(n_features, layer_sizes, stateful, batch_size)
         next_price, *_ = decoder([masked_X] + init_states)
 
         super(SpecializedNetwork, self).__init__([X, stock_id], next_price, name='Specialized')

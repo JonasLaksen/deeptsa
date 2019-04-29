@@ -9,6 +9,7 @@ from keras.losses import MAE
 from keras.optimizers import Adam
 from keras.utils import plot_model
 from sklearn import preprocessing
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from models.gen_network import GeneralizedNetwork
 from models.spec_network import SpecializedNetwork
@@ -17,7 +18,17 @@ from models.spec_network import SpecializedNetwork
 def expand(x): return np.expand_dims(x, axis=0)
 
 
+def mean_absolute_percentage_error(y_true, y_pred):
+    print(y_true)
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+
 def plot(result, y):
+    mape = mean_absolute_percentage_error(y, result)
+    mae = mean_absolute_error(y, result)
+    mse = mean_squared_error(y, result)
+    print(mape, mae, mse)
     pd.DataFrame({'Predicted': result}).plot(label='Predicted', c='b')
     pd.DataFrame({'Actual': y})['Actual'].plot(label='Actual', c='r', linestyle='--')
 
@@ -98,7 +109,7 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
         spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(y), layer_sizes=layer_sizes,
                                         stateful=False, batch_size=batch_size)
         spec_model.decoder.get_layer('LSTM').set_weights(gen_model.get_layer('LSTM')
-                                                                .get_weights())
+                                                         .get_weights())
         if load_spec:
             spec_model.load_weights('weights/spec.h5')
             print('Loaded specialised model')
@@ -131,4 +142,4 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
     plt.show()
 
 
-main('spec', both=False, gen_epochs=100, spec_epochs=11, load_gen=False, load_spec=False)
+main('gen', both=False, gen_epochs=30, spec_epochs=100, load_gen=True, load_spec=False)
