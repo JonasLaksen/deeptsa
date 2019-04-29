@@ -76,8 +76,7 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
 
     if mode == 'gen' or both:
         gen_model.compile(optimizer=Adam(0.001), loss=MAE)
-        zeros = np.zeros((batch_size, layer_sizes[0]))
-        gen_model.fit([X, zeros, zeros], y, batch_size=batch_size, epochs=gen_epochs, shuffle=False,
+        gen_model.fit(X, y, batch_size=batch_size, epochs=gen_epochs, shuffle=False,
                       callbacks=[
                           # Save model every 10th epoch
                           ModelCheckpoint('weights/gen.h5', period=10, save_weights_only=True),
@@ -87,10 +86,10 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
         gen_pred_model = GeneralizedNetwork(n_features=n_features, layer_sizes=layer_sizes, batch_size=1, stateful=True)
         gen_pred_model.set_weights(gen_model.get_weights())
 
-        result_train = gen_pred_model.predict([X_train, zeros, zeros])
+        result_train = gen_pred_model.predict(X_train)
         result_train = scaler_y.inverse_transform(result_train[0]).reshape(-1)
 
-        result_test = gen_pred_model.predict([X_test, zeros, zeros])
+        result_test = gen_pred_model.predict(X_test)
         result_test = scaler_y.inverse_transform(result_test[0]).reshape(-1)
 
         [plot(*x) for x in [(result_train, y_train), (result_test, y_test)]]
@@ -98,8 +97,7 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
     if mode == 'spec' or both:
         spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(y), layer_sizes=layer_sizes,
                                         stateful=False, batch_size=batch_size)
-        spec_model.decoder.get_layer('StackedLSTM').set_weights(gen_model.get_layer('StackedLSTM')
-                                                                             .get_weights())
+        spec_model.decoder.set_weights(gen_model.get_layer('Decoder').get_weights())
         if load_spec:
             spec_model.load_weights('weights/spec.h5')
             print('Loaded specialised model')
@@ -132,4 +130,4 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
     plt.show()
 
 
-main('gen', both=False, gen_epochs=100, spec_epochs=11, load_gen=False, load_spec=False)
+main('spec', both=False, gen_epochs=100, spec_epochs=11, load_gen=False, load_spec=False)
