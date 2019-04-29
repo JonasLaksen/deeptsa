@@ -3,13 +3,13 @@ from keras.layers import Reshape, Embedding
 
 
 class Encoder(Model):
-    def __init__(self, num_stocks, cell_size):
+    def __init__(self, num_stocks, cell_size, n_states = 2):
         encoder_inputs = Input(shape=(1, 1), name='Stock_ID')
 
-        init_h = Embedding(num_stocks + 1, cell_size)(encoder_inputs)
-        init_h = Reshape((cell_size,), name='Initial_h')(init_h)
+        states = []
+        for i in range(n_states):
+            state = Embedding(num_stocks + 1, cell_size)(encoder_inputs)
+            state = Reshape((cell_size,), name='State_{}'.format(i))(state)
+            states.append(state)
 
-        init_c = Embedding(num_stocks + 1, cell_size)(encoder_inputs)
-        init_c = Reshape((cell_size,), name='Initial_c')(init_c)
-
-        super(Encoder, self).__init__(encoder_inputs, [init_h, init_c], name='Encoder')
+        super(Encoder, self).__init__(encoder_inputs, states, name='Encoder')
