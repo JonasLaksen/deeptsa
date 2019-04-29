@@ -97,14 +97,15 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
     if mode == 'spec' or both:
         spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(y), layer_sizes=layer_sizes,
                                         stateful=False, batch_size=batch_size)
-        spec_model.decoder.set_weights(gen_model.get_layer('Decoder').get_weights())
+        spec_model.decoder.get_layer('LSTM').set_weights(gen_model.get_layer('LSTM')
+                                                                .get_weights())
         if load_spec:
             spec_model.load_weights('weights/spec.h5')
             print('Loaded specialised model')
 
         [plot_model(x[1], 'model_plots/{}.png'.format(x[0]), show_shapes=True) for x in
          [('gen', gen_model), ('spec', spec_model), ('decoder', spec_model.decoder), ('encoder', spec_model.encoder),
-          ('stacked', spec_model.decoder.get_layer('StackedLSTM'))]]
+          ('lstm', spec_model.decoder.get_layer('LSTM'))]]
 
         spec_model.compile(optimizer=Adam(0.001), loss=MAE)
 

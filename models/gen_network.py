@@ -12,9 +12,10 @@ class GeneralizedNetwork(Model):
         X = Input(batch_shape=(batch_size, None, n_features), name='X')
         masked_X = Masking(mask_value=0., batch_input_shape=(batch_size, None, n_features), name='Masked_X')(X)
 
-        init_h, init_c = Input(tensor=zeros((batch_size, layer_sizes[0]))), \
-                         Input(tensor=zeros((batch_size, layer_sizes[0])))
+        n_states = 4
+        zero_states = [Input(tensor=zeros((batch_size, layer_sizes[0]))) for _ in range(n_states)]
 
-        decoder = Decoder(n_features, layer_sizes, stateful, batch_size)
-        next_price, _, _ = decoder([masked_X, init_h, init_c])
-        super(GeneralizedNetwork, self).__init__([X, init_h, init_c], next_price, name='Generalized')
+        # lstm = StackedLSTM(n_features, layer_sizes, stateful, batch_size)
+        lstm = BidirLSTM(n_features, layer_sizes, stateful, batch_size)
+        next_price, *_ = lstm([masked_X] + zero_states)
+        super(GeneralizedNetwork, self).__init__([X] + zero_states, next_price, name='Generalized')
