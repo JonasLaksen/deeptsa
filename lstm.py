@@ -142,4 +142,4 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
     plt.show()
 
 
-main('gen', both=False, gen_epochs=30, spec_epochs=100, load_gen=True, load_spec=False)
+main('gen', both=False, gen_epochs=10, spec_epochs=100, load_gen=False, load_spec=False)
