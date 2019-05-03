@@ -4,11 +4,13 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import models.bidir_lstm_seq as bidir_lstm_seq
 from keras.callbacks import ModelCheckpoint, TensorBoard
-from keras.losses import MAE
+from keras.losses import MAE, MAPE
 from keras.optimizers import Adam
 from keras.utils import plot_model
 from sklearn import preprocessing
+from tensorflow import keras as ks
 
 from models.gen_network import GeneralizedNetwork
 from models.spec_network import SpecializedNetwork
@@ -62,7 +64,7 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
 
     X_no_pad, X, X_test = group_by_stock(X, n_features)
     y_no_pad, y, y_test = group_by_stock(y, 1)
-    stock_id = 12
+    stock_id = 13
 
     X_train, X_test = expand(X_no_pad[stock_id]), expand(X_test[stock_id])
     y_train = scaler_y.inverse_transform(y_no_pad[stock_id]).reshape(-1)
@@ -81,7 +83,8 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
                           # Save model every 10th epoch
                           ModelCheckpoint('weights/gen.h5', period=10, save_weights_only=True),
                           # Write to logfile to see graph in TensorBoard
-                          TensorBoard(log_dir='logs/gen/{}'.format(datetime.now()))])
+                          # TensorBoard(log_dir='logs/gen/{}'.format(datetime.now()))
+                      ])
 
         gen_pred_model = GeneralizedNetwork(n_features=n_features, layer_sizes=layer_sizes, batch_size=1, stateful=True)
         gen_pred_model.set_weights(gen_model.get_weights())
@@ -127,7 +130,36 @@ def main(mode='gen', both=False, gen_epochs=0, spec_epochs=0, load_gen=True, loa
         result_test = scaler_y.inverse_transform(result_test[0]).reshape(-1)
 
         [plot(*x) for x in [(result_train, y_train), (result_test, y_test)]]
+
+    if mode == 'bidir_seq':
+        layer_size = 73
+        bidir_model = bidir_lstm_seq.build_model(n_features=n_features, layer_size=layer_size, stateful=False,
+                                                batch_size=batch_size)
+
+        bidir_model.compile(optimizer=Adam(0.001), loss=MAE, metrics=[MAPE])
+
+        bidir_model.fit(X, y, batch_size=batch_size, epochs=2, shuffle=False,
+                      callbacks=[
+                          # Save model every 10th epoch
+                          # ModelCheckpoint('weights/bidir.h5', period=10, save_weights_only=True),
+                          # Write to logfile to see graph in TensorBoard
+                          # TensorBoard(log_dir='logs/gen/{}'.format(datetime.now()))
+                      ])
+
+        bidir_pred_model = bidir_lstm_seq.build_model(n_features=n_features, layer_size=layer_size, stateful=True,
+                                                batch_size=1)
+        bidir_pred_model.set_weights(bidir_model.get_weights())
+
+        result_train = bidir_pred_model.predict(X_train)
+        result_train = scaler_y.inverse_transform(result_train[0]).reshape(-1)
+
+        result_test = bidir_pred_model.predict(X_test)
+        result_test = scaler_y.inverse_transform(result_test[0]).reshape(-1)
+
+        [plot(*x) for x in [(result_train, y_train), (result_test, y_test)]]
+
+
     plt.show()
 
 
-main('spec', both=False, gen_epochs=100, spec_epochs=11, load_gen=False, load_spec=False)
+main('bidir_seq', both=False, gen_epochs=100, spec_epochs=11, load_gen=False, load_spec=False)
