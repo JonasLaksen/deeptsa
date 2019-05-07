@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
 def plot_correlation(data, x_name, y_name):
     sns.jointplot(x=x_name, y=y_name, data=data)
 
