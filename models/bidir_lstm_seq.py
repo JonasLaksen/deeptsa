@@ -2,34 +2,46 @@ import keras
 from keras.layers import Bidirectional, LSTM, Dense, Masking, Dropout, Average, Input
 from keras import Model
 
-def build_model(n_features, layer_size, stateful, batch_size):
+def build_model(n_features, layer_size, stateful, batch_size, return_states=True):
 
     input_lstm = Input(batch_shape=(batch_size, None, n_features))
 
+    init_states = [Input(shape=(layer_size,), name='State_{}'.format(i)) for i in range(4)]
 
-    left = keras.Sequential()
-    left.add(Masking(mask_value=0.0, batch_input_shape=(batch_size, None, n_features)))
-    left.add(LSTM(layer_size, return_sequences=True, stateful=stateful))
-    left.add(Dropout(0.2))
+    # masking_input = Masking(mask_value=0.0)
+    # input_lstm = masking_input(input_lstm)
 
-    left_input = left(input_lstm)
+    left_masking = Masking(mask_value=0.0)
+    left_lstm_1 = LSTM(layer_size, return_sequences=True, return_state=True, stateful=stateful)
+    left_dropout_1 = Dropout(0.2)
+    # left_lstm_2 = LSTM(layer_size, return_sequences=True, return_state=True, stateful=stateful)
+    # left_dropout_2 = Dropout(0.2)
+    left_output = left_masking(input_lstm)
+    left_output, *left_states = left_lstm_1(left_output, initial_state=init_states[:2])
+    left_output = left_dropout_1(left_output)
+    # left_output, *left_states = left_lstm_2(left_output, initial_state=left_states)
+    # left_output = left_dropout_2(left_output)
 
-    right = keras.Sequential()
-    right.add(Masking(mask_value=0.0, batch_input_shape=(batch_size, None, n_features)))
-    right.add(LSTM(layer_size, return_sequences=True, stateful=stateful, go_backwards=True))
-    right.add(Dropout(0.2))
-
-    right_input = right(input_lstm)
-
+    right_masking = Masking(mask_value=0.0)
+    right_lstm_1 = LSTM(layer_size, return_sequences=True, return_state=True, stateful=stateful, go_backwards=True)
+    right_dropout_1 = Dropout(0.2)
+    # right_lstm_2 = LSTM(layer_size, return_sequences=True, return_state=True, stateful=stateful, go_backwards=True)
+    # right_dropout_2 = Dropout(0.2)
+    right_output = right_masking(input_lstm)
+    right_output, *right_states = right_lstm_1(right_output, initial_state=init_states[2:])
+    right_output = right_dropout_1(right_output)
+    # right_output, *right_states = right_lstm_2(right_output, initial_state=right_states)
+    # right_output = right_dropout_2(right_output)
 
     merge_layer = Average()
 
-    output = merge_layer([left_input, right_input])
+    next_price = merge_layer([left_output, right_output])
 
     output_layer = Dense(1, activation='linear')
 
-    output = output_layer(output)
+    next_price = output_layer(next_price)
+    new_states = left_states + right_states
 
-    model = Model(input_lstm, output)
+    model = Model([input_lstm] + init_states, [next_price] + (new_states if return_states else []))
 
     return model
