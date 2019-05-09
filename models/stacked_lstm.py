@@ -1,5 +1,5 @@
 from keras import Model, Input
-from keras.layers import LSTM, Dense, Dropout, Masking
+from keras.layers import LSTM, Dense, Dropout, Masking, CuDNNLSTM
 
 
 class StackedLSTM(Model):
@@ -12,7 +12,7 @@ class StackedLSTM(Model):
 
         output = X
         for i, size in enumerate(layer_sizes):
-            lstm = LSTM(size, return_sequences=True, return_state=True)
+            lstm = CuDNNLSTM(size, return_sequences=True, return_state=True)
             # If init_all_layers, set initial state of all layers equal the input init_states
             # Else, set the initial state of the first layer equals the first two states of init_states and the other
             # layers init_states equal the end state of previous layers
