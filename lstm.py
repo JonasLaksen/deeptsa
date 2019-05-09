@@ -62,6 +62,8 @@ def group_by_stock(data, n_features):
         except:
             group_by_dict[row[0]] = [row[1:]]
 
+    data = {k: v[-1190:] for k,v in group_by_dict.items()}
+
     data = list(map(lambda x: np.array(group_by_dict[x])[:-50], group_by_dict.keys()))
     test_data = list(map(lambda x: np.array(group_by_dict[x])[-50:], group_by_dict.keys()))
 
@@ -207,4 +209,4 @@ def main(bidir_seq_epoch=0, gen_epochs=0, spec_epochs=0, load_gen=True, load_spe
     plt.show()
 
 
-main(bidir_seq_epoch=250, gen_epochs=0, spec_epochs=0, load_gen=False, load_spec=False)
+main(bidir_seq_epoch=0, gen_epochs=1, spec_epochs=0, load_gen=False, load_spec=False)

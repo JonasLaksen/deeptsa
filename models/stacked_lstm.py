@@ -5,13 +5,12 @@ from keras.layers import LSTM, Dense, Dropout, Masking
 class StackedLSTM(Model):
     def __init__(self, n_features, layer_sizes, batch_size, init_all_layers=True, return_states=True):
         X = Input(batch_shape=(batch_size, None, n_features), name='X')
-        masked_X = Masking(mask_value=0., batch_input_shape=(batch_size, None, n_features), name='Masked_X')(X)
 
         init_states = [Input(shape=(layer_sizes[0],), name='State_{}'.format(i)) for i in range(len(layer_sizes) * 2)]
         new_states = []
         states = []
 
-        output = masked_X
+        output = X
         for i, size in enumerate(layer_sizes):
             lstm = LSTM(size, return_sequences=True, return_state=True)
             # If init_all_layers, set initial state of all layers equal the input init_states
