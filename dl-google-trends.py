@@ -5,7 +5,9 @@ import calendar
 
 if __name__ == '__main__':
     pytrends = TrendReq(hl='en-US', tz=60)
-
+    stock_list = ['CSCO', 'CTSH', 'SBUX', 'EBAY', 'MDLZ', 'ATVI', 'EA', 'WDC', 'TXN', 'PEP', 'EXPE', 'ADBE',
+                  'COST', 'HAS', 'SYMC', 'MSFT', 'SIRI', 'MU', 'GILD', 'MRVL', 'ODP', 'MAT', 'GRMN', 'PHG',
+                  'BA', 'IBM', 'MCD', 'GS']
     stock = 'TWTR'
     kw_list = [stock + ' stock']
 
