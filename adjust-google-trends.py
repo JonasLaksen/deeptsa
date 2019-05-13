@@ -3,7 +3,9 @@ import pandas as pd
 if __name__ == '__main__':
     # stock_list = ['AAPL', 'AMD', 'AMZN', 'BIDU', 'DIS', 'FB', 'GOOG', 'HD', 'INTC', 'KO', 'NFLX', 'NVDA',
     #               'PFE', 'QCOM', 'TSLA', 'TWTR', 'WMT']
-    stock_list = ['TWTR', 'WMT']
+    stock_list = ['CSCO', 'CTSH', 'SBUX', 'EBAY', 'MDLZ', 'ATVI', 'EA', 'WDC', 'TXN', 'PEP', 'EXPE', 'ADBE',
+                  'COST', 'HAS', 'SYMC', 'MSFT', 'SIRI', 'MU', 'GILD', 'MRVL', 'ODP', 'MAT', 'GRMN', 'PHG',
+                  'BA', 'IBM', 'MCD', 'GS']
     for stock in stock_list:
         trends_all = pd.read_csv('trends_data/' + stock + '_trends_all.csv')
         row_num = 0
@@ -32,6 +34,6 @@ if __name__ == '__main__':
 
                 trends_adjusted = pd.concat([trends_adjusted, trend_month])
 
-        trends_adjusted.to_csv('trends_data/' + stock + 'trends.csv')
+        trends_adjusted.to_csv('data/' + stock + 'trends.csv')
 
 
