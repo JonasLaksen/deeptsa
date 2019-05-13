@@ -20,6 +20,7 @@ tensorboard = "*"
 statsmodels = "*"
 patsy = "*"
 requests = "*"
+pytrends = "*"
 
 [requires]
 python_version = "3.6"
