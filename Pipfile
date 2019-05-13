@@ -17,6 +17,8 @@ seaborn = "*"
 pydot = "*"
 graphviz = "*"
 tensorboard = "*"
+statsmodels = "*"
+patsy = "*"
 
 [requires]
 python_version = "3.6"
