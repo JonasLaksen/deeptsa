@@ -1,24 +1,25 @@
 from keras import Model, Input
-from keras.layers import LSTM, Dense, Dropout, Masking
+from keras import backend as K
+from keras.layers import Dense, Dropout, Masking
+
+if len(K.tensorflow_backend._get_available_gpus()) > 0:
+    from keras.layers import CuDNNLSTM as LSTM
+else:
+    from keras.layers import LSTM
 
 
 class StackedLSTM(Model):
-    def __init__(self, n_features, layer_sizes, batch_size, init_all_layers=True, return_states=True):
+    def __init__(self, n_features, layer_sizes, batch_size, return_states=True):
         X = Input(batch_shape=(batch_size, None, n_features), name='X')
         masked_X = Masking(mask_value=0., batch_input_shape=(batch_size, None, n_features), name='Masked_X')(X)
 
         init_states = [Input(shape=(layer_sizes[0],), name='State_{}'.format(i)) for i in range(len(layer_sizes) * 2)]
         new_states = []
-        states = []
 
         output = masked_X
         for i, size in enumerate(layer_sizes):
             lstm = LSTM(size, return_sequences=True, return_state=True)
-            # If init_all_layers, set initial state of all layers equal the input init_states
-            # Else, set the initial state of the first layer equals the first two states of init_states and the other
-            # layers init_states equal the end state of previous layers
-            output, *states = lstm(output, initial_state=init_states[i * 2:(i * 2) + 2] if (
-                    init_all_layers or i == 0) else states)
+            output, *states = lstm(output, initial_state=init_states[i * 2:(i * 2) + 2])
             new_states = new_states + states
             output = Dropout(.4)(output)
 
