@@ -1,7 +1,13 @@
+from json import dump
+
 import pytrends
 from pytrends.request import TrendReq
 import pandas as pd
 import calendar
+
+from requests import get
+
+api_key = '78e4f115c0960e419532bdbed431fc67'
 
 if __name__ == '__main__':
     pytrends = TrendReq(hl='en-US', tz=60)
@@ -9,6 +15,12 @@ if __name__ == '__main__':
                   'COST', 'HAS', 'SYMC', 'MSFT', 'SIRI', 'MU', 'GILD', 'MRVL', 'ODP', 'MAT', 'GRMN', 'PHG',
                   'BA', 'IBM', 'MCD', 'GS']
     stock = 'TWTR'
+
+
+    # Download sentiment
+    sentiment = get(f'http://api.stockfluence.com/fund/CSCO/history/2000-01-01/2019-03-05?apikey={api_key}').json()
+    with open(f'data/{stock}.json', 'w') as file:
+        dump(sentiment, file)
     kw_list = [stock + ' stock']
 
 
