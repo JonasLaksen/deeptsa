@@ -51,5 +51,8 @@ def write_to_dataset_file():
         df['change_percent'] = (df['next_price'] - df['price'])/df['price']
 
     dfs = map(lambda x: x[1:-2], dfs)
-    pd.concat(dfs).to_csv('dataset.csv')
+    pd.concat(dfs).to_csv('dataset_v2.csv')
+
+if __name__ == '__main__':
+    write_to_dataset_file()
 
