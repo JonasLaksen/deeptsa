@@ -2,8 +2,9 @@ import keras
 from keras.layers import Bidirectional, LSTM, Dense, Masking, Dropout, Average, Input
 from keras import Model
 
-def build_model(n_features, layer_size, stateful, batch_size, return_states=True):
+def build_model(n_features, layer_sizes, batch_size, return_states=True):
 
+    layer_size = layer_sizes[0]
     input_lstm = Input(batch_shape=(batch_size, None, n_features))
 
     init_states = [Input(shape=(layer_size,), name='State_{}'.format(i)) for i in range(4)]
@@ -12,7 +13,7 @@ def build_model(n_features, layer_size, stateful, batch_size, return_states=True
     # input_lstm = masking_input(input_lstm)
 
     left_masking = Masking(mask_value=0.0)
-    left_lstm_1 = LSTM(layer_size, return_sequences=True, return_state=True, stateful=stateful)
+    left_lstm_1 = LSTM(layer_size, return_sequences=True, return_state=True)
     left_dropout_1 = Dropout(0.2)
     # left_lstm_2 = LSTM(layer_size, return_sequences=True, return_state=True, stateful=stateful)
     # left_dropout_2 = Dropout(0.2)
@@ -23,7 +24,7 @@ def build_model(n_features, layer_size, stateful, batch_size, return_states=True
     # left_output = left_dropout_2(left_output)
 
     right_masking = Masking(mask_value=0.0)
-    right_lstm_1 = LSTM(layer_size, return_sequences=True, return_state=True, stateful=stateful, go_backwards=True)
+    right_lstm_1 = LSTM(layer_size, return_sequences=True, return_state=True, go_backwards=True)
     right_dropout_1 = Dropout(0.2)
     # right_lstm_2 = LSTM(layer_size, return_sequences=True, return_state=True, stateful=stateful, go_backwards=True)
     # right_dropout_2 = Dropout(0.2)
