@@ -13,13 +13,13 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 
-def plot(result, y):
+def plot(title, result, y):
     mape = mean_absolute_percentage_error(y, result)
     mae = mean_absolute_error(y, result)
     mse = mean_squared_error(y, result)
     accuracy_direction = direction_eval(result, y)
     print(mape, mae, mse, accuracy_direction)
-    pd.DataFrame({'Predicted': result}).plot(label='Predicted', c='b')
+    pd.DataFrame({'Predicted': result}).plot(label='Predicted', c='b', title=title)
     pd.DataFrame({'Actual': y})['Actual'].plot(label='Actual', c='r', linestyle='--')
 
 
@@ -38,7 +38,8 @@ def direction_eval(result, y):
     return accuracy_score(y_pair, result_pair)
 
 
-def group_by_stock(data, n_features):
+def group_by_stock(data, training_prop=.8, validation_prop=.1, test_prop=.1):
+    assert training_prop + validation_prop + test_prop == 1.
     group_by_dict = {}
     for row in data:
         try:
@@ -46,16 +47,13 @@ def group_by_stock(data, n_features):
         except:
             group_by_dict[row[0]] = [row[1:]]
 
-    data = list(map(lambda x: np.array(group_by_dict[x])[:-50], group_by_dict.keys()))
-    test_data = list(map(lambda x: np.array(group_by_dict[x])[-50:], group_by_dict.keys()))
-
-    data_padded = copy.deepcopy(data)
-
-    max_length = np.max([x.shape[0] for x in data])
-    for i in range(len(data)):
-        data_padded[i] = np.append(data_padded[i], np.zeros((max_length - data_padded[i].shape[0], n_features)), axis=0)
-
-    return np.array(data), np.array(data_padded), np.array(test_data)
+    data_size = len(min(group_by_dict.values(), key=len))
+    train_size, val_size, test_size = int(data_size * training_prop), int(data_size * validation_prop), int(
+        data_size * test_prop)
+    train_data = list(map(lambda x: np.array(group_by_dict[x])[-data_size: -data_size + train_size], group_by_dict.keys()))
+    val_data = list(map(lambda x: np.array(group_by_dict[x])[-data_size + train_size: -data_size + train_size + val_size], group_by_dict.keys()))
+    test_data = list(map(lambda x: np.array(group_by_dict[x])[-test_size:], group_by_dict.keys()))
+    return np.array(train_data), np.array(val_data), np.array(test_data)
 
 
 def get_feature_list_lags(features, lags=0):
