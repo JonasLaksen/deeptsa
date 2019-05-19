@@ -133,29 +133,34 @@ arguments = {
 
 
 def random_arguments():
-    args = {
-        'copy_weights_from_gen_to_spec': False,
+    hyperparameters = {
         'feature_list': list(set(sample(feature_list, randint(1, len(feature_list))) + ['price'])),
         'dropout': .1 * randint(1, 8),
-        'gen_epochs': 1000,
-        'spec_epochs': 1000,
+        'gen_epochs': 300,
+        'spec_epochs': 300,
         'layer_sizes': [2 ** randint(1, 8)] * 1,
         'learning_rate': 10 ** (-randint(1, 4)),
-        'load_gen': False,
-        'load_spec': False,
         'model': 'stacked',
         # 'model': 'bidir',
     }
-    return args, from_args_to_filename(args)
+    other_args = {
+        'copy_weights_from_gen_to_spec': False,
+        'load_gen': False,
+        'load_spec': False
+    }
+
+    return hyperparameters, other_args, from_args_to_filename(hyperparameters)
 
 
 # Generate random arguments to test an arbitrary amount of new models
 for i in range(100):
-    args, filename = random_arguments()
-    main(**args,
+    hyperparameters, other_args, filename = random_arguments()
+    print(hyperparameters)
+    main(**hyperparameters, **other_args,
          model_generator=StackedLSTM if arguments['model'] == 'stacked' else bidir_lstm_seq.build_model,
          filename=filename)
 
 
-all_files = list(map(lambda x: (json.loads(from_filename_to_args(x)), x), listdir('plot_data/gen/training')))
-[plot_data(i, f'plot_data/gen/training/{x}') for i, (_, x) in enumerate(all_files)]
+all_files = list(map(lambda x: (json.loads(from_filename_to_args(x)), x), listdir('plot_data/spec/validation')))
+[plot_data(i, f'plot_data/spec/validation/{x}') for i, (_, x) in enumerate(all_files)]
+[print(i, json.loads(from_filename_to_args(x))) for i, (_, x) in enumerate(all_files)]
