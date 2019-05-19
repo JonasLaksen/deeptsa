@@ -93,7 +93,7 @@ def write_to_csv(filename, dict):
 
 def from_args_to_filename(args):
     test = json.dumps(args)
-    compressed = compress(test.encode('utf-8'))
+    compressed = compress(test.encode('utf-8'), 9)
     return b64encode(compressed).decode('utf-8').replace('/', '$')
 
 
