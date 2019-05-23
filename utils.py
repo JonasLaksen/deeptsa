@@ -18,6 +18,14 @@ def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
+def print_metrics(result, y):
+    result = np.asarray(result).reshape((result.shape[0], -1))
+    y = np.asarray(y).reshape((result.shape[0], -1))
+    mape = mean_absolute_percentage_error(y, result)
+    mae = mean_absolute_error(y, result)
+    mse = mean_squared_error(y, result)
+    accuracy_direction = mean_direction_eval(result, y)
+    print({'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction})
 
 def plot(title, result, y):
     # result = np.asarray(result)
@@ -42,6 +50,8 @@ def direction_value(x, y):
     else:
         return 0
 
+def mean_direction_eval(result, y):
+    return np.mean(np.array(list(map(lambda x: direction_eval(x[0], x[1]), zip(result, y)))))
 
 def direction_eval(result, y):
     result_pair = list(map(lambda x, y: direction_value(x, y), result[:-1], result[1:]))
@@ -98,7 +108,7 @@ def from_args_to_filename(args):
 
 
 def from_filename_to_args(filename):
-    decoded = b64decode(filename.replace('$', '/'))
+    decoded = b64decode(filename.replace('$', '/').split('.csv')[0])
     return decompress(decoded)
 
 
