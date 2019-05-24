@@ -4,14 +4,13 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.losses import MAE
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 from sklearn.preprocessing import MinMaxScaler
 
 from models import bidir_lstm_seq
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
-from utils import get_feature_list_lags, group_by_stock, print_metrics
+from utils import get_feature_list_lags, group_by_stock, print_metrics, plot
 
 
 def load_data(feature_list):
@@ -19,9 +18,20 @@ def load_data(feature_list):
     data = data.dropna()
     scaler_X = MinMaxScaler()
     scaler_y = MinMaxScaler()
-    X = scaler_X.fit_transform(data[feature_list].values)
+
+    X = data['stock'].values.reshape(-1, 1)
+
+    try:
+        scaled_X = scaler_X.fit_transform(data[[x for x in feature_list if x is not 'trendscore']].values)
+        X = np.append(X, scaled_X, axis=1)
+    except:
+        #If there are no features to be scaled an error is thrown, e.g. when feature list only consists of trendscore
+        pass
+
+    if ('trendscore' in feature_list):
+        X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
+
     y = scaler_y.fit_transform(data['next_price'].values.reshape(-1, 1))
-    X = np.append(data['stock'].values.reshape(-1, 1), X, axis=1)
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
 
     X_train, X_val, X_test = group_by_stock(X)
@@ -30,7 +40,8 @@ def load_data(feature_list):
 
 
 def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_generator=StackedLSTM, layer_sizes=[41],
-         copy_weights_from_gen_to_spec=False, feature_list=[], learning_rate=.001, dropout=.2, filename='test', **_):
+         copy_weights_from_gen_to_spec=False, feature_list=[], optimizer=Adam(.01), dropout=.2, filename='test',
+         loss='MAE', **_):
     (X_train, X_val, X_test), \
     (y_train, y_val, y_test), \
     scaler_y = load_data(feature_list)
@@ -48,7 +59,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         print('Loaded generalised model')
 
     # Create the general model
-    gen_model.compile(optimizer=Adam(learning_rate), loss=MAE)
+    gen_model.compile(optimizer=optimizer, loss=loss)
     history = gen_model.fit([X_train] + zero_states, y_train, validation_data=([X_val] + zero_states, y_val),
                             epochs=gen_epochs * 1000,
                             verbose=0,
@@ -70,7 +81,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         decoder.set_weights(gen_model.get_weights())
     spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(X_train), layer_sizes=layer_sizes,
                                     decoder=decoder, is_bidir=is_bidir)
-    spec_model.compile(optimizer=Adam(learning_rate), loss=MAE)
+    spec_model.compile(optimizer=optimizer, loss=loss)
     if load_spec:
         spec_model.load_weights('weights/spec.h5')
         print('Loaded specialised model')
@@ -103,6 +114,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             [result_train, result_val, result_test, y_train, y_val, y_test])
 
         print_metrics(result_val, y_val_inv)
+        plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
+        plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
         # training = {f'training {"spec" if has_context else "gen"}': result_train.tolist(), 'y': y_train_inv.tolist()}
         # validation = {f'validation {"spec" if has_context else "gen"}': result_val.tolist(), 'y': y_val_inv.tolist()}
         # write_to_csv(f'plot_data/{"spec" if has_context else "gen"}/training/{filename}', training)
@@ -123,7 +136,7 @@ feature_subsets = list(map(lambda x: sum(x, []), temp))
 
 arguments = {
     'copy_weights_from_gen_to_spec': False,
-    'feature_list': feature_list,
+    # 'feature_list': feature_list,
     'gen_epochs': 1,
     'spec_epochs': 0,
     'load_gen': False,
@@ -131,15 +144,17 @@ arguments = {
     'model': 'stacked',
     'dropout': .2,
     'layer_sizes': [64],
-    'learning_rate': .01
+    'optimizer': RMSprop(.01),
+    'loss':  'MAE'
     # 'model': 'bidir',
 }
 
 # Hyperparameter search
 # possible_hyperparameters = {
 #     'dropout': [0, .2, .5],
-#     'layer_sizes': [[8], [64], [256]],
-#     'learning_rate': [.001, .01, .1],
+#     'layer_sizes': [[8], [64], [128], [256]],
+#     'optimizer': [RMSProp(.001), RMSProp(.01), RMSProp(.1), Adam(.001), Adam(.01), Adam(.1)],
+#     'loss': ['MSE', 'MAE']
 # }
 
 # Feature search
@@ -147,6 +162,10 @@ possible_hyperparameters = {
     'feature_list': feature_subsets
 }
 
+
+main(**arguments, feature_list=['open', 'high', 'low'],
+     model_generator=StackedLSTM,
+     filename='test')
 
 def hyperparameter_search(possible, other_args):
     for key in possible_hyperparameters.keys():
@@ -159,4 +178,4 @@ def hyperparameter_search(possible, other_args):
                  filename='test')
 
 
-hyperparameter_search(possible_hyperparameters, arguments)
+# hyperparameter_search(possible_hyperparameters, arguments)

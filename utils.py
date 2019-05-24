@@ -27,20 +27,15 @@ def print_metrics(result, y):
     accuracy_direction = mean_direction_eval(result, y)
     print({'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction})
 
-def plot(title, result, y):
-    # result = np.asarray(result)
-    # y = np.asarray(y)
-    # mape = mean_absolute_percentage_error(y, result)
-    # mae = mean_absolute_error(y, result)
-    # mse = mean_squared_error(y, result)
-    # accuracy_direction = direction_eval(result, y)
-    # print(mape, mae, mse, accuracy_direction)
-    # pd.DataFrame({'Predicted': result}).plot(label='Predicted', c='b', title=title)
-    # pd.DataFrame({'Actual': y})['Actual'].plot(label='Actual', c='r', linestyle='--')
-    pyplot.plot(result)
-    pyplot.plot(y)
-    pyplot.show()
+def plot(title, stocklist, result, y):
+    for i in range(len(result)):
+        fig = pyplot.figure()
+        fig.suptitle(f'{title}: {stocklist[i]}')
+        pyplot.plot(result[i], label='Predicted')
+        pyplot.plot(y[i], label='True value')
+        pyplot.legend(loc='upper left')
 
+    pyplot.show()
 
 def direction_value(x, y):
     if x > y:
