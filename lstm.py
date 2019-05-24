@@ -4,7 +4,7 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.optimizers import Adam, RMSprop
+from keras.optimizers import Adam
 from sklearn.preprocessing import MinMaxScaler
 
 from models import bidir_lstm_seq
@@ -25,7 +25,7 @@ def load_data(feature_list):
         scaled_X = scaler_X.fit_transform(data[[x for x in feature_list if x is not 'trendscore']].values)
         X = np.append(X, scaled_X, axis=1)
     except:
-        #If there are no features to be scaled an error is thrown, e.g. when feature list only consists of trendscore
+        # If there are no features to be scaled an error is thrown, e.g. when feature list only consists of trendscore
         pass
 
     if ('trendscore' in feature_list):
@@ -136,7 +136,7 @@ feature_subsets = list(map(lambda x: sum(x, []), temp))
 
 arguments = {
     'copy_weights_from_gen_to_spec': False,
-    # 'feature_list': feature_list,
+    'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
     'gen_epochs': 1,
     'spec_epochs': 0,
     'load_gen': False,
@@ -144,38 +144,36 @@ arguments = {
     'model': 'stacked',
     'dropout': .2,
     'layer_sizes': [64],
-    'optimizer': RMSprop(.01),
-    'loss':  'MAE'
+    'optimizer': Adam(.001),
+    'loss': 'MAE'
     # 'model': 'bidir',
 }
 
 # Hyperparameter search
-# possible_hyperparameters = {
-#     'dropout': [0, .2, .5],
-#     'layer_sizes': [[8], [64], [128], [256]],
-#     'optimizer': [RMSProp(.001), RMSProp(.01), RMSProp(.1), Adam(.001), Adam(.01), Adam(.1)],
-#     'loss': ['MSE', 'MAE']
-# }
-
-# Feature search
 possible_hyperparameters = {
-    'feature_list': feature_subsets
+    'dropout': [0, .2, .5],
+    'layer_sizes': [[32], [128], [160]],
+    'loss': ['MSE', 'MAE']
 }
 
 
-main(**arguments, feature_list=['open', 'high', 'low'],
-     model_generator=StackedLSTM,
-     filename='test')
+# Feature search
+# possible_hyperparameters = {
+#     'feature_list': feature_subsets
+# }
+
 
 def hyperparameter_search(possible, other_args):
-    for key in possible_hyperparameters.keys():
-        for possible_value in possible[key]:
-            args = deepcopy(other_args)
-            args[key] = possible_value
-            print({k: args[k] for k in possible_hyperparameters.keys() if k in args})
-            main(**args,
-                 model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
-                 filename='test')
+    for i in possible['dropout']:
+        for j in possible['layer_sizes']:
+            for k in possible['loss']:
+                args = other_args
+                args['dropout'] = i
+                args['layer_sizes'] = j
+                args['loss'] = k
+                print({k: args[k] for k in possible_hyperparameters.keys() if k in args})
+                main(**args,
+                     model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
+                     filename='test')
 
-
-# hyperparameter_search(possible_hyperparameters, arguments)
+hyperparameter_search(possible_hyperparameters, arguments)
