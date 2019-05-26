@@ -1,8 +1,12 @@
-from copy import deepcopy
+import csv
+import os
+import random
 from itertools import combinations
 
 import numpy as np
 import pandas as pd
+import tensorflow as tf
+from keras import backend as K
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.optimizers import Adam
 from sklearn.preprocessing import MinMaxScaler
@@ -10,7 +14,16 @@ from sklearn.preprocessing import MinMaxScaler
 from models import bidir_lstm_seq
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
-from utils import get_feature_list_lags, group_by_stock, print_metrics, plot
+from utils import get_feature_list_lags, group_by_stock, evaluate
+
+seed = 0
+os.environ['PYTHONHASHSEED'] = str(seed)
+random.seed(seed)
+np.random.seed(seed)
+tf.set_random_seed(seed)
+session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+K.set_session(sess)
 
 
 def load_data(feature_list):
@@ -113,9 +126,14 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             lambda x: np.array(list(map(scaler_y.inverse_transform, x))),
             [result_train, result_val, result_test, y_train, y_val, y_test])
 
-        print_metrics(result_val, y_val_inv)
-        plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
-        plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
+        evaluation = evaluate(result_val, y_val_inv)
+        with open(f"{seed}", "a") as file:
+            writer = csv.writer(file)
+            writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
+            writer.writerow(list(evaluation.values()) + feature_list)
+
+        # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
+        # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
         # training = {f'training {"spec" if has_context else "gen"}': result_train.tolist(), 'y': y_train_inv.tolist()}
         # validation = {f'validation {"spec" if has_context else "gen"}': result_val.tolist(), 'y': y_val_inv.tolist()}
         # write_to_csv(f'plot_data/{"spec" if has_context else "gen"}/training/{filename}', training)
@@ -153,14 +171,19 @@ arguments = {
 possible_hyperparameters = {
     'dropout': [0, .2, .5],
     'layer_sizes': [[32], [128], [160]],
-    'loss': ['MSE', 'MAE']
+    'loss': ['MAE', 'MSE']
 }
-
 
 # Feature search
 # possible_hyperparameters = {
 #     'feature_list': feature_subsets
 # }
+
+
+try:
+    os.remove(f'{seed}')
+except OSError:
+    pass
 
 
 def hyperparameter_search(possible, other_args):
@@ -175,5 +198,6 @@ def hyperparameter_search(possible, other_args):
                 main(**args,
                      model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
                      filename='test')
+
 
 hyperparameter_search(possible_hyperparameters, arguments)

@@ -3,11 +3,9 @@ import csv
 import json
 from base64 import b64encode, b64decode
 from zlib import compress, decompress
-import matplotlib.pyplot as plt
 
 import numpy as np
-import pandas as pd
-from matplotlib import pyplot
+#from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 
 
@@ -18,24 +16,25 @@ def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
-def print_metrics(result, y):
+def evaluate(result, y):
     result = np.asarray(result).reshape((result.shape[0], -1))
     y = np.asarray(y).reshape((result.shape[0], -1))
     mape = mean_absolute_percentage_error(y, result)
     mae = mean_absolute_error(y, result)
     mse = mean_squared_error(y, result)
     accuracy_direction = mean_direction_eval(result, y)
-    print({'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction})
+    return {'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
 
 def plot(title, stocklist, result, y):
-    for i in range(len(result)):
-        fig = pyplot.figure()
-        fig.suptitle(f'{title}: {stocklist[i]}')
-        pyplot.plot(result[i], label='Predicted')
-        pyplot.plot(y[i], label='True value')
-        pyplot.legend(loc='upper left')
-
-    pyplot.show()
+    pass
+    # for i in range(len(result)):
+    #     fig = pyplot.figure()
+    #     fig.suptitle(f'{title}: {stocklist[i]}')
+    #     pyplot.plot(result[i], label='Predicted')
+    #     pyplot.plot(y[i], label='True value')
+    #     pyplot.legend(loc='upper left')
+    #
+    # pyplot.show()
 
 def direction_value(x, y):
     if x > y:
@@ -106,13 +105,3 @@ def from_filename_to_args(filename):
     decoded = b64decode(filename.replace('$', '/').split('.csv')[0])
     return decompress(decoded)
 
-
-def plot_data(i, filepath):
-    with open(filepath) as file:
-        reader = csv.reader(file)
-        fig = plt.figure(i)
-        for row in reader:
-            plt.plot([float(i) for i in row[1:]], label=row[0])
-            plt.legend(loc='upper left')
-        fig.suptitle(f'{i}')
-        plt.show()
