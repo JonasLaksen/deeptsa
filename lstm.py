@@ -16,7 +16,7 @@ from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from utils import get_feature_list_lags, group_by_stock, evaluate
 
-seed = 0
+seed = 3
 os.environ['PYTHONHASHSEED'] = str(seed)
 random.seed(seed)
 np.random.seed(seed)
@@ -127,10 +127,10 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             [result_train, result_val, result_test, y_train, y_val, y_test])
 
         evaluation = evaluate(result_val, y_val_inv)
-        with open(f"{seed}", "a") as file:
+        with open(f"hyperparameter_search/{seed}", "a") as file:
             writer = csv.writer(file)
             writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
-            writer.writerow(list(evaluation.values()) + feature_list)
+            # writer.writerow(list(evaluation.values()) + feature_list)
 
         # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
         # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
