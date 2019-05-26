@@ -16,7 +16,7 @@ from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from utils import get_feature_list_lags, group_by_stock, evaluate
 
-seed = 3
+seed = 2
 os.environ['PYTHONHASHSEED'] = str(seed)
 random.seed(seed)
 np.random.seed(seed)
