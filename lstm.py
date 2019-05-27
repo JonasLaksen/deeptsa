@@ -66,7 +66,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
     stock_list = [np.arange(len(X_train)).reshape((len(X_train), 1, 1))]
 
     gen_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, batch_size=batch_size,
-                                return_states=False)
+                                return_states=False, dropout=dropout)
     if load_gen:
         gen_model.load_weights('weights/gen.h5')
         print('Loaded generalised model')
