@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
+from sklearn.preprocessing import MinMaxScaler
+
 
 
 def expand(x): return np.expand_dims(x, axis=0)
@@ -121,3 +123,17 @@ def plot_data(i, filepath):
             plt.legend(loc='upper left')
         fig.suptitle(f'{i}')
         plt.show()
+
+def load_data(feature_list):
+    data = pd.read_csv('dataset_v2.csv', index_col=0)
+    data = data.dropna()
+    scaler_X = MinMaxScaler()
+    scaler_y = MinMaxScaler()
+    X = scaler_X.fit_transform(data[feature_list].values)
+    y = scaler_y.fit_transform(data['next_price'].values.reshape(-1, 1))
+    X = np.append(data['stock'].values.reshape(-1, 1), X, axis=1)
+    y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
+
+    X_train, X_val, X_test = group_by_stock(X)
+    y_train, y_val, y_test = group_by_stock(y)
+    return (X_train, X_val, X_test), (y_train, y_val, y_test), scaler_y

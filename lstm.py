@@ -6,27 +6,12 @@ import pandas as pd
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.losses import MAE
 from keras.optimizers import Adam
-from sklearn.preprocessing import MinMaxScaler
 
 from models import bidir_lstm_seq
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
-from utils import get_feature_list_lags, group_by_stock, print_metrics
+from utils import get_feature_list_lags, group_by_stock, print_metrics, load_data
 
-
-def load_data(feature_list):
-    data = pd.read_csv('dataset_v2.csv', index_col=0)
-    data = data.dropna()
-    scaler_X = MinMaxScaler()
-    scaler_y = MinMaxScaler()
-    X = scaler_X.fit_transform(data[feature_list].values)
-    y = scaler_y.fit_transform(data['next_price'].values.reshape(-1, 1))
-    X = np.append(data['stock'].values.reshape(-1, 1), X, axis=1)
-    y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
-
-    X_train, X_val, X_test = group_by_stock(X)
-    y_train, y_val, y_test = group_by_stock(y)
-    return (X_train, X_val, X_test), (y_train, y_val, y_test), scaler_y
 
 
 def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_generator=StackedLSTM, layer_sizes=[41],
