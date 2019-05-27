@@ -20,6 +20,9 @@ def data_from_stock(stock, show_plot=False):
 
     sentiment_data = pd.read_json(f'data/{stock}.json').transpose()[["positive","negative","neutral"]]
     sentiment_data.index.name = "date"
+    sentiment_data["positive"] = sentiment_data["positive"].astype(float)
+    sentiment_data["negative"] = sentiment_data["negative"].astype(float)
+    sentiment_data["neutral"] = sentiment_data["neutral"].astype(float)
 
     trends_data = pd.read_csv(f'data/{stock}trends.csv')
     trends_data["date"] = pd.to_datetime(trends_data["date"])
@@ -47,8 +50,12 @@ def write_to_dataset_file():
         for feature in ['price','volume','trendscore','positive','negative','neutral']:
             add_prev_feature(df, feature, 2)
 
-        df['change'] = df['next_price'] - df['price']
-        df['change_percent'] = (df['next_price'] - df['price'])/df['price']
+        # df['change'] = df['next_price'] - df['price']
+        # df['change_percent'] = (df['next_price'] - df['price'])/df['price']
+        total_sent = df['positive'] + df['negative'] + df['neutral']
+        df['positive_prop'] = df['positive'] / total_sent
+        df['negative_prop'] = df['negative'] / total_sent
+        df['neutral_prop'] = df['neutral'] / total_sent
 
     dfs = map(lambda x: x[1:-2], dfs)
     pd.concat(dfs).to_csv('dataset_v2.csv')
