@@ -130,7 +130,10 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         with open(f"hyperparameter_search/{seed}", "a") as file:
             writer = csv.writer(file)
             writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
-            # writer.writerow(list(evaluation.values()) + feature_list)
+
+        # with open(f"hyperparameter_search/{seed}", "a") as file:
+        #     writer = csv.writer(file)
+        #     writer.writerow(list(evaluation.values()) + feature_list)
 
         # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
         # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
