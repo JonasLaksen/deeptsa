@@ -3,7 +3,7 @@ from functools import reduce
 
 import pandas
 
-files = list(map(lambda i: pandas.read_csv(f'hyperparameter_search/{i}', header=None), range(3)))
+files = list(map(lambda i: pandas.read_csv(f'features_{i}', names=range(25), header=None), range(3)))
 test = list(map(lambda x: x[x.columns[0:4]],files))
 
 columns = files[0].columns[0:4]
@@ -32,14 +32,17 @@ lol = lol.round(2)
 lol = lol.sort_values(by=['sum_ranks', 'avg_mape_rank', 'avg_mae_rank', 'avg_mse_rank', 'avg_da_rank'])
 
 for i, row in lol.iterrows():
-    line1 = f'{map(lambda x: f"{x} & ", row[4])} & 0 & {row["0_x"]} & {row["1_x"]} & {row["2_x"]} & {row["3_x"]} \\\\'
-    line2 = f'{"& "*len(row[4])} & 1 & {row["0_y"]} & {row["1_y"]} & {row["2_y"]} & {row["3_y"]} \\\\'
-    line3 = f'{"& "*len(row[4])} & 2 & {row[0]} & {row[1]} & {row[2]} & {row[3]} \\\\'
+    row = row.dropna()
+    line0 = f'{",".join(map(lambda x: f"{x}", row[12:-9]))} \\\\'
+    line1 = f'0 & {"".join(map(lambda x: f"{x} & ", row[0:4]))} \\\\'
+    line2 = f'1 & {"".join(map(lambda x: f"{x} & ", row[4:8]))} \\\\'
+    line3 = f'2 & {"".join(map(lambda x: f"{x} & ", row[8:12]))} \\\\'
     line4 = '\midrule'
-    line5 = f'{"& "*len(row[4])} & Mean & {row["avg_mape"]} & {row["avg_mae"]} & {row["avg_mse"]} & {row["avg_da"]} \\\\'
-    line6 = f'{"& "*len(row[4])} & Mean Rank & {row["avg_mape_rank"]} & {row["avg_mae_rank"]} & {row["avg_mse_rank"]} & {row["avg_da_rank"]} \\\\'
-    line7 = f'{"& "*len(row[4])} & Sum rank & {row["sum_ranks"]} \\\\'
+    line5 = f'Mean & {row["avg_mape"]} & {row["avg_mae"]} & {row["avg_mse"]} & {row["avg_da"]} \\\\'
+    line6 = f'Mean Rank & {row["avg_mape_rank"]} & {row["avg_mae_rank"]} & {row["avg_mse_rank"]} & {row["avg_da_rank"]} \\\\'
+    line7 = f'Sum rank & {row["sum_ranks"]} \\\\'
     line8 = '\midrule'
+    print(line0)
     print(line1)
     print(line2)
     print(line3)
