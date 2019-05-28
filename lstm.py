@@ -188,9 +188,21 @@ try:
 except OSError:
     pass
 
-
 def hyperparameter_search(possible, other_args):
-    arguments_list = [{**other_args, **{i: j}} for i in possible_hyperparameters.keys() for j in possible_hyperparameters[i] ]
+    for i in possible['dropout']:
+        for j in possible['layer_sizes']:
+            for k in possible['loss']:
+                args = other_args
+                args['dropout'] = i
+                args['layer_sizes'] = j
+                args['loss'] = k
+                print({k: args[k] for k in possible_hyperparameters.keys() if k in args})
+                main(**args,
+                     model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
+                     filename='test')
+
+def feature_search(possible, other_args):
+    arguments_list = [{**other_args, **{i: j}} for i in possible.keys() for j in possible[i] ]
     for args in arguments_list:
         print({k: args[k] for k in possible.keys() if k in args})
         main(**args,
@@ -198,4 +210,4 @@ def hyperparameter_search(possible, other_args):
              filename='test')
 
 
-hyperparameter_search(possible_hyperparameters, arguments)
+feature_search(possible_hyperparameters, arguments)
