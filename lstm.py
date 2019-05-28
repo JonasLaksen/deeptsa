@@ -127,13 +127,13 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             [result_train, result_val, result_test, y_train, y_val, y_test])
 
         evaluation = evaluate(result_val, y_val_inv)
-        with open(f"hyperparameter_search/{seed}", "a") as file:
-            writer = csv.writer(file)
-            writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
-
         # with open(f"hyperparameter_search/{seed}", "a") as file:
         #     writer = csv.writer(file)
-        #     writer.writerow(list(evaluation.values()) + feature_list)
+        #     writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
+
+        with open(f"hyperparameter_search/features_{seed}", "a") as file:
+            writer = csv.writer(file)
+            writer.writerow(list(evaluation.values()) + feature_list)
 
         # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
         # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
@@ -164,23 +164,23 @@ arguments = {
     'load_spec': False,
     'model': 'stacked',
     'dropout': .2,
-    'layer_sizes': [64],
+    'layer_sizes': [128],
     'optimizer': Adam(.001),
     'loss': 'MAE'
     # 'model': 'bidir',
 }
 
 # Hyperparameter search
-possible_hyperparameters = {
-    'dropout': [0, .2, .5],
-    'layer_sizes': [[32], [128], [160]],
-    'loss': ['MAE', 'MSE']
-}
+# possible_hyperparameters = {
+#     'dropout': [0, .2, .5],
+#     'layer_sizes': [[32], [128], [160]],
+#     'loss': ['MAE', 'MSE']
+# }
 
 # Feature search
-# possible_hyperparameters = {
-#     'feature_list': feature_subsets
-# }
+possible_hyperparameters = {
+    'feature_list': feature_subsets
+}
 
 
 try:
@@ -190,17 +190,12 @@ except OSError:
 
 
 def hyperparameter_search(possible, other_args):
-    for i in possible['dropout']:
-        for j in possible['layer_sizes']:
-            for k in possible['loss']:
-                args = other_args
-                args['dropout'] = i
-                args['layer_sizes'] = j
-                args['loss'] = k
-                print({k: args[k] for k in possible_hyperparameters.keys() if k in args})
-                main(**args,
-                     model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
-                     filename='test')
+    arguments_list = [{**other_args, **{i: j}} for i in possible_hyperparameters.keys() for j in possible_hyperparameters[i] ]
+    for args in arguments_list:
+        print({k: args[k] for k in possible.keys() if k in args})
+        main(**args,
+             model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
+             filename='test')
 
 
 hyperparameter_search(possible_hyperparameters, arguments)
