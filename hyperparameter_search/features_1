@@ -1,0 +1,6 @@
+3.85,3.50,63.66,0.49,price,volume
+2.10,2.78,46.40,0.50,open,high,low
+139.24,100.71,54224.87,0.50,positive,negative,neutral
+117.88,104.70,56332.59,0.47,positive_prop,negative_prop,neutral_prop
+138.25,99.36,53330.19,0.49,trendscore
+1.90,2.56,39.72,0.50,price,volume,open,high,low
