@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot
+
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 
@@ -20,37 +21,31 @@ def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
-def print_metrics(result, y):
+
+def evaluate(result, y):
     result = np.asarray(result).reshape((result.shape[0], -1))
     y = np.asarray(y).reshape((result.shape[0], -1))
-    mape = mean_absolute_percentage_error(y, result)
-    mae = mean_absolute_error(y, result)
-    mse = mean_squared_error(y, result)
-    accuracy_direction = mean_direction_eval(result, y)
-    print({'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction})
+    mape = '{0:.2f}'.format(mean_absolute_percentage_error(y, result))
+    mae = '{0:.2f}'.format(mean_absolute_error(y, result))
+    mse = '{0:.2f}'.format(mean_squared_error(y, result))
+    accuracy_direction = '{0:.2f}'.format(mean_direction_eval(result, y))
+    return {'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
 
-def plot(title, result, y):
-    # result = np.asarray(result)
-    # y = np.asarray(y)
-    # mape = mean_absolute_percentage_error(y, result)
-    # mae = mean_absolute_error(y, result)
-    # mse = mean_squared_error(y, result)
-    # accuracy_direction = direction_eval(result, y)
-    # print(mape, mae, mse, accuracy_direction)
-    # pd.DataFrame({'Predicted': result}).plot(label='Predicted', c='b', title=title)
-    # pd.DataFrame({'Actual': y})['Actual'].plot(label='Actual', c='r', linestyle='--')
-    pyplot.plot(result)
-    pyplot.plot(y)
+def plot(title, stocklist, result, y):
+    for i in range(len(result)):
+        fig = pyplot.figure()
+        fig.suptitle(f'{title}: {stocklist[i]}')
+        pyplot.plot(result[i], label='Predicted')
+        pyplot.plot(y[i], label='True value')
+        pyplot.legend(loc='upper left')
+
     pyplot.show()
-
 
 def direction_value(x, y):
     if x > y:
-        return -1
-    elif x < y:
-        return 1
+        return [0]
     else:
-        return 0
+        return [1]
 
 def mean_direction_eval(result, y):
     return np.mean(np.array(list(map(lambda x: direction_eval(x[0], x[1]), zip(result, y)))))
@@ -59,6 +54,33 @@ def direction_eval(result, y):
     result_pair = list(map(lambda x, y: direction_value(x, y), result[:-1], result[1:]))
     y_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], y[1:]))
     return accuracy_score(y_pair, result_pair)
+
+
+def make_train_val_test_set(data, training_prop=.8, validation_prop=.1, test_prop=.1):
+    data_size = min(map(lambda data_group: len(data_group), data))
+    train_size, val_size, test_size = int(data_size * training_prop), int(data_size * validation_prop), int(
+        data_size * test_prop)
+    data_train = data[:, -data_size:-data_size + train_size]
+    data_val = data[:, -data_size:-data_size + train_size + val_size]
+    data_test = data[:, -test_size:]
+
+    return data_train, data_val, data_test
+
+def create_direction_arrays(X_train, X_val, X_test, y_train, y_val, y_test):
+    X = np.append(X_train, X_val, axis=1)
+    y = np.append(y_train, y_val, axis=1)
+    y_dir = []
+    for i in range(X_train.shape[0]):
+        y_dir_partial = list(map(lambda x, y: direction_value(x, y), y[i][:-1], y[i][1:]))
+        y_dir.append(y_dir_partial)
+
+    X = X[:, :-1]
+    y = y[:, :-1]
+    y_dir = np.array(y_dir)
+
+    return make_train_val_test_set(X), make_train_val_test_set(y), make_train_val_test_set(y_dir)
+
+
 
 
 def group_by_stock(data, training_prop=.8, validation_prop=.1, test_prop=.1):
@@ -129,9 +151,20 @@ def load_data(feature_list):
     data = data.dropna()
     scaler_X = MinMaxScaler()
     scaler_y = MinMaxScaler()
-    X = scaler_X.fit_transform(data[feature_list].values)
+
+    X = data['stock'].values.reshape(-1, 1)
+
+    try:
+        scaled_X = scaler_X.fit_transform(data[[x for x in feature_list if x is not 'trendscore']].values)
+        X = np.append(X, scaled_X, axis=1)
+    except:
+        # If there are no features to be scaled an error is thrown, e.g. when feature list only consists of trendscore
+        pass
+
+    if ('trendscore' in feature_list):
+        X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
+
     y = scaler_y.fit_transform(data['next_price'].values.reshape(-1, 1))
-    X = np.append(data['stock'].values.reshape(-1, 1), X, axis=1)
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
 
     X_train, X_val, X_test = group_by_stock(X)
