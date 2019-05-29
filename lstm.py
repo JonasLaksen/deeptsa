@@ -35,6 +35,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
          loss='MAE', **_):
     (X_train, X_val, X_test), \
     (y_train, y_val, y_test), \
+    (y_train_dir, y_val_dir, y_test_dir), \
     scaler_y = load_data(feature_list)
 
     n_features = X_train.shape[2]
@@ -130,8 +131,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 feature_list = ['volume', 'price']
 feature_list = get_feature_list_lags(feature_list, lags=2)
 feature_list = feature_list + ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop', 'neutral_prop',
-                               'trendscore', 'open', 'high', 'low']
-trading_features = [['price', 'volume'], ['open', 'high', 'low']]
+                               'trendscore', 'open', 'high', 'low', 'direction']
+trading_features = [['price', 'volume'], ['open', 'high', 'low'], ['direction']]
 sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop', 'neutral_prop']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
@@ -148,13 +149,8 @@ arguments = {
     'load_gen': False,
     'load_spec': False,
     'model': 'stacked',
-<<<<<<< HEAD
-    'dropout': 0,
-    'layer_sizes': [64],
-=======
     'dropout': .2,
-    'layer_sizes': [128],
->>>>>>> 8bbe11125096453932822fe6dfc704cf7db188f3
+    'layer_sizes': [32],
     'optimizer': Adam(.001),
     'loss': 'MAE'
     # 'model': 'bidir',
@@ -212,11 +208,9 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
          loss='MAE', **_):
     (X_train, X_val, X_test), \
     (y_train, y_val, y_test), \
+    (y_train_dir, y_val_dir, y_test_dir), \
     scaler_y = load_data(feature_list)
 
-    (X_train, X_val, X_test), \
-    (y_train, y_val, y_test), \
-    (y_train_dir, y_val_dir, y_test_dir) = create_direction_arrays(X_train, X_val, X_test, y_train, y_val, y_test)
 
     n_features = X_train.shape[2]
     batch_size = X_train.shape[0]
@@ -230,7 +224,7 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
     gen_model.compile(optimizer=optimizer, loss=loss)
     history = gen_model.fit([X_train] + zero_states, [y_train, y_train_dir], validation_data=([X_val] + zero_states,
                                                                                               [y_val, y_val_dir]),
-                            epochs=gen_epochs * 500,
+                            epochs=gen_epochs * 200,
                             verbose=1,
                             shuffle=False,
                             batch_size=batch_size,

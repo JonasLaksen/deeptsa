@@ -166,7 +166,9 @@ def load_data(feature_list):
 
     y = scaler_y.fit_transform(data['next_price'].values.reshape(-1, 1))
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
-
+    y_dir = data['next_direction'].values.reshape(-1, 1)
+    y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
     X_train, X_val, X_test = group_by_stock(X)
     y_train, y_val, y_test = group_by_stock(y)
-    return (X_train, X_val, X_test), (y_train, y_val, y_test), scaler_y
+    y_train_dir, y_val_dir, y_test_dir = group_by_stock(y_dir)
+    return (X_train, X_val, X_test), (y_train, y_val, y_test), (y_train_dir, y_val_dir, y_test_dir) , scaler_y

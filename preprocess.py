@@ -4,11 +4,14 @@ from constants import stock_list
 
 #Returns X, y
 def data_from_stock(stock, show_plot=False):
-    price_data = pd.read_csv(f'data/{stock} Historical Data.csv')[["Date", "Price", "Vol.", "Open", "High", "Low"]]
+    price_data = pd.read_csv(f'data/{stock} Historical Data.csv')[["Date", "Price", "Vol.", "Open", "High", "Low",
+                                                                   "Change %"]]
     price_data['price'] = (price_data['Price'].replace('[\$,)]', '', regex=True).astype(float))
     price_data['open'] = (price_data['Open'].replace('[\$,)]', '', regex=True).astype(float))
     price_data['high'] = (price_data['High'].replace('[\$,)]', '', regex=True).astype(float))
     price_data['low'] = (price_data['Low'].replace('[\$,)]', '', regex=True).astype(float))
+    price_data['direction'] = (price_data['Change %'].replace('[\%,)]', '', regex=True).astype(float))
+    price_data['direction']  = price_data['direction'].apply(lambda x: 1 if x >= 0 else 0)
     price_data["date"] = pd.to_datetime(price_data["Date"])
     price_data["volume"] = (price_data['Vol.'].replace('-','0', regex = True ).replace('K','e3', regex = True).replace('M', 'e6', regex = True).astype(float).fillna('0.00'))
     price_data = price_data.set_index("date")
@@ -31,11 +34,11 @@ def data_from_stock(stock, show_plot=False):
 
 
     joined_data = price_data.join(sentiment_data, on="date")[["volume", "positive","negative", "neutral", "price",
-                                                              "open", "high", "low"]]
+                                                              "open", "high", "low", "direction"]]
     joined_data = joined_data.join(trends_data, on="date", how="inner")
     joined_data['stock'] = stock.upper()
     joined_data = joined_data[["stock", "volume", "positive", "negative", "neutral", "trendscore", "price",
-                        "open", "high", "low"]]
+                        "open", "high", "low", "direction"]]
     return joined_data.reindex(index=joined_data.index[::-1])
 
 
@@ -47,6 +50,7 @@ def write_to_dataset_file():
     dfs = list(map(lambda x: data_from_stock(x), stock_list))
     for df in dfs:
         df['next_price'] = df['price'].shift(-1)
+        df['next_direction'] = df['direction'].shift(-1)
         for feature in ['price','volume','trendscore','positive','negative','neutral']:
             add_prev_feature(df, feature, 2)
 
