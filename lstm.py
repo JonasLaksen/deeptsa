@@ -100,7 +100,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         print('Loaded specialised model')
 
     spec_model.fit([X_train] + stock_list, y_train, validation_data=([X_val] + stock_list, y_val),
-                   batch_size=batch_size, epochs=spec_epochs, shuffle=False,
+                   batch_size=batch_size, epochs=spec_epochs * 1000, shuffle=False,
                    callbacks=[ModelCheckpoint('weights/spec.h5', period=1, save_weights_only=True),
                               EarlyStopping(monitor='val_loss', patience=20)])
     # write_to_csv(f'plot_data/spec/loss/{filename}.csv', history.history)
@@ -132,7 +132,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         #     writer = csv.writer(file)
         #     writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
 
-        with open(f"hyperparameter_search/features_{seed}", "a") as file:
+        with open(f"hyperparameter_search/context_{seed}", "a") as file:
             writer = csv.writer(file)
             writer.writerow(list(evaluation.values()) + feature_list)
 
@@ -159,8 +159,8 @@ feature_subsets = list(map(lambda x: sum(x, []), temp))
 arguments = {
     'copy_weights_from_gen_to_spec': False,
     'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 1,
-    'spec_epochs': 0,
+    'gen_epochs': 0,
+    'spec_epochs': 1,
     'load_gen': False,
     'load_spec': False,
     'model': 'stacked',
@@ -181,7 +181,7 @@ arguments = {
 # Feature search
 possible_hyperparameters = {
     # 'feature_list': feature_subsets
-    'feature_list': trading_features
+    'feature_list': [trading_features[0] + trading_features[1]]
 }
 
 
