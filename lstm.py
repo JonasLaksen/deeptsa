@@ -78,17 +78,15 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
                             shuffle=False,
                             batch_size=batch_size,
                             callbacks=[ModelCheckpoint('weights/gen.h5', period=10, save_weights_only=True),
-                                       EarlyStopping(monitor='val_loss', patience=1000)])
+                                       EarlyStopping(monitor='val_loss', patience=20)])
 
     # write_to_csv(f'plot_data/gen/loss/{filename}.csv', history.history)
 
-    gen_pred_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, batch_size=batch_size,
-                                     return_states=True, dropout=dropout)
+    gen_pred_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=True, dropout=dropout)
     gen_pred_model.set_weights(gen_model.get_weights())
 
     # Create the context model, set the decoder = the gen model
-    decoder = model_generator(n_features=n_features, layer_sizes=layer_sizes, batch_size=batch_size, return_states=True,
-                              dropout=dropout)
+    decoder = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=True, dropout=dropout)
     if copy_weights_from_gen_to_spec:
         decoder.set_weights(gen_model.get_weights())
     spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(X_train), layer_sizes=layer_sizes,
