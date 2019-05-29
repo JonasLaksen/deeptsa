@@ -3,15 +3,13 @@ import csv
 import json
 from base64 import b64encode, b64decode
 from zlib import compress, decompress
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot
-
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
-
 
 
 def expand(x): return np.expand_dims(x, axis=0)
@@ -31,6 +29,7 @@ def evaluate(result, y):
     accuracy_direction = mean_direction_eval(result, y)
     return {'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
 
+
 def plot(title, stocklist, result, y):
     for i in range(len(result)):
         fig = pyplot.figure()
@@ -41,14 +40,17 @@ def plot(title, stocklist, result, y):
 
     pyplot.show()
 
+
 def direction_value(x, y):
     if x > y:
         return [0]
     else:
         return [1]
 
+
 def mean_direction_eval(result, y):
     return np.mean(np.array(list(map(lambda x: direction_eval(x[0], x[1]), zip(result, y)))))
+
 
 def direction_eval(result, y):
     result_pair = list(map(lambda x, y: direction_value(x, y), result[:-1], result[1:]))
@@ -66,6 +68,7 @@ def make_train_val_test_set(data, training_prop=.8, validation_prop=.1, test_pro
 
     return data_train, data_val, data_test
 
+
 def create_direction_arrays(X_train, X_val, X_test, y_train, y_val, y_test):
     X = np.append(X_train, X_val, axis=1)
     y = np.append(y_train, y_val, axis=1)
@@ -79,8 +82,6 @@ def create_direction_arrays(X_train, X_val, X_test, y_train, y_val, y_test):
     y_dir = np.array(y_dir)
 
     return make_train_val_test_set(X), make_train_val_test_set(y), make_train_val_test_set(y_dir)
-
-
 
 
 def group_by_stock(data, training_prop=.8, validation_prop=.1, test_prop=.1):
@@ -146,6 +147,7 @@ def plot_data(i, filepath):
         fig.suptitle(f'{i}')
         plt.show()
 
+
 def load_data(feature_list):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
@@ -171,4 +173,4 @@ def load_data(feature_list):
     X_train, X_val, X_test = group_by_stock(X)
     y_train, y_val, y_test = group_by_stock(y)
     y_train_dir, y_val_dir, y_test_dir = group_by_stock(y_dir)
-    return (X_train, X_val, X_test), (y_train, y_val, y_test), (y_train_dir, y_val_dir, y_test_dir) , scaler_y
+    return (X_train, X_val, X_test), (y_train, y_val, y_test), (y_train_dir, y_val_dir, y_test_dir), scaler_y
