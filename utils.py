@@ -25,10 +25,10 @@ def mean_absolute_percentage_error(y_true, y_pred):
 def evaluate(result, y):
     result = np.asarray(result).reshape((result.shape[0], -1))
     y = np.asarray(y).reshape((result.shape[0], -1))
-    mape = '{0:.2f}'.format(mean_absolute_percentage_error(y, result))
-    mae = '{0:.2f}'.format(mean_absolute_error(y, result))
-    mse = '{0:.2f}'.format(mean_squared_error(y, result))
-    accuracy_direction = '{0:.2f}'.format(mean_direction_eval(result, y))
+    mape = mean_absolute_percentage_error(y, result)
+    mae = mean_absolute_error(y, result)
+    mse = mean_squared_error(y, result)
+    accuracy_direction = mean_direction_eval(result, y)
     return {'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
 
 def plot(title, stocklist, result, y):
