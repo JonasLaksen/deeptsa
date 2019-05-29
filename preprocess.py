@@ -27,7 +27,7 @@ def data_from_stock(stock, show_plot=False):
     trends_data = pd.read_csv(f'data/{stock}trends.csv')
     trends_data["date"] = pd.to_datetime(trends_data["date"])
     trends_data = trends_data.set_index("date")
-    trends_data["trendscore"] = trends_data[stock + ' stock']
+    trends_data["trendscore"] = trends_data[stock + ' stock'].astype(float)/100
 
 
     joined_data = price_data.join(sentiment_data, on="date")[["volume", "positive","negative", "neutral", "price",
@@ -46,7 +46,7 @@ def add_prev_feature(df, feature, n):
 def write_to_dataset_file():
     dfs = list(map(lambda x: data_from_stock(x), stock_list))
     for df in dfs:
-        df['next_price'] = df['price'].shift(1)
+        df['next_price'] = df['price'].shift(-1)
         for feature in ['price','volume','trendscore','positive','negative','neutral']:
             add_prev_feature(df, feature, 2)
 

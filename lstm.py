@@ -1,21 +1,38 @@
-from copy import deepcopy
+import csv
+import os
+import random
 from itertools import combinations
 
 import numpy as np
 import pandas as pd
+
+import tensorflow as tf
+from keras import backend as K
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.losses import MAE
 from keras.optimizers import Adam
 
 from models import bidir_lstm_seq
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
-from utils import get_feature_list_lags, group_by_stock, print_metrics, load_data
+from models.stacked_lstm_modified import StackedLSTM_Modified
+
+from utils import get_feature_list_lags, group_by_stock, evaluate, load_data, create_direction_arrays
+
+seed = 2
+os.environ['PYTHONHASHSEED'] = str(seed)
+random.seed(seed)
+np.random.seed(seed)
+tf.set_random_seed(seed)
+session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+K.set_session(sess)
+
 
 
 
 def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_generator=StackedLSTM, layer_sizes=[41],
-         copy_weights_from_gen_to_spec=False, feature_list=[], learning_rate=.001, dropout=.2, filename='test', **_):
+         copy_weights_from_gen_to_spec=False, feature_list=[], optimizer=Adam(.01), dropout=.2, filename='test',
+         loss='MAE', **_):
     (X_train, X_val, X_test), \
     (y_train, y_val, y_test), \
     scaler_y = load_data(feature_list)
@@ -27,16 +44,18 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
     stock_list = [np.arange(len(X_train)).reshape((len(X_train), 1, 1))]
 
     gen_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, batch_size=batch_size,
-                                return_states=False)
+                                return_states=False, dropout=dropout)
+
     if load_gen:
         gen_model.load_weights('weights/gen.h5')
         print('Loaded generalised model')
 
     # Create the general model
-    gen_model.compile(optimizer=Adam(learning_rate), loss=MAE)
+
+    gen_model.compile(optimizer=optimizer, loss=loss)
     history = gen_model.fit([X_train] + zero_states, y_train, validation_data=([X_val] + zero_states, y_val),
                             epochs=gen_epochs * 1000,
-                            verbose=0,
+                            verbose=1,
                             shuffle=False,
                             batch_size=batch_size,
                             callbacks=[ModelCheckpoint('weights/gen.h5', period=10, save_weights_only=True),
@@ -55,7 +74,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         decoder.set_weights(gen_model.get_weights())
     spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(X_train), layer_sizes=layer_sizes,
                                     decoder=decoder, is_bidir=is_bidir)
-    spec_model.compile(optimizer=Adam(learning_rate), loss=MAE)
+
+    spec_model.compile(optimizer=optimizer, loss=loss)
     if load_spec:
         spec_model.load_weights('weights/spec.h5')
         print('Loaded specialised model')
@@ -87,7 +107,16 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             lambda x: np.array(list(map(scaler_y.inverse_transform, x))),
             [result_train, result_val, result_test, y_train, y_val, y_test])
 
-        print_metrics(result_val, y_val_inv)
+
+        evaluation = evaluate(result_val, y_val_inv)
+        with open(f"hyperparameter_search/{seed}", "a") as file:
+            writer = csv.writer(file)
+            writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
+            # writer.writerow(list(evaluation.values()) + feature_list)
+
+        # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
+        # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
+
         # training = {f'training {"spec" if has_context else "gen"}': result_train.tolist(), 'y': y_train_inv.tolist()}
         # validation = {f'validation {"spec" if has_context else "gen"}': result_val.tolist(), 'y': y_val_inv.tolist()}
         # write_to_csv(f'plot_data/{"spec" if has_context else "gen"}/training/{filename}', training)
@@ -108,40 +137,138 @@ feature_subsets = list(map(lambda x: sum(x, []), temp))
 
 arguments = {
     'copy_weights_from_gen_to_spec': False,
-    'feature_list': feature_list,
+
+    'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
+    # 'feature_list': sum(trading_features, []),
     'gen_epochs': 1,
     'spec_epochs': 0,
     'load_gen': False,
     'load_spec': False,
     'model': 'stacked',
-    'dropout': .2,
+    'dropout': 0,
     'layer_sizes': [64],
-    'learning_rate': .01
+    'optimizer': Adam(.001),
+    'loss': 'MAE'
     # 'model': 'bidir',
 }
 
 # Hyperparameter search
-# possible_hyperparameters = {
-#     'dropout': [0, .2, .5],
-#     'layer_sizes': [[8], [64], [256]],
-#     'learning_rate': [.001, .01, .1],
-# }
+possible_hyperparameters = {
+    'dropout': [0, .2, .5],
+    'layer_sizes': [[32], [128], [160]],
+    'loss': ['MAE', 'MSE']
+}
 
 # Feature search
-possible_hyperparameters = {
-    'feature_list': feature_subsets
-}
+# possible_hyperparameters = {
+#     'feature_list': feature_subsets
+# }
+
+
+try:
+    os.remove(f'{seed}')
+except OSError:
+    pass
 
 
 def hyperparameter_search(possible, other_args):
-    for key in possible_hyperparameters.keys():
-        for possible_value in possible[key]:
-            args = deepcopy(other_args)
-            args[key] = possible_value
-            print({k: args[k] for k in possible_hyperparameters.keys() if k in args})
-            main(**args,
-                 model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
-                 filename='test')
+    for i in possible['dropout']:
+        for j in possible['layer_sizes']:
+            for k in possible['loss']:
+                args = other_args
+                args['dropout'] = i
+                args['layer_sizes'] = j
+                args['loss'] = k
+                print({k: args[k] for k in possible_hyperparameters.keys() if k in args})
+                main(**args,
+                     model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
+                     filename='test')
 
 
-hyperparameter_search(possible_hyperparameters, arguments)
+# hyperparameter_search(possible_hyperparameters, arguments)
+
+
+# main(**arguments,
+#                      model_generator=StackedLSTM,
+#                      filename='test')
+
+def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_generator=StackedLSTM, layer_sizes=[41],
+         copy_weights_from_gen_to_spec=False, feature_list=[], optimizer=Adam(.01), dropout=.2, filename='test',
+         loss='MAE', **_):
+    (X_train, X_val, X_test), \
+    (y_train, y_val, y_test), \
+    scaler_y = load_data(feature_list)
+
+    (X_train, X_val, X_test), \
+    (y_train, y_val, y_test), \
+    (y_train_dir, y_val_dir, y_test_dir) = create_direction_arrays(X_train, X_val, X_test, y_train, y_val, y_test)
+
+    n_features = X_train.shape[2]
+    batch_size = X_train.shape[0]
+    is_bidir = model_generator is (not StackedLSTM or not StackedLSTM_Modified)
+    zero_states = [np.zeros((batch_size, layer_sizes[0]))] * len(layer_sizes) * 2 * (2 if is_bidir else 1)
+    stock_list = [np.arange(len(X_train)).reshape((len(X_train), 1, 1))]
+
+    gen_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, batch_size=batch_size,
+                                return_states=False, dropout=dropout)
+
+    gen_model.compile(optimizer=optimizer, loss=loss)
+    history = gen_model.fit([X_train] + zero_states, [y_train, y_train_dir], validation_data=([X_val] + zero_states,
+                                                                                              [y_val, y_val_dir]),
+                            epochs=gen_epochs * 500,
+                            verbose=1,
+                            shuffle=False,
+                            batch_size=batch_size,
+                            callbacks=[ModelCheckpoint('weights/gen.h5', period=10, save_weights_only=True),
+                                       EarlyStopping(monitor='val_loss', patience=20)])
+
+    # write_to_csv(f'plot_data/gen/loss/{filename}.csv', history.history)
+
+    gen_pred_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, batch_size=batch_size,
+                                     return_states=True, dropout=dropout)
+    gen_pred_model.set_weights(gen_model.get_weights())
+
+    # Create the context model, set the decoder = the gen model
+    decoder = model_generator(n_features=n_features, layer_sizes=layer_sizes, batch_size=batch_size, return_states=True,
+                              dropout=dropout)
+
+    if copy_weights_from_gen_to_spec:
+        decoder.set_weights(gen_model.get_weights())
+
+
+    for model in ([gen_pred_model] if gen_epochs > 0 else []):
+        has_context = isinstance(model, SpecializedNetwork)
+        # If general model, give zeros as input, if context give stock ids as input
+        init_state = model.encoder.predict(stock_list) if has_context else zero_states
+
+        if has_context:
+            model = model.decoder
+
+        result_train, result_train_dir, *new_states = model.predict([X_train] + init_state)
+        result_val, result_val_dir, *new_states = model.predict([X_val] + new_states)
+        result_test, result_test_dir, *_ = model.predict([X_test] + new_states)
+
+        result_train, result_val, result_test, y_train_inv, y_val_inv, y_test_inv = map(
+            # lambda x: scaler_y.inverse_transform(x).reshape(-1),
+            lambda x: np.array(list(map(scaler_y.inverse_transform, x))),
+            [result_train, result_val, result_test, y_train, y_val, y_test])
+
+
+        evaluation = evaluate(result_val, y_val_inv)
+        with open(f"hyperparameter_search/{seed}", "a") as file:
+            writer = csv.writer(file)
+            writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
+            # writer.writerow(list(evaluation.values()) + feature_list)
+
+        # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
+        # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
+
+        # training = {f'training {"spec" if has_context else "gen"}': result_train.tolist(), 'y': y_train_inv.tolist()}
+        # validation = {f'validation {"spec" if has_context else "gen"}': result_val.tolist(), 'y': y_val_inv.tolist()}
+        # write_to_csv(f'plot_data/{"spec" if has_context else "gen"}/training/{filename}', training)
+        # write_to_csv(f'plot_data/{"spec" if has_context else "gen"}/validation/{filename}', validation)
+
+
+main2(**arguments,
+                     model_generator=StackedLSTM_Modified,
+                     filename='test2')
