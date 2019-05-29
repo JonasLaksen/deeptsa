@@ -1,5 +1,6 @@
 import csv
 import os
+import pandas
 import random
 from itertools import combinations
 
@@ -24,6 +25,12 @@ tf.set_random_seed(seed)
 session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
 sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
 K.set_session(sess)
+
+results = pandas.DataFrame.from_csv('loss-history.csv', header=None)
+# print (results.iloc[[0]].values)
+# print (results.iloc[[1]].values)
+print('ok')
+plot('wtfk', ['test'], results.iloc[[0]].values[0:,100:], results.iloc[[1]].values[0:,100:])
 
 
 def load_data(feature_list):

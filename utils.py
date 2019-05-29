@@ -6,6 +6,7 @@ from zlib import compress, decompress
 
 import numpy as np
 #from matplotlib import pyplot
+from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 
 
@@ -26,15 +27,16 @@ def evaluate(result, y):
     return {'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
 
 def plot(title, stocklist, result, y):
-    pass
-    # for i in range(len(result)):
-    #     fig = pyplot.figure()
-    #     fig.suptitle(f'{title}: {stocklist[i]}')
-    #     pyplot.plot(result[i], label='Predicted')
-    #     pyplot.plot(y[i], label='True value')
-    #     pyplot.legend(loc='upper left')
-    #
-    # pyplot.show()
+    for i in range(len(result)):
+        print('ok')
+        fig = pyplot.figure()
+        fig.suptitle(f'{title}: {stocklist[i]}')
+        pyplot.plot(result[i], label='Predicted')
+        pyplot.plot(y[i], label='True value')
+        pyplot.legend(loc='upper left')
+
+    print('wwwww')
+    pyplot.show()
 
 def direction_value(x, y):
     if x > y:
