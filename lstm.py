@@ -75,7 +75,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
     gen_model.compile(optimizer=optimizer, loss=loss)
     history = gen_model.fit([X_train] + zero_states, y_train, validation_data=([X_val] + zero_states, y_val),
                             epochs=gen_epochs * 1000,
-                            verbose=0,
+                            verbose=1,
                             shuffle=False,
                             batch_size=batch_size,
                             callbacks=[ModelCheckpoint('weights/gen.h5', period=10, save_weights_only=True),
@@ -101,7 +101,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
     spec_model.fit([X_train] + stock_list, y_train, validation_data=([X_val] + stock_list, y_val),
                    batch_size=batch_size, epochs=spec_epochs, shuffle=False,
-                   callbacks=[ModelCheckpoint('weights/spec.h5', period=1, save_weights_only=True)])
+                   callbacks=[ModelCheckpoint('weights/spec.h5', period=1, save_weights_only=True),
+                              EarlyStopping(monitor='val_loss', patience=20)])
     # write_to_csv(f'plot_data/spec/loss/{filename}.csv', history.history)
     spec_pred_model = SpecializedNetwork(n_features=n_features, num_stocks=len(X_train), layer_sizes=layer_sizes,
                                          return_states=True, decoder=spec_model.decoder, is_bidir=is_bidir)
@@ -158,15 +159,15 @@ feature_subsets = list(map(lambda x: sum(x, []), temp))
 arguments = {
     'copy_weights_from_gen_to_spec': False,
     'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 1,
-    'spec_epochs': 0,
+    'gen_epochs': 0,
+    'spec_epochs': 1,
     'load_gen': False,
     'load_spec': False,
     'model': 'stacked',
     'dropout': .2,
     'layer_sizes': [128],
     'optimizer': Adam(.001),
-    'loss': 'MAE'
+    'loss': 'MSLE'
     # 'model': 'bidir',
 }
 
@@ -179,7 +180,8 @@ arguments = {
 
 # Feature search
 possible_hyperparameters = {
-    'feature_list': feature_subsets
+    # 'feature_list': feature_subsets
+    'feature_list': trading_features
 }
 
 
