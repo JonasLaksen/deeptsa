@@ -1,5 +1,7 @@
 import csv
 import os
+import sys
+
 import pandas
 import random
 from itertools import combinations
@@ -17,7 +19,8 @@ from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from utils import get_feature_list_lags, group_by_stock, evaluate, plot, write_to_csv
 
-seed = 2
+seed = int(sys.argv[1]) if sys.argv[1] else 0
+type_search = sys.argv[2] if sys.argv[2] else 'hyper'
 os.environ['PYTHONHASHSEED'] = str(seed)
 random.seed(seed)
 np.random.seed(seed)
@@ -26,11 +29,8 @@ session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_paralleli
 sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
 K.set_session(sess)
 
-results = pandas.DataFrame.from_csv('loss-history.csv', header=None)
-# print (results.iloc[[0]].values)
-# print (results.iloc[[1]].values)
-print('ok')
-plot('wtfk', ['test'], results.iloc[[0]].values[0:,100:], results.iloc[[1]].values[0:,100:])
+# results = pandas.DataFrame.from_csv('loss-history.csv', header=None)
+# plot('wtfk', ['test'], results.iloc[[0]].values[0:,100:], results.iloc[[1]].values[0:,100:])
 
 
 def load_data(feature_list):
@@ -80,16 +80,15 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
     # Create the general model
     gen_model.compile(optimizer=optimizer, loss=loss)
     history = gen_model.fit([X_train] + zero_states, y_train, validation_data=([X_val] + zero_states, y_val),
-                            epochs=gen_epochs * 10000,
+                            epochs=gen_epochs,
                             verbose=1,
                             shuffle=False,
-                            batch_size=batch_size,
-                            callbacks=[ModelCheckpoint('weights/gen.h5', period=10, save_weights_only=True),
-                                       EarlyStopping(monitor='val_loss', patience=10000)])
+                            batch_size=batch_size)
+                                       # EarlyStopping(monitor='val_loss', patience=10000)])
 
     # plot('test', ['ok'], [history.history['loss']], [history.history['val_loss']])
 
-    write_to_csv(f'loss-history.csv', history.history)
+    # write_to_csv(f'loss-history.csv', history.history)
 
     gen_pred_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=True, dropout=dropout)
     gen_pred_model.set_weights(gen_model.get_weights())
@@ -138,7 +137,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         #     writer = csv.writer(file)
         #     writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
 
-        with open(f"hyperparameter_search/context_{seed}", "a") as file:
+        with open(f"hyperparameter_search/{type_search}_{seed}", "a") as file:
             writer = csv.writer(file)
             writer.writerow(list(evaluation.values()) + feature_list)
 
@@ -162,40 +161,6 @@ s = trading_features + sentiment_features + trendscore_features
 temp = sum(map(lambda r: list(combinations(s, r)), range(1, len(s) + 1)), [])
 feature_subsets = list(map(lambda x: sum(x, []), temp))
 
-arguments = {
-    'copy_weights_from_gen_to_spec': False,
-    'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 1,
-    'spec_epochs': 0,
-    'load_gen': False,
-    'load_spec': False,
-    'dropout': .2,
-    'layer_sizes': [128],
-    'optimizer': Adam(.001),
-    'loss': 'MAE',
-    'model': 'stacked',
-    # 'model': 'bidir'
-}
-
-# Hyperparameter search
-# possible_hyperparameters = {
-#     'dropout': [0, .2, .5],
-#     'layer_sizes': [[32], [128], [160]],
-#     'loss': ['MAE', 'MSE']
-# }
-
-# Feature search
-possible_hyperparameters = {
-    # 'feature_list': feature_subsets
-    'feature_list': [trading_features[0] + trading_features[1]]
-}
-
-
-try:
-    os.remove(f'{seed}')
-except OSError:
-    pass
-
 def hyperparameter_search(possible, other_args):
     for i in possible['dropout']:
         for j in possible['layer_sizes']:
@@ -218,4 +183,33 @@ def feature_search(possible, other_args):
              filename='test')
 
 
-feature_search(possible_hyperparameters, arguments)
+arguments = {
+    'copy_weights_from_gen_to_spec': False,
+    'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
+    'gen_epochs': 5000,
+    'spec_epochs': 0,
+    'load_gen': False,
+    'load_spec': False,
+    'dropout': .2,
+    'layer_sizes': [128],
+    'optimizer': Adam(.001),
+    'loss': 'MAE',
+    'model': 'stacked',
+    # 'model': 'bidir'
+}
+if type_search == 'hyper':
+    # Hyperparameter search
+    print('hyper search')
+    possible_hyperparameters = {
+        'dropout': [0, .2, .5],
+        'layer_sizes': [[32], [128], [160]],
+        'loss': ['MAE', 'MSE']
+    }
+    hyperparameter_search(possible_hyperparameters, arguments)
+elif type_search == 'feature':
+    # Feature search
+    print('feature search')
+    possible_hyperparameters = {
+        'feature_list': feature_subsets
+    }
+    feature_search(possible_hyperparameters, arguments)
