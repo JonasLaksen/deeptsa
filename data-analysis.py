@@ -9,16 +9,19 @@ def plot_correlation(data, x_name, y_name):
 
 
 if __name__ == '__main__':
-    all_data = pd.read_csv('dataset.csv')
+    all_data = pd.read_csv('dataset_v2.csv')
     for stock in constants.stock_list:
 
 
         data = all_data[all_data['stock'] == stock]
-        # plot_correlation(data, 'negative', 'next_price')
+        plot_correlation(data, 'direction', 'next_direction')
 
-        acf = plot_acf(data[['price']].values, lags=200, title=stock + ' Autocorrelation')
-        pacf = plot_pacf(data[['price']].values, lags=85, title=stock + ' Partial Autocorrelation')
-        acf.savefig('./figures/' + stock + '_acf.png')
-        plt.close(acf)
-        pacf.savefig('./figures/' + stock + '_pacf.png')
-        plt.close(pacf)
+        plt.show()
+        break
+
+        # acf = plot_acf(data[['price']].values, lags=200, title=stock + ' Autocorrelation')
+        # pacf = plot_pacf(data[['price']].values, lags=85, title=stock + ' Partial Autocorrelation')
+        # acf.savefig('./figures/' + stock + '_acf.png')
+        # plt.close(acf)
+        # pacf.savefig('./figures/' + stock + '_pacf.png')
+        # plt.close(pacf)
