@@ -79,7 +79,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
                             shuffle=False,
                             batch_size=batch_size,
                             callbacks=[ModelCheckpoint('weights/gen.h5', period=10, save_weights_only=True),
-                                       EarlyStopping(monitor='val_loss', patience=20)])
+                                       EarlyStopping(monitor='val_loss', patience=1000)])
 
     # write_to_csv(f'plot_data/gen/loss/{filename}.csv', history.history)
 
@@ -159,15 +159,15 @@ feature_subsets = list(map(lambda x: sum(x, []), temp))
 arguments = {
     'copy_weights_from_gen_to_spec': False,
     'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 0,
-    'spec_epochs': 1,
+    'gen_epochs': 1,
+    'spec_epochs': 0,
     'load_gen': False,
     'load_spec': False,
     'model': 'stacked',
     'dropout': .2,
     'layer_sizes': [128],
     'optimizer': Adam(.001),
-    'loss': 'MSLE'
+    'loss': 'MAE'
     # 'model': 'bidir',
 }
 
