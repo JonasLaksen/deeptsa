@@ -65,8 +65,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
     zero_states = [np.zeros((batch_size, layer_sizes[0]))] * len(layer_sizes) * 2 * (2 if is_bidir else 1)
     stock_list = [np.arange(len(X_train)).reshape((len(X_train), 1, 1))]
 
-    gen_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, batch_size=batch_size,
-                                return_states=False, dropout=dropout)
+    gen_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False, dropout=dropout)
     if load_gen:
         gen_model.load_weights('weights/gen.h5')
         print('Loaded generalised model')
@@ -159,16 +158,16 @@ feature_subsets = list(map(lambda x: sum(x, []), temp))
 arguments = {
     'copy_weights_from_gen_to_spec': False,
     'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 0,
-    'spec_epochs': 1,
+    'gen_epochs': 1,
+    'spec_epochs': 0,
     'load_gen': False,
     'load_spec': False,
-    'model': 'stacked',
     'dropout': .2,
     'layer_sizes': [128],
     'optimizer': Adam(.001),
-    'loss': 'MAE'
-    # 'model': 'bidir',
+    'loss': 'MAE',
+    # 'model': 'stacked',
+    'model': 'bidir'
 }
 
 # Hyperparameter search
