@@ -44,7 +44,7 @@ def data_from_stock(stock, show_plot=False):
 
 def add_prev_feature(df, feature, n):
     for i in range(n):
-        df[f'prev_{feature}_{i}'] = df[feature].shift(-(i+1))
+        df[f'prev_{feature}_{i}'] = df[feature].shift(i+1)
 
 def write_to_dataset_file():
     dfs = list(map(lambda x: data_from_stock(x), stock_list))
