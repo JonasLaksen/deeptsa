@@ -5,6 +5,7 @@ import sys
 from itertools import combinations
 
 import numpy as np
+import pandas
 import tensorflow as tf
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint, EarlyStopping
@@ -14,7 +15,7 @@ from models import bidir_lstm_seq
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from models.stacked_lstm_modified import StackedLSTM_Modified
-from utils import get_feature_list_lags, evaluate, load_data
+from utils import get_feature_list_lags, evaluate, load_data, plot_one
 
 seed = int(sys.argv[1]) if sys.argv[1] else 0
 type_search = sys.argv[2] if sys.argv[2] else 'hyper'
@@ -26,9 +27,9 @@ session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_paralleli
 sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
 K.set_session(sess)
 
-
-# results = pandas.DataFrame.from_csv('loss-history.csv', header=None)
-# plot('wtfk', ['test'], results.iloc[[0]].values[0:,100:], results.iloc[[1]].values[0:,100:])
+# results = pandas.DataFrame.from_csv('loss-history20k.csv', header=None)
+# plot_one('', [results.iloc[[0]].values[0, 100:], results.iloc[[1]].values[0, 100:]],
+#          ['Training loss', 'Validation loss'], ['Epoch', 'MAE loss'])
 
 
 def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_generator=StackedLSTM, layer_sizes=[41],
