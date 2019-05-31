@@ -6,7 +6,9 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from utils import load_data, plot, evaluate
 from constants import stock_list
 
-feature_list = ['price', 'high', 'low', 'open', 'volume']
+feature_list = ['price', 'high', 'low', 'open', 'volume', 'direction',
+                'neutral_prop', 'positive_prop', 'negative_prop',
+                'trendscore']
 
 
 def naive_model(y_val, y_test):
@@ -81,21 +83,24 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 def main():
     (X_train, X_val, X_test), \
     (y_train, y_val, y_test), \
+    (y_train_dir, y_val_dir, y_test_dir), \
     scaler_y = load_data(feature_list)
 
     X_train = np.append(X_train, X_val, axis=1)
     y_train = np.append(y_train, y_val, axis=1)
 
-    # result, y = naive_model(y_val, y_test)
-    # result, y = svm(X_train, X_test, y_train, y_test)
-    result, y = linear_regression(X_train, X_test, y_train, y_test)
+    result, y = naive_model(y_val, y_test)
+    # result, y = linear_regression(X_train, X_test, y_train, y_test)
     # result, y = ridge_regression(X_train, X_test, y_train, y_test)
-    # result, y = gaussian_process(X_train, X_test, y_train, y_test)
+
+    #Not in use
+    # result, y = gaussian_process(X_train, X_val, y_train, y_val)
+    # result, y = svm(X_train, X_test, y_train, y_test)
 
     result = scaler_y.inverse_transform(result.reshape(43,-1))
     y = scaler_y.inverse_transform(y.reshape(43,-1))
 
-    # plot("Naive model", stock_list, result, y)
+    plot("Baseline model", stock_list, result, y)
 
     print(evaluate(result, y))
 
