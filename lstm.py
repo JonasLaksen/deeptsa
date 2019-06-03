@@ -252,7 +252,7 @@ arguments = {
     'load_gen': False,
     'load_spec': False,
     'dropout': .2,
-    'layer_sizes': [128],
+    'layer_sizes': [64,64],
     'optimizer': Adam(.001),
     'loss': 'MAE',
     'model': 'stacked',
