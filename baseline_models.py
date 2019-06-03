@@ -7,7 +7,7 @@ from utils import load_data, plot, evaluate
 from constants import stock_list
 
 feature_list = ['price', 'high', 'low', 'open', 'volume', 'direction',
-                'neutral_prop', 'positive_prop', 'negative_prop',
+                'neutral_prop', 'positive_prop', 'negative_prop', 'negative', 'positive', 'neutral',
                 'trendscore']
 
 

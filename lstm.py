@@ -5,7 +5,6 @@ import sys
 from itertools import combinations
 
 import numpy as np
-import pandas
 import tensorflow as tf
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint, EarlyStopping
@@ -15,7 +14,7 @@ from models import bidir_lstm_seq
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from models.stacked_lstm_modified import StackedLSTM_Modified
-from utils import get_feature_list_lags, evaluate, load_data, plot_one
+from utils import get_feature_list_lags, evaluate, load_data
 
 seed = int(sys.argv[1]) if sys.argv[1] else 0
 type_search = sys.argv[2] if sys.argv[2] else 'hyper'
@@ -26,6 +25,7 @@ tf.set_random_seed(seed)
 session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
 sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
 K.set_session(sess)
+
 
 # results = pandas.DataFrame.from_csv('loss-history20k.csv', header=None)
 # plot_one('', [results.iloc[[0]].values[0, 100:], results.iloc[[1]].values[0, 100:]],
@@ -154,10 +154,18 @@ def hyperparameter_search(possible, other_args):
                      filename='test')
 
 
-def feature_search(possible, other_args):
-    arguments_list = [{**other_args, **{i: j}} for i in possible.keys() for j in possible[i]]
+def feature_search(other_args):
+    features_list = {'feature_list': [['price'],
+                                       ['price', 'open', 'high', 'low', 'direction'],
+                                       ['price', 'positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
+                                        'neutral_prop'],
+                                       ['price', 'trendscore'],
+                                       ['price', 'open', 'high', 'low', 'direction', 'positive', 'negative', 'neutral',
+                                        'positive_prop',
+                                        'negative_prop', 'neutral_prop', 'trendscore']]}
+    arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
     for args in arguments_list:
-        print({k: args[k] for k in possible.keys() if k in args})
+        print({k: args[k] for k in features_list.keys() if k in args})
         main(**args,
              model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
              filename='test')
@@ -265,7 +273,4 @@ if type_search == 'hyper':
 elif type_search == 'feature':
     # Feature search
     print('feature search')
-    possible_hyperparameters = {
-        'feature_list': feature_subsets
-    }
-    feature_search(possible_hyperparameters, arguments)
+    feature_search(arguments)
