@@ -4,10 +4,10 @@ import json
 from base64 import b64encode, b64decode
 from zlib import compress, decompress
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot
+#from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 
@@ -140,15 +140,15 @@ def from_filename_to_args(filename):
     return decompress(decoded)
 
 
-def plot_data(i, filepath):
-    with open(filepath) as file:
-        reader = csv.reader(file)
-        fig = plt.figure(i)
-        for row in reader:
-            plt.plot([float(i) for i in row[1:]], label=row[0])
-            plt.legend(loc='upper left')
-        fig.suptitle(f'{i}')
-        plt.show()
+#def plot_data(i, filepath):
+#    with open(filepath) as file:
+#        reader = csv.reader(file)
+#        fig = plt.figure(i)
+#        for row in reader:
+#            plt.plot([float(i) for i in row[1:]], label=row[0])
+#            plt.legend(loc='upper left')
+#        fig.suptitle(f'{i}')
+#        plt.show()
 
 
 def load_data(feature_list):

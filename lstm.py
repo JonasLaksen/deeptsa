@@ -58,8 +58,10 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
                             epochs=gen_epochs,
                             verbose=1,
                             shuffle=False,
-                            batch_size=batch_size)
-    # EarlyStopping(monitor='val_loss', patience=10000)])
+                            batch_size=batch_size,
+                            callbacks=[EarlyStopping(monitor='val_loss', patience=500),
+                                       ModelCheckpoint(filepath="best-weights.hdf5", verbose=0, save_weights_only=True, save_best_only=True)])
+    gen_model.load_weights("best-weights.hdf5")
 
     # plot('test', ['ok'], [history.history['loss']], [history.history['val_loss']])
 
@@ -110,13 +112,13 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             [result_train, result_val, result_test, y_train, y_val, y_test])
 
         evaluation = evaluate(result_val, y_val_inv)
-        # with open(f"hyperparameter_search/{seed}", "a") as file:
-        #     writer = csv.writer(file)
-        #     writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
 
         with open(f"hyperparameter_search/{type_search}_{seed}", "a") as file:
             writer = csv.writer(file)
-            writer.writerow(list(evaluation.values()) + feature_list)
+            if type_search == 'hyper':
+                writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
+            if type_search == 'feature':
+                writer.writerow(list(evaluation.values()) + feature_list)
 
         # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
         # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
