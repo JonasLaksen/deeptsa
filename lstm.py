@@ -60,7 +60,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
                             shuffle=False,
                             batch_size=batch_size,
                             callbacks=[EarlyStopping(monitor='val_loss', patience=500),
-                                       ModelCheckpoint(filepath="best-weights.hdf5", verbose=0, save_weights_only=True, save_best_only=True)])
+                                       ModelCheckpoint(filepath="best-weights.hdf5", verbose=0, save_weights_only=True,
+                                                       save_best_only=True)])
     gen_model.load_weights("best-weights.hdf5")
 
     # plot('test', ['ok'], [history.history['loss']], [history.history['val_loss']])
@@ -130,12 +131,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
 
 # feature_list = ['positive', 'negative', 'neutral', 'open', 'high', 'low', 'volume', 'price']
-feature_list = ['volume', 'price']
-feature_list = get_feature_list_lags(feature_list, lags=2)
-feature_list = feature_list + ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop', 'neutral_prop',
-                               'trendscore', 'open', 'high', 'low', 'direction']
 trading_features = [['price', 'volume'], ['open', 'high', 'low'], ['direction']]
-sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop', 'neutral_prop']]
+sentiment_features = [['positive_prop', 'negative_prop', 'neutral_prop']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
 temp = sum(map(lambda r: list(combinations(s, r)), range(1, len(s) + 1)), [])
@@ -158,13 +155,11 @@ def hyperparameter_search(possible, other_args):
 
 def feature_search(other_args):
     features_list = {'feature_list': [['price'],
-                                       ['price', 'open', 'high', 'low', 'direction'],
-                                       ['price', 'positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
-                                        'neutral_prop'],
-                                       ['price', 'trendscore'],
-                                       ['price', 'open', 'high', 'low', 'direction', 'positive', 'negative', 'neutral',
-                                        'positive_prop',
-                                        'negative_prop', 'neutral_prop', 'trendscore']]}
+                                      ['price', 'open', 'high', 'low', 'direction'],
+                                      ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
+                                      ['price', 'trendscore'],
+                                      ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
+                                       'neutral_prop', 'trendscore']]}
     arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
     for args in arguments_list:
         print({k: args[k] for k in features_list.keys() if k in args})
