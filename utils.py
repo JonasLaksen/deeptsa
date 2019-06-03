@@ -31,19 +31,12 @@ def evaluate(result, y):
 
 
 def plot(title, stocklist, result, y, legends=['Predicted', 'True value']):
-    for i in range(len(result)):
-        fig = pyplot.figure()
-        fig.suptitle(f'{title}: {stocklist[i]}')
-        pyplot.plot(result[i], label=legends[0])
-        pyplot.plot(y[i], label=legends[1])
-        pyplot.legend(loc='upper left')
-    pyplot.show()
+    [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], ['Predicted', 'True value'], ['Day', 'Price $']) for i in range(len(result))]
 
 
 def plot_one(title, xs, legends, axises):
     assert len(xs) == len(legends)
-    fig = pyplot.figure()
-    fig.suptitle(title)
+    pyplot.title(title)
     [pyplot.plot(x, label=legends[i]) for i, x in enumerate(xs)]
     pyplot.legend(loc='upper left')
     pyplot.xlabel(axises[0])
