@@ -247,7 +247,7 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
 arguments = {
     'copy_weights_from_gen_to_spec': False,
     'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 1,
+    'gen_epochs': 5000,
     'spec_epochs': 0,
     'load_gen': False,
     'load_spec': False,
