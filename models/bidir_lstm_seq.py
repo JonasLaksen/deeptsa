@@ -1,5 +1,5 @@
-from keras.layers import Dense, Dropout, Average, Input
 from keras import backend as K, Model
+from keras.layers import Dense, Dropout, Average, Input
 
 if len(K.tensorflow_backend._get_available_gpus()) > 0:
     from keras.layers import CuDNNLSTM as LSTM
@@ -8,29 +8,24 @@ else:
 
 
 def build_model(n_features, layer_sizes, return_states=True, dropout=1.):
-    layer_size = layer_sizes[0]
-    input_lstm = Input(shape=(None, n_features))
+    X = Input(shape=(None, n_features))
 
-    init_states = [Input(shape=(layer_size,), name='State_{}'.format(i)) for i in range(4)]
+    init_states = [Input(shape=(layer_sizes[0],), name='State_{}'.format(i)) for i in range(4 * len(layer_sizes))]
+    new_states = []
+    output = X
 
-    left_lstm_1 = LSTM(layer_size, return_sequences=True, return_state=True)
-    left_dropout_1 = Dropout(dropout)
-    left_output, *left_states = left_lstm_1(input_lstm, initial_state=init_states[:2])
-    left_output = left_dropout_1(left_output)
+    for i, layer_size in enumerate(layer_sizes):
+        left_lstm = LSTM(layer_size, return_sequences=True, return_state=True)
+        left_output, *left_states = left_lstm(output, initial_state=init_states[i * 4: (i * 4) + 2])
+        left_output = Dropout(dropout)(left_output)
 
-    right_lstm_1 = LSTM(layer_size, return_sequences=True, return_state=True, go_backwards=True)
-    right_dropout_1 = Dropout(dropout)
-    right_output, *right_states = right_lstm_1(input_lstm, initial_state=init_states[2:])
-    right_output = right_dropout_1(right_output)
+        right_lstm = LSTM(layer_size, return_sequences=True, return_state=True, go_backwards=True)
+        right_output, *right_states = right_lstm(output, initial_state=init_states[i * 4 + 2: (i * 4) + 4])
+        right_output = Dropout(dropout)(right_output)
 
-    merge_layer = Average()
-    next_price = merge_layer([left_output, right_output])
+        output = Average()([left_output, right_output])
+        new_states = new_states + left_states + right_states
 
-    output_layer = Dense(1, activation='linear')
+    next_price = Dense(1, activation='linear')(output)
 
-    next_price = output_layer(next_price)
-    new_states = left_states + right_states
-
-    model = Model([input_lstm] + init_states, [next_price] + (new_states if return_states else []))
-
-    return model
+    return Model([X] + init_states, [next_price] + (new_states if return_states else []))
