@@ -114,14 +114,18 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
         evaluation = evaluate(result_val, y_val_inv)
 
-        with open(f"""hyperparameter_search/
-                    {type_search}_{seed}_{'_'.join(str(x) for x in layer_sizes)}
-                    _{'bidir' if is_bidir else 'stacked'}""", "a") as file:
-            writer = csv.writer(file)
-            if type_search == 'hyper':
-                writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
-            if type_search == 'feature':
-                writer.writerow(list(evaluation.values()) + feature_list)
+        if type_search == 'feature':
+            with open(f"""hyperparameter_search/
+                        {type_search}_{seed}_{'_'.join(str(x) for x in layer_sizes)}
+                        _{'bidir' if is_bidir else 'stacked'}""", "a") as file:
+                writer = csv.writer(file)
+                if type_search == 'feature':
+                    writer.writerow(list(evaluation.values()) + feature_list)
+        elif type_search == 'hyper':
+            with open(f"hyperparameter_search/{type_search}_{seed}", "a") as file:
+                writer = csv.writer(file)
+                if type_search == 'hyper':
+                    writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
 
         # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
         # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
@@ -258,8 +262,8 @@ arguments = {
     'layer_sizes': [42, 42, 42],
     'optimizer': Adam(.001),
     'loss': 'MAE',
-    # 'model': 'stacked',
-    'model': 'bidir'
+    'model': 'stacked',
+    # 'model': 'bidir'
 }
 if type_search == 'hyper':
     # Hyperparameter search

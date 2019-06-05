@@ -16,10 +16,10 @@ class StackedLSTM(Model):
 
         output = X
         for i, size in enumerate(layer_sizes):
-            lstm = LSTM(size, return_sequences=True, return_state=True)
+            lstm = LSTM(size, return_sequences=True, return_state=True, dropout=dropout)
             output, *states = lstm(output, initial_state=init_states[i * 2:(i * 2) + 2])
             new_states = new_states + states
-            output = Dropout(dropout)(output)
+            # output = Dropout(dropout)(output)
 
         next_price = Dense(1, activation='linear')(output)
         super(StackedLSTM, self).__init__([X] + init_states, [next_price] + (new_states if return_states else []),
