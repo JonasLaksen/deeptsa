@@ -14,7 +14,7 @@ from models import bidir_lstm_seq
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from models.stacked_lstm_modified import StackedLSTM_Modified
-from utils import get_feature_list_lags, evaluate, load_data
+from utils import evaluate, load_data
 
 seed = int(sys.argv[1]) if sys.argv[1] else 0
 type_search = sys.argv[2] if sys.argv[2] else 'hyper'
@@ -114,7 +114,9 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
         evaluation = evaluate(result_val, y_val_inv)
 
-        with open(f"hyperparameter_search/{type_search}_{seed}", "a") as file:
+        with open(f"""hyperparameter_search/
+                    {type_search}_{seed}_{'_'.join(str(x) for x in layer_sizes)}
+                    _{'bidir' if is_bidir else 'stacked'}""", "a") as file:
             writer = csv.writer(file)
             if type_search == 'hyper':
                 writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
@@ -159,7 +161,8 @@ def feature_search(other_args):
                                       ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
                                       ['price', 'trendscore'],
                                       ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
-                                       'neutral_prop', 'trendscore']]}
+                                       'neutral_prop', 'trendscore']],
+                     'layer_sizes': [[128], [64, 64], [42, 42, 42]]}
     arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
     for args in arguments_list:
         print({k: args[k] for k in features_list.keys() if k in args})
@@ -252,11 +255,11 @@ arguments = {
     'load_gen': False,
     'load_spec': False,
     'dropout': .2,
-    'layer_sizes': [42,42,42],
+    'layer_sizes': [42, 42, 42],
     'optimizer': Adam(.001),
     'loss': 'MAE',
-    'model': 'stacked',
-    # 'model': 'bidir'
+    # 'model': 'stacked',
+    'model': 'bidir'
 }
 if type_search == 'hyper':
     # Hyperparameter search
