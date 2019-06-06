@@ -4,7 +4,7 @@ import pandas
 pandas.set_option('display.max_columns', 500)
 pandas.set_option('display.width', 1000)
 
-files = list(map(lambda i: pandas.read_csv(f'feature_{i}', names=range(25), header=None), range(3)))
+files = list(map(lambda i: pandas.read_csv(f'hyper_{i}', names=range(25), header=None), range(3)))
 columns = files[0].columns[0:4]
 df = files[0][columns].append(files[1][columns]).append(files[1][columns])
 df = reduce(lambda left, right: pandas.merge(left, right, left_index=True, right_index=True),
@@ -15,9 +15,9 @@ mae_cols = ['1_x', '1_y', 1]
 mse_cols = ['2_x', '2_y', 2]
 da_cols = ['3_x', '3_y', 3]
 
-for i in zip(['avg_mape', 'avg_mae', 'avg_mse', 'avg_da'], [mape_cols, mae_cols, mse_cols, da_cols]):
+for i in zip(['avg_mape', 'avg_mae', 'avg_mse', 'avg_da'], [mape_cols, mae_cols, mse_cols, da_cols], [True, True, True, False]):
     df[i[0]] = df[i[1]].mean(axis=1)
-    df[f'{i[0]}_rank'] = df[i[0]].rank(ascending=True).astype(int)
+    df[f'{i[0]}_rank'] = df[i[0]].rank(ascending=i[2]).astype(int)
 
 df['sum_ranks'] = df['avg_da_rank'] + df['avg_mape_rank'] + df['avg_mse_rank'] + df['avg_mae_rank']
 df = df.round(4)
