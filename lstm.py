@@ -18,6 +18,8 @@ from utils import evaluate, load_data
 
 seed = int(sys.argv[1]) if sys.argv[1] else 0
 type_search = sys.argv[2] if sys.argv[2] else 'hyper'
+layer_sizes = list(map(int, sys.argv[3].split(","))) if sys.argv[3] else [999]
+model_type = sys.argv[4] if sys.argv[4] else 'stacked'
 os.environ['PYTHONHASHSEED'] = str(seed)
 random.seed(seed)
 np.random.seed(seed)
@@ -40,6 +42,11 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
     (y_train_dir, y_val_dir, y_test_dir), \
     scaler_y = load_data(feature_list)
 
+    X_train, y_train = np.append(X_train, X_val, axis=1), np.append(y_train, y_val, axis=1)
+    X_val, y_val = X_test, y_test
+
+    print(layer_sizes)
+    print(model_generator)
     n_features = X_train.shape[2]
     batch_size = X_train.shape[0]
     is_bidir = model_generator is not StackedLSTM
@@ -115,9 +122,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         evaluation = evaluate(result_val, y_val_inv)
 
         if type_search == 'feature':
-            with open(f"""hyperparameter_search/
-                        {type_search}_{seed}_{'_'.join(str(x) for x in layer_sizes)}
-                        _{'bidir' if is_bidir else 'stacked'}""", "a") as file:
+            with open(f"hyperparameter_search/{type_search}_{seed}_{'_'.join(str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}", "a") as file:
                 writer = csv.writer(file)
                 if type_search == 'feature':
                     writer.writerow(list(evaluation.values()) + feature_list)
@@ -154,8 +159,8 @@ def hyperparameter_search(possible, other_args):
                 args['layer_sizes'] = j
                 args['loss'] = k
                 print({k: args[k] for k in possible_hyperparameters.keys() if k in args})
-                main(**args,
-                     model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
+                main(**args, layer_sizes=layer_sizes,
+                     model_generator=StackedLSTM if model_type == 'stacked' else bidir_lstm_seq.build_model,
                      filename='test')
 
 
@@ -170,8 +175,8 @@ def feature_search(other_args):
     arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
     for args in arguments_list:
         print({k: args[k] for k in features_list.keys() if k in args})
-        main(**args,
-             model_generator=StackedLSTM if other_args['model'] == 'stacked' else bidir_lstm_seq.build_model,
+        main(**args, layer_sizes=layer_sizes,
+             model_generator=StackedLSTM if model_type == 'stacked' else bidir_lstm_seq.build_model,
              filename='test')
 
 
@@ -258,12 +263,9 @@ arguments = {
     'spec_epochs': 0,
     'load_gen': False,
     'load_spec': False,
-    'dropout': .2,
-    'layer_sizes': [42, 42, 42],
+    'dropout': .0,
     'optimizer': Adam(.001),
-    'loss': 'MAE',
-    'model': 'stacked',
-    # 'model': 'bidir'
+    'loss': 'MAE'
 }
 if type_search == 'hyper':
     # Hyperparameter search
