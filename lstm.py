@@ -170,8 +170,7 @@ def feature_search(other_args):
                                       ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
                                       ['price', 'trendscore'],
                                       ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
-                                       'neutral_prop', 'trendscore']],
-                     'layer_sizes': [[128], [64, 64], [42, 42, 42]]}
+                                       'neutral_prop', 'trendscore']] }
     arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
     for args in arguments_list:
         print({k: args[k] for k in features_list.keys() if k in args})

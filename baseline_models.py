@@ -100,7 +100,7 @@ def main():
     result = scaler_y.inverse_transform(result.reshape(43,-1))
     y = scaler_y.inverse_transform(y.reshape(43,-1))
 
-    plot("Baseline model", stock_list, result, y)
+    # plot("Baseline model", stock_list, result, y)
 
     print(evaluate(result, y))
 
