@@ -115,9 +115,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         evaluation = evaluate(result_val, y_val_inv)
 
         if type_search == 'feature':
-            with open(f"""hyperparameter_search/
-                        {type_search}_{seed}_{'_'.join(str(x) for x in layer_sizes)}
-                        _{'bidir' if is_bidir else 'stacked'}""", "a") as file:
+            with open(f"hyperparameter_search/{type_search}_{seed}_{'_'.join(str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}", "a") as file:
                 writer = csv.writer(file)
                 if type_search == 'feature':
                     writer.writerow(list(evaluation.values()) + feature_list)
@@ -258,12 +256,12 @@ arguments = {
     'spec_epochs': 0,
     'load_gen': False,
     'load_spec': False,
-    'dropout': .2,
-    'layer_sizes': [42, 42, 42],
+    'dropout': .0,
+    'layer_sizes': [32,32],
     'optimizer': Adam(.001),
     'loss': 'MAE',
-    'model': 'stacked',
-    # 'model': 'bidir'
+    #'model': 'stacked',
+    'model': 'bidir'
 }
 if type_search == 'hyper':
     # Hyperparameter search
