@@ -14,7 +14,7 @@ from models import bidir_lstm_seq
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from models.stacked_lstm_modified import StackedLSTM_Modified
-from utils import evaluate, load_data
+from utils import evaluate, load_data, plot
 
 seed = int(sys.argv[1]) if sys.argv[1] else 0
 type_search = sys.argv[2] if sys.argv[2] else 'hyper'
@@ -37,13 +37,11 @@ K.set_session(sess)
 def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_generator=StackedLSTM, layer_sizes=[41],
          copy_weights_from_gen_to_spec=False, feature_list=[], optimizer=Adam(.01), dropout=.2, filename='test',
          loss='MAE', **_):
-    (X_train, X_val, X_test), \
-    (y_train, y_val, y_test), \
-    (y_train_dir, y_val_dir, y_test_dir), \
-    scaler_y = load_data(feature_list)
+    X, y, y_dir, scaler_y = load_data(feature_list)
 
-    X_train, y_train = np.append(X_train, X_val, axis=1), np.append(y_train, y_val, axis=1)
-    X_val, y_val = X_test, y_test
+    training_size = int(.9 * len(X[0]))
+    X_train, y_train = X[:, :training_size], y[:, :training_size]
+    X_val, y_val = X[:, training_size:], y[:, training_size:]
 
     print(layer_sizes)
     print(model_generator)
@@ -111,18 +109,17 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             model = model.decoder
 
         result_train, *new_states = model.predict([X_train] + init_state)
-        result_val, *new_states = model.predict([X_val] + new_states)
-        result_test, *_ = model.predict([X_test] + new_states)
+        result_val, *_ = model.predict([X_val] + new_states)
 
-        result_train, result_val, result_test, y_train_inv, y_val_inv, y_test_inv = map(
+        result_train, result_val, y_train_inv, y_val_inv = map(
             # lambda x: scaler_y.inverse_transform(x).reshape(-1),
             lambda x: np.array(list(map(scaler_y.inverse_transform, x))),
-            [result_train, result_val, result_test, y_train, y_val, y_test])
+            [result_train, result_val, y_train, y_val])
 
         evaluation = evaluate(result_val, y_val_inv)
 
         if type_search == 'feature':
-            with open(f"hyperparameter_search/{type_search}_{seed}_{'_'.join(str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}", "a") as file:
+            with open(f"hyperparameter_search/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}", "a") as file:
                 writer = csv.writer(file)
                 if type_search == 'feature':
                     writer.writerow(list(evaluation.values()) + feature_list)
@@ -170,7 +167,7 @@ def feature_search(other_args):
                                       ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
                                       ['price', 'trendscore'],
                                       ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
-                                       'neutral_prop', 'trendscore']] }
+                                       'neutral_prop', 'trendscore']]}
     arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
     for args in arguments_list:
         print({k: args[k] for k in features_list.keys() if k in args})
@@ -258,7 +255,7 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
 arguments = {
     'copy_weights_from_gen_to_spec': False,
     'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 5000,
+    'gen_epochs': 1,
     'spec_epochs': 0,
     'load_gen': False,
     'load_spec': False,
