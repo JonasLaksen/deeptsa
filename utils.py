@@ -8,6 +8,7 @@ from zlib import compress, decompress
 import numpy as np
 import pandas as pd
 #from matplotlib import pyplot
+from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 
@@ -87,8 +88,28 @@ def create_direction_arrays(X_train, X_val, X_test, y_train, y_val, y_test):
     return make_train_val_test_set(X), make_train_val_test_set(y), make_train_val_test_set(y_dir)
 
 
-def group_by_stock(data, training_prop=.8, validation_prop=.1, test_prop=.1):
-    assert training_prop + validation_prop + test_prop == 1.
+# def group_by_stock(data, training_prop=.8, validation_prop=.1, test_prop=.1):
+#     assert training_prop + validation_prop + test_prop == 1.
+#     group_by_dict = {}
+#     for row in data:
+#         try:
+#             group_by_dict[row[0]].append(row[1:])
+#         except:
+#             group_by_dict[row[0]] = [row[1:]]
+#
+#     group_by_dict = {k: v for k, v in group_by_dict.items() if len(v) > 1600}
+#
+#     data_size = len(min(group_by_dict.values(), key=len))
+#     train_size, val_size, test_size = int(data_size * training_prop), int(data_size * validation_prop), int(
+#         data_size * test_prop)
+#     train_data = list(
+#         map(lambda x: np.array(group_by_dict[x])[-data_size: -data_size + train_size], group_by_dict.keys()))
+#     val_data = list(
+#         map(lambda x: np.array(group_by_dict[x])[-data_size + train_size: -data_size + train_size + val_size],
+#             group_by_dict.keys()))
+#     test_data = list(map(lambda x: np.array(group_by_dict[x])[-test_size:], group_by_dict.keys()))
+#     return np.array(train_data), np.array(val_data), np.array(test_data)
+def group_by_stock(data):
     group_by_dict = {}
     for row in data:
         try:
@@ -97,17 +118,9 @@ def group_by_stock(data, training_prop=.8, validation_prop=.1, test_prop=.1):
             group_by_dict[row[0]] = [row[1:]]
 
     group_by_dict = {k: v for k, v in group_by_dict.items() if len(v) > 1600}
-
     data_size = len(min(group_by_dict.values(), key=len))
-    train_size, val_size, test_size = int(data_size * training_prop), int(data_size * validation_prop), int(
-        data_size * test_prop)
-    train_data = list(
-        map(lambda x: np.array(group_by_dict[x])[-data_size: -data_size + train_size], group_by_dict.keys()))
-    val_data = list(
-        map(lambda x: np.array(group_by_dict[x])[-data_size + train_size: -data_size + train_size + val_size],
-            group_by_dict.keys()))
-    test_data = list(map(lambda x: np.array(group_by_dict[x])[-test_size:], group_by_dict.keys()))
-    return np.array(train_data), np.array(val_data), np.array(test_data)
+    data = list(map(lambda x: np.array(group_by_dict[x][-data_size:]), group_by_dict.keys()))
+    return np.array(data)
 
 
 def get_feature_list_lags(features, lags=0):
@@ -139,18 +152,6 @@ def from_filename_to_args(filename):
     decoded = b64decode(filename.replace('$', '/').split('.csv')[0])
     return decompress(decoded)
 
-
-#def plot_data(i, filepath):
-#    with open(filepath) as file:
-#        reader = csv.reader(file)
-#        fig = plt.figure(i)
-#        for row in reader:
-#            plt.plot([float(i) for i in row[1:]], label=row[0])
-#            plt.legend(loc='upper left')
-#        fig.suptitle(f'{i}')
-#        plt.show()
-
-
 def load_data(feature_list):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
@@ -173,7 +174,7 @@ def load_data(feature_list):
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
     y_dir = data['next_direction'].values.reshape(-1, 1)
     y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
-    X_train, X_val, X_test = group_by_stock(X)
-    y_train, y_val, y_test = group_by_stock(y)
-    y_train_dir, y_val_dir, y_test_dir = group_by_stock(y_dir)
-    return (X_train, X_val, X_test), (y_train, y_val, y_test), (y_train_dir, y_val_dir, y_test_dir), scaler_y
+    X = group_by_stock(X)
+    y = group_by_stock(y)
+    y_dir = group_by_stock(y_dir)
+    return X, y, y_dir, scaler_y
