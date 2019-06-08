@@ -129,16 +129,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
                 if type_search == 'hyper':
                     writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
 
-        # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
-        # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
-
-        # training = {f'training {"spec" if has_context else "gen"}': result_train.tolist(), 'y': y_train_inv.tolist()}
-        # validation = {f'validation {"spec" if has_context else "gen"}': result_val.tolist(), 'y': y_val_inv.tolist()}
-        # write_to_csv(f'plot_data/{"spec" if has_context else "gen"}/training/{filename}', training)
-        # write_to_csv(f'plot_data/{"spec" if has_context else "gen"}/validation/{filename}', validation)
 
 
-# feature_list = ['positive', 'negative', 'neutral', 'open', 'high', 'low', 'volume', 'price']
 trading_features = [['price', 'volume'], ['open', 'high', 'low'], ['direction']]
 sentiment_features = [['positive_prop', 'negative_prop', 'neutral_prop']]
 trendscore_features = [['trendscore']]
@@ -239,14 +231,6 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
             writer.writerow(list(evaluation.values()) + [dropout, layer_sizes, loss])
             # writer.writerow(list(evaluation.values()) + feature_list)
 
-        # plot('Train', np.array(stock_list).reshape(-1)[0:3], result_train[0:3], y_train_inv[0:3])
-        # plot('Val', np.array(stock_list).reshape(-1)[0:3], result_val[0:3], y_val_inv[0:3])
-
-        # training = {f'training {"spec" if has_context else "gen"}': result_train.tolist(), 'y': y_train_inv.tolist()}
-        # validation = {f'validation {"spec" if has_context else "gen"}': result_val.tolist(), 'y': y_val_inv.tolist()}
-        # write_to_csv(f'plot_data/{"spec" if has_context else "gen"}/training/{filename}', training)
-        # write_to_csv(f'plot_data/{"spec" if has_context else "gen"}/validation/{filename}', validation)
-
 
 # main2(**arguments,
 #                      model_generator=StackedLSTM_Modified,
@@ -255,7 +239,7 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
 arguments = {
     'copy_weights_from_gen_to_spec': False,
     'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 1,
+    'gen_epochs': 5000,
     'spec_epochs': 0,
     'load_gen': False,
     'load_spec': False,

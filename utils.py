@@ -4,11 +4,9 @@ import json
 from base64 import b64encode, b64decode
 from zlib import compress, decompress
 
-#import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 #from matplotlib import pyplot
-from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 
