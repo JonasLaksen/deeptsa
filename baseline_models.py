@@ -81,16 +81,15 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
 
 def main():
-    (X_train, X_val, X_test), \
-    (y_train, y_val, y_test), \
-    (y_train_dir, y_val_dir, y_test_dir), \
-    scaler_y = load_data(feature_list)
+    X, y, y_dir, scaler_y = load_data(feature_list)
 
-    X_train = np.append(X_train, X_val, axis=1)
-    y_train = np.append(y_train, y_val, axis=1)
 
-    result, y = naive_model(y_val, y_test)
-    # result, y = linear_regression(X_train, X_test, y_train, y_test)
+    training_size = int(.9 * len(X[0]))
+    X_train, y_train = X[:, :training_size], y[:, :training_size]
+    X_test, y_test = X[:, training_size:], y[:, training_size:]
+
+    # result, y = naive_model(y_val, y_test)
+    result, y = linear_regression(X_train, X_test, y_train, y_test)
     # result, y = ridge_regression(X_train, X_test, y_train, y_test)
 
     #Not in use
