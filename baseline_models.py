@@ -88,7 +88,7 @@ def main():
     X_train, y_train = X[:, :training_size], y[:, :training_size]
     X_test, y_test = X[:, training_size:], y[:, training_size:]
 
-    # result, y = naive_model(y_val, y_test)
+    # result, y = naive_model(y_train, y_test)
     result, y = linear_regression(X_train, X_test, y_train, y_test)
     # result, y = ridge_regression(X_train, X_test, y_train, y_test)
 
