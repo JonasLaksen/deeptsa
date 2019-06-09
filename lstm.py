@@ -100,7 +100,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
     # The place for saving stuff for plotting
     # Only plot if the epoch > 0
-    for model in ([gen_pred_model] if gen_epochs > 0 else []) + ([spec_pred_model] if spec_epochs > 0 else []):
+    for model in [gen_pred_model]  + ([spec_pred_model] if spec_epochs > 0 else []):
         has_context = isinstance(model, SpecializedNetwork)
         # If general model, give zeros as input, if context give stock ids as input
         init_state = model.encoder.predict(stock_list) if has_context else zero_states
@@ -109,7 +109,13 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             model = model.decoder
 
         result_train, *new_states = model.predict([X_train] + init_state)
-        result_val, *_ = model.predict([X_val] + new_states)
+        result_val = None
+        for i in range(X_val.shape[1]):
+            temp, *new_states = model.predict([np.append(X_train, X_val[:,:i+1], axis=1)] + new_states)
+            if result_val is None:
+                result_val = temp[:,-1:]
+            else:
+                result_val = np.append(result_val, temp[:,-1:], axis=1)
 
         result_train, result_val, y_train_inv, y_val_inv = map(
             # lambda x: scaler_y.inverse_transform(x).reshape(-1),
@@ -117,6 +123,11 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             [result_train, result_val, y_train, y_val])
 
         evaluation = evaluate(result_val, y_val_inv)
+        print('Val: ', evaluation)
+        train_evaluation = evaluate(result_train, y_train_inv)
+        print('Training:', train_evaluation)
+        # plot('Training', np.array(stock_list).reshape(-1), result_train[:3], y_train_inv[:3])
+        # plot('Val', np.array(stock_list).reshape(-1), result_val[:3], y_val_inv[:3])
 
         if type_search == 'feature':
             with open(f"hyperparameter_search/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}", "a") as file:
@@ -154,12 +165,12 @@ def hyperparameter_search(possible, other_args):
 
 
 def feature_search(other_args):
-    features_list = {'feature_list': [['price'],
-                                      ['price', 'open', 'high', 'low', 'direction'],
-                                      ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
-                                      ['price', 'trendscore'],
-                                      ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
-                                       'neutral_prop', 'trendscore']]}
+    features_list = {'feature_list': [#['price'],
+                                      ['price', 'open', 'high', 'low', 'direction']]}
+                                      # ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
+                                      # ['price', 'trendscore'],
+                                      # ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
+                                      #  'neutral_prop', 'trendscore']]}
     arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
     for args in arguments_list:
         print({k: args[k] for k in features_list.keys() if k in args})
