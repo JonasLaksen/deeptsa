@@ -6,9 +6,10 @@ from itertools import combinations
 
 import numpy as np
 import tensorflow as tf
-from keras import backend as K
+from keras import backend as K, Model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.engine.saving import load_model
+from keras.layers import RNN, LSTM
 from keras.optimizers import Adam
 
 from models import bidir_lstm_seq
@@ -16,7 +17,7 @@ from models.bidir import BidirLSTM
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from models.stacked_lstm_modified import StackedLSTM_Modified
-from utils import evaluate, load_data, plot
+from utils import evaluate, load_data, plot, write_to_csv
 
 seed = int(sys.argv[1]) if sys.argv[1] else 0
 type_search = sys.argv[2] if sys.argv[2] else 'hyper'
@@ -55,7 +56,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
     gen_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False, dropout=dropout)
     if load_gen:
-        gen_model = load_model(f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}")
+        gen_model = load_model(f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}", custom_objects={"StackedLSTM": Model, "CuDNNLSTM": LSTM})
         # gen_model.load_weights(f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}")
         print('Loaded generalised model')
 
@@ -136,8 +137,11 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         if type_search == 'feature':
             with open(f"hyperparameter_search/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}", "a") as file:
                 writer = csv.writer(file)
-                if type_search == 'feature':
-                    writer.writerow(list(evaluation.values()) + feature_list)
+                writer.writerow(list(evaluation.values()) + feature_list)
+            np.save(f"plot_data/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}_result",
+                    result_val )
+            np.save(f"plot_data/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}_y",
+                    y_val_inv )
         elif type_search == 'hyper':
             with open(f"hyperparameter_search/{type_search}_{seed}", "a") as file:
                 writer = csv.writer(file)
