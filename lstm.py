@@ -11,6 +11,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.optimizers import Adam
 
 from models import bidir_lstm_seq
+from models.bidir import BidirLSTM
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from models.stacked_lstm_modified import StackedLSTM_Modified
@@ -175,7 +176,7 @@ def feature_search(other_args):
     for args in arguments_list:
         print({k: args[k] for k in features_list.keys() if k in args})
         main(**args, layer_sizes=layer_sizes,
-             model_generator=StackedLSTM if model_type == 'stacked' else bidir_lstm_seq.build_model,
+             model_generator=StackedLSTM if model_type == 'stacked' else BidirLSTM,
              filename='test')
 
 
