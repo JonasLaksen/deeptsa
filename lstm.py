@@ -54,7 +54,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
     gen_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False, dropout=dropout)
     if load_gen:
-        gen_model.load_weights('weights/gen.h5')
+        gen_model.load_weights(f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}")
         print('Loaded generalised model')
 
     # Create the general model
@@ -66,8 +66,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
                             shuffle=False,
                             batch_size=batch_size,
                             callbacks=[EarlyStopping(monitor='val_loss', patience=500),
-                                       ModelCheckpoint(filepath=f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}", verbose=0, save_weights_only=True,
-                                                       save_best_only=True)])
+                                       ModelCheckpoint(filepath=f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}", verbose=0, save_weights_only=True )])
     #gen_model.load_weights("best-weights.hdf5")
 
     # plot('test', ['ok'], [history.history['loss']], [history.history['val_loss']])
