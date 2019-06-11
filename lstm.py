@@ -65,9 +65,9 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
                             shuffle=False,
                             batch_size=batch_size,
                             callbacks=[EarlyStopping(monitor='val_loss', patience=500),
-                                       ModelCheckpoint(filepath="best-weights.hdf5", verbose=0, save_weights_only=True,
+                                       ModelCheckpoint(filepath=f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}", verbose=0, save_weights_only=True,
                                                        save_best_only=True)])
-    gen_model.load_weights("best-weights.hdf5")
+    #gen_model.load_weights("best-weights.hdf5")
 
     # plot('test', ['ok'], [history.history['loss']], [history.history['val_loss']])
 
@@ -109,6 +109,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             model = model.decoder
 
         result_train, *new_states = model.predict([X_train] + init_state)
+        result_train = result_train[:,10:]
         result_val = None
         for i in range(X_val.shape[1]):
             temp, *new_states = model.predict([np.append(X_train, X_val[:,:i+1], axis=1)] + new_states)
@@ -122,6 +123,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
             lambda x: np.array(list(map(scaler_y.inverse_transform, x))),
             [result_train, result_val, y_train, y_val])
 
+        y_train_inv = y_train_inv[:,10:]
         evaluation = evaluate(result_val, y_val_inv)
         print('Val: ', evaluation)
         train_evaluation = evaluate(result_train, y_train_inv)
@@ -165,12 +167,12 @@ def hyperparameter_search(possible, other_args):
 
 
 def feature_search(other_args):
-    features_list = {'feature_list': [#['price'],
-                                      ['price', 'open', 'high', 'low', 'direction']]}
-                                      # ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
-                                      # ['price', 'trendscore'],
-                                      # ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
-                                      #  'neutral_prop', 'trendscore']]}
+    features_list = {'feature_list': [['price'],
+                                      ['price', 'open', 'high', 'low', 'direction'],
+                                      ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
+                                      ['price', 'trendscore'],
+                                      ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
+                                        'neutral_prop', 'trendscore']]}
     arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
     for args in arguments_list:
         print({k: args[k] for k in features_list.keys() if k in args})
