@@ -6,7 +6,7 @@ from zlib import compress, decompress
 
 import numpy as np
 import pandas as pd
-# from matplotlib import pyplot
+from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 
