@@ -1,5 +1,5 @@
 from keras import backend as K, Model
-from keras.layers import Dense, Dropout, Average, Input
+from keras.layers import Dense, Dropout, Concatenate, Input
 
 if len(K.tensorflow_backend._get_available_gpus()) > 0:
     from keras.layers import CuDNNLSTM as LSTM
@@ -23,7 +23,7 @@ def build_model(n_features, layer_sizes, return_states=True, dropout=1.):
         right_output, *right_states = right_lstm(output, initial_state=init_states[i * 4 + 2: (i * 4) + 4])
         right_output = Dropout(dropout)(right_output)
 
-        output = Average()([left_output, right_output])
+        output = Concatenate()([left_output, right_output])
         new_states = new_states + left_states + right_states
 
     next_price = Dense(1, activation='linear')(output)
