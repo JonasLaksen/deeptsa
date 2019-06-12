@@ -264,16 +264,20 @@ arguments = {
     'optimizer': Adam(.001),
     'loss': 'MAE'
 }
-if type_search == 'hyper':
-    # Hyperparameter search
-    print('hyper search')
-    possible_hyperparameters = {
-        'dropout': [0, .2, .5],
-        'layer_sizes': [[32], [128], [160]],
-        'loss': ['MAE', 'MSE']
-    }
-    hyperparameter_search(possible_hyperparameters, arguments)
-elif type_search == 'feature':
-    # Feature search
-    print('feature search')
-    feature_search(arguments)
+# if type_search == 'hyper':
+#     # Hyperparameter search
+#     print('hyper search')
+#     possible_hyperparameters = {
+#         'dropout': [0, .2, .5],
+#         'layer_sizes': [[32], [128], [160]],
+#         'loss': ['MAE', 'MSE']
+#     }
+#     hyperparameter_search(possible_hyperparameters, arguments)
+# elif type_search == 'feature':
+#     # Feature search
+#     print('feature search')
+#     feature_search(arguments)
+
+result = np.load('plot_data/feature_0_128_stacked_price_result.npy')[:3]
+y = np.load('plot_data/feature_0_128_stacked_price_y.npy')[:3]
+plot('Validation', range(100), result, y)
