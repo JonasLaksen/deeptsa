@@ -67,9 +67,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
                             epochs=gen_epochs,
                             verbose=1,
                             shuffle=False,
-                            batch_size=batch_size,
-                            callbacks=[EarlyStopping(monitor='val_loss', patience=500),
-                                       ModelCheckpoint(filepath=f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}", verbose=0)])
+                            batch_size=batch_size)
     #gen_model.load_weights("best-weights.hdf5")
 
     # plot('test', ['ok'], [history.history['loss']], [history.history['val_loss']])
