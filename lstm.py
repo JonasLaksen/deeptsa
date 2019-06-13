@@ -28,11 +28,12 @@ os.environ['PYTHONHASHSEED'] = str(seed)
 random.seed(seed)
 np.random.seed(seed)
 tf.set_random_seed(seed)
-session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+session_conf = tf.ConfigProto()
 session_conf.gpu_options.allow_growth=True
 session_conf.gpu_options.per_process_gpu_memory_fraction = 0.4
-sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-K.set_session(sess)
+sess = tf.Session(config=session_conf)
+from keras.backend.tensorflow_backend import set_session
+set_session(sess)
 
 
 # results = pandas.DataFrame.from_csv('loss-history20k.csv', header=None)
@@ -94,9 +95,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         print('Loaded specialised model')
 
     spec_model.fit([X_train] + stock_list, y_train, validation_data=([X_val] + stock_list, y_val),
-                   batch_size=batch_size, epochs=spec_epochs * 20, shuffle=False,
-                   callbacks=[ModelCheckpoint('weights/spec.h5', period=1, save_weights_only=True),
-                              EarlyStopping(monitor='val_loss', patience=20)])
+                   batch_size=batch_size, epochs=spec_epochs, shuffle=False,
+                   callbacks=[ModelCheckpoint('weights/spec.h5', period=1, save_weights_only=True) ])
     # write_to_csv(f'plot_data/spec/loss/{filename}.csv', history.history)
     spec_pred_model = SpecializedNetwork(n_features=n_features, num_stocks=len(X_train), layer_sizes=layer_sizes,
                                          return_states=True, decoder=spec_model.decoder, is_bidir=is_bidir)
@@ -104,7 +104,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
     # The place for saving stuff for plotting
     # Only plot if the epoch > 0
-    for model in [gen_pred_model]  + ([spec_pred_model] if spec_epochs > 0 else []):
+    for model in ([gen_pred_model] if gen_epochs > 0 else [])  + ([spec_pred_model] if spec_epochs > 0 else []):
         has_context = isinstance(model, SpecializedNetwork)
         # If general model, give zeros as input, if context give stock ids as input
         init_state = model.encoder.predict(stock_list) if has_context else zero_states
@@ -136,12 +136,12 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         # plot('Val', np.array(stock_list).reshape(-1), result_val[:3], y_val_inv[:3])
 
         if type_search == 'feature':
-            with open(f"hyperparameter_search/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}", "a") as file:
+            with open(f"hyperparameter_search/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}{'_context' if has_context else ''}", "a") as file:
                 writer = csv.writer(file)
                 writer.writerow(list(evaluation.values()) + feature_list)
-            np.save(f"plot_data/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}_result",
+            np.save(f"plot_data/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}_result{'_context' if has_context else ''}",
                     result_val )
-            np.save(f"plot_data/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}_y",
+            np.save(f"plot_data/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}_y{'_context' if has_context else ''}",
                     y_val_inv )
         elif type_search == 'hyper':
             with open(f"hyperparameter_search/{type_search}_{seed}", "a") as file:
@@ -174,10 +174,10 @@ def hyperparameter_search(possible, other_args):
 
 
 def feature_search(other_args):
-    features_list = {'feature_list': [#['price'],
-                                      #['price', 'open', 'high', 'low', 'direction'],
-                                      #['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
-                                      #['price', 'trendscore'],
+    features_list = {'feature_list': [['price'],
+                                      ['price', 'open', 'high', 'low', 'direction'],
+                                      ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
+                                      ['price', 'trendscore'],
                                       ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
                                         'neutral_prop', 'trendscore']]}
     arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
@@ -259,8 +259,8 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
 arguments = {
     'copy_weights_from_gen_to_spec': False,
     'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 5000,
-    'spec_epochs': 0,
+    'gen_epochs': 0,
+    'spec_epochs': 5000,
     'load_gen': False,
     'load_spec': False,
     'dropout': .0,
