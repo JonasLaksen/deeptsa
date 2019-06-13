@@ -29,6 +29,7 @@ random.seed(seed)
 np.random.seed(seed)
 tf.set_random_seed(seed)
 session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+session_conf.gpu_options.allow_growth=True
 sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
 K.set_session(sess)
 
@@ -57,7 +58,7 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
     gen_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False, dropout=dropout)
     if load_gen:
-        gen_model = load_model(f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}", custom_objects={"StackedLSTM": Model, "CuDNNLSTM": LSTM})
+        #gen_model = load_model(f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}", custom_objects={"StackedLSTM": Model, "CuDNNLSTM": LSTM})
         # gen_model.load_weights(f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}")
         print('Loaded generalised model')
 

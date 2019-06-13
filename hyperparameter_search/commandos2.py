@@ -4,7 +4,7 @@ import pandas
 pandas.set_option('display.max_columns', 500)
 pandas.set_option('display.width', 1000)
 
-files = list(map(lambda i: pandas.read_csv(f'feature_{i}_21_21_21_bidir', names=range(25), header=None), range(3)))
+files = list(map(lambda i: pandas.read_csv(f'feature_{i}_32_32_bidir', names=range(25), header=None), range(3)))
 columns = files[0].columns[0:4]
 df = files[0][columns].append(files[1][columns]).append(files[1][columns])
 df = reduce(lambda left, right: pandas.merge(left, right, left_index=True, right_index=True),
