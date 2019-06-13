@@ -30,6 +30,7 @@ np.random.seed(seed)
 tf.set_random_seed(seed)
 session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
 session_conf.gpu_options.allow_growth=True
+session_conf.gpu_options.per_process_gpu_memory_fraction = 0.4
 sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
 K.set_session(sess)
 
@@ -173,10 +174,10 @@ def hyperparameter_search(possible, other_args):
 
 
 def feature_search(other_args):
-    features_list = {'feature_list': [['price'],
-                                      ['price', 'open', 'high', 'low', 'direction'],
-                                      ['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
-                                      ['price', 'trendscore'],
+    features_list = {'feature_list': [#['price'],
+                                      #['price', 'open', 'high', 'low', 'direction'],
+                                      #['price', 'positive_prop', 'negative_prop', 'neutral_prop'],
+                                      #['price', 'trendscore'],
                                       ['price', 'open', 'high', 'low', 'direction', 'positive_prop', 'negative_prop',
                                         'neutral_prop', 'trendscore']]}
     arguments_list = [{**other_args, **{i: j}} for i in features_list.keys() for j in features_list[i]]
