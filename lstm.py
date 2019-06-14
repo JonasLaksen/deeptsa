@@ -189,10 +189,11 @@ def feature_search(other_args):
 def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_generator=StackedLSTM, layer_sizes=[41],
           copy_weights_from_gen_to_spec=False, feature_list=[], optimizer=Adam(.01), dropout=.2, filename='test',
           loss='MAE', **_):
-    (X_train, X_val, X_test), \
-    (y_train, y_val, y_test), \
-    (y_train_dir, y_val_dir, y_test_dir), \
-    scaler_y = load_data(feature_list)
+    X, y, y_dir, scaler_y = load_data(feature_list)
+
+    training_size = int(.9 * len(X[0]))
+    X_train, y_train, y_train_dir = X[:, :training_size], y[:, :training_size], y_dir[:, :training_size]
+    X_val, y_val, y_val_dir = X[:, training_size:], y[:, training_size:], y_dir[:, training_size:]
 
     n_features = X_train.shape[2]
     batch_size = X_train.shape[0]
@@ -206,7 +207,7 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
     gen_model.compile(optimizer=optimizer, loss=loss)
     history = gen_model.fit([X_train] + zero_states, [y_train, y_train_dir], validation_data=([X_val] + zero_states,
                                                                                               [y_val, y_val_dir]),
-                            epochs=gen_epochs * 200,
+                            epochs=gen_epochs,
                             verbose=1,
                             shuffle=False,
                             batch_size=batch_size,
@@ -236,12 +237,11 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
 
         result_train, result_train_dir, *new_states = model.predict([X_train] + init_state)
         result_val, result_val_dir, *new_states = model.predict([X_val] + new_states)
-        result_test, result_test_dir, *_ = model.predict([X_test] + new_states)
 
-        result_train, result_val, result_test, y_train_inv, y_val_inv, y_test_inv = map(
+        result_train, result_val, y_train_inv, y_val_inv = map(
             # lambda x: scaler_y.inverse_transform(x).reshape(-1),
             lambda x: np.array(list(map(scaler_y.inverse_transform, x))),
-            [result_train, result_val, result_test, y_train, y_val, y_test])
+            [result_train, result_val, y_train, y_val])
 
         evaluation = evaluate(result_val, y_val_inv)
         with open(f"hyperparameter_search/{seed}", "a") as file:
@@ -250,14 +250,11 @@ def main2(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gen
             # writer.writerow(list(evaluation.values()) + feature_list)
 
 
-# main2(**arguments,
-#                      model_generator=StackedLSTM_Modified,
-#                      filename='test2')
 
 arguments = {
     'copy_weights_from_gen_to_spec': False,
     'feature_list': sum(trading_features + sentiment_features + trendscore_features, []),
-    'gen_epochs': 5000,
+    'gen_epochs': 5,
     'spec_epochs': 0,
     'load_gen': False,
     'load_spec': False,
@@ -265,20 +262,23 @@ arguments = {
     'optimizer': Adam(.001),
     'loss': 'MAE'
 }
-if type_search == 'hyper':
-    # Hyperparameter search
-    print('hyper search')
-    possible_hyperparameters = {
-        'dropout': [0, .2, .5],
-        'layer_sizes': [[32], [128], [160]],
-        'loss': ['MAE', 'MSE']
-    }
-    hyperparameter_search(possible_hyperparameters, arguments)
-elif type_search == 'feature':
-    # Feature search
-    print('feature search')
-    feature_search(arguments)
+# if type_search == 'hyper':
+#     # Hyperparameter search
+#     print('hyper search')
+#     possible_hyperparameters = {
+#         'dropout': [0, .2, .5],
+#         'layer_sizes': [[32], [128], [160]],
+#         'loss': ['MAE', 'MSE']
+#     }
+#     hyperparameter_search(possible_hyperparameters, arguments)
+# elif type_search == 'feature':
+#     # Feature search
+#     print('feature search')
+#     feature_search(arguments)
 
 # result = np.load('plot_data/feature_0_128_stacked_price_result.npy')[:3]
 # y = np.load('plot_data/feature_0_128_stacked_price_y.npy')[:3]
 # plot('Validation', range(100), result, y)
+main2(**arguments,
+      model_generator=StackedLSTM_Modified,
+      filename='test2')
