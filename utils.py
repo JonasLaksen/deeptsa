@@ -6,7 +6,7 @@ from zlib import compress, decompress
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot
+#from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 
@@ -33,14 +33,14 @@ def plot(title, stocklist, result, y, legends=['Predicted', 'True value']):
     [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], ['Predicted', 'True value'], ['Day', 'Price $']) for i in range(len(result))]
 
 
-def plot_one(title, xs, legends, axises):
-    assert len(xs) == len(legends)
-    pyplot.title(title)
-    [pyplot.plot(x, label=legends[i]) for i, x in enumerate(xs)]
-    pyplot.legend(loc='upper left')
-    pyplot.xlabel(axises[0])
-    pyplot.ylabel(axises[1])
-    pyplot.show()
+#def plot_one(title, xs, legends, axises):
+#    assert len(xs) == len(legends)
+#    pyplot.title(title)
+#    [pyplot.plot(x, label=legends[i]) for i, x in enumerate(xs)]
+#    pyplot.legend(loc='upper left')
+#    pyplot.xlabel(axises[0])
+#    pyplot.ylabel(axises[1])
+#    pyplot.show()
 
 
 def direction_value(x, y):
