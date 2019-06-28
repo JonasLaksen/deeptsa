@@ -12,13 +12,14 @@ from keras.engine.saving import load_model
 from keras.layers import RNN, LSTM
 from keras.optimizers import Adam
 
+from constants import stock_list
 from models import bidir_lstm_seq
 from models.bidir import BidirLSTM
 from models.bidir_lstm_seq import build_model
 from models.spec_network import SpecializedNetwork
 from models.stacked_lstm import StackedLSTM
 from models.stacked_lstm_modified import StackedLSTM_Modified
-from utils import evaluate, load_data, plot, write_to_csv
+from utils import evaluate, load_data, plot, write_to_csv, plot_one
 
 seed = int(sys.argv[1]) if sys.argv[1] else 0
 type_search = sys.argv[2] if sys.argv[2] else 'hyper'
@@ -268,23 +269,34 @@ arguments = {
     'optimizer': Adam(.001),
     'loss': 'MAE'
 }
-if type_search == 'hyper':
-    # Hyperparameter search
-    print('hyper search')
-    possible_hyperparameters = {
-        'dropout': [0, .2, .5],
-        'layer_sizes': [[32], [128], [160]],
-        'loss': ['MAE', 'MSE']
-    }
-    hyperparameter_search(possible_hyperparameters, arguments)
-elif type_search == 'feature':
-    # Feature search
-    print('feature search')
-    feature_search(arguments)
+# if type_search == 'hyper':
+#     # Hyperparameter search
+#     print('hyper search')
+#     possible_hyperparameters = {
+#         'dropout': [0, .2, .5],
+#         'layer_sizes': [[32], [128], [160]],
+#         'loss': ['MAE', 'MSE']
+#     }
+#     hyperparameter_search(possible_hyperparameters, arguments)
+# elif type_search == 'feature':
+#     # Feature search
+#     print('feature search')
+#     feature_search(arguments)
+#
 
-# result = np.load('plot_data/feature_0_128_stacked_price_result.npy')[:3]
-# y = np.load('plot_data/feature_0_128_stacked_price_y.npy')[:3]
-# plot('Validation', range(100), result, y)
-#main2(**arguments,
-#      model_generator=StackedLSTM_Modified,
-#      filename='test2')
+# result = np.load('plot_data/feature_0_64_bidir_price_trendscore_result_context.npy')
+# y = np.load('plot_data/feature_0_64_bidir_price_trendscore_y_context.npy')
+# plot('lstm_2_outputs_128', stock_list, result, y)
+
+# main2(**arguments,
+#       model_generator=StackedLSTM_Modified,
+#       filename='test2')
+
+
+import csv
+
+with open('loss-history20k.csv', newline='') as csvfile:
+    data = list(csv.reader(csvfile))
+
+plot_one('Loss history', xs=[list(map(float,data[0][100:])),list(map(float,data[1][100:]))], legends=['Validation loss', 'Training loss'], axises=[ 'Epoch', 'MAE loss'])
+
