@@ -269,20 +269,20 @@ arguments = {
     'optimizer': Adam(.001),
     'loss': 'MAE'
 }
-# if type_search == 'hyper':
-#     # Hyperparameter search
-#     print('hyper search')
-#     possible_hyperparameters = {
-#         'dropout': [0, .2, .5],
-#         'layer_sizes': [[32], [128], [160]],
-#         'loss': ['MAE', 'MSE']
-#     }
-#     hyperparameter_search(possible_hyperparameters, arguments)
-# elif type_search == 'feature':
-#     # Feature search
-#     print('feature search')
-#     feature_search(arguments)
-#
+if type_search == 'hyper':
+    # Hyperparameter search
+    print('hyper search')
+    possible_hyperparameters = {
+        'dropout': [0, .2, .5],
+        'layer_sizes': [[32], [128], [160]],
+        'loss': ['MAE', 'MSE']
+    }
+    hyperparameter_search(possible_hyperparameters, arguments)
+elif type_search == 'feature':
+    # Feature search
+    print('feature search')
+    feature_search(arguments)
+
 
 # result = np.load('plot_data/feature_0_64_bidir_price_trendscore_result_context.npy')
 # y = np.load('plot_data/feature_0_64_bidir_price_trendscore_y_context.npy')
@@ -292,11 +292,11 @@ arguments = {
 #       model_generator=StackedLSTM_Modified,
 #       filename='test2')
 
-
-import csv
-
-with open('loss-history20k.csv', newline='') as csvfile:
-    data = list(csv.reader(csvfile))
-
-plot_one('Loss history', xs=[list(map(float,data[0][100:])),list(map(float,data[1][100:]))], legends=['Validation loss', 'Training loss'], axises=[ 'Epoch', 'MAE loss'])
+#
+# import csv
+#
+# with open('loss-history20k.csv', newline='') as csvfile:
+#     data = list(csv.reader(csvfile))
+#
+# plot_one('Loss history', xs=[list(map(float,data[0][100:])),list(map(float,data[1][100:]))], legends=['Validation loss', 'Training loss'], axises=[ 'Epoch', 'MAE loss'])
 
