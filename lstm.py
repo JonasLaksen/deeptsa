@@ -41,7 +41,6 @@ set_session(sess)
 # plot_one('', [results.iloc[[0]].values[0, 100:], results.iloc[[1]].values[0, 100:]],
 #          ['Training loss', 'Validation loss'], ['Epoch', 'MAE loss'])
 
-
 def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_generator=StackedLSTM, layer_sizes=[41],
          copy_weights_from_gen_to_spec=False, feature_list=[], optimizer=Adam(.01), dropout=.2, filename='test',
          loss='MAE', **_):
@@ -61,6 +60,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
 
     gen_model = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False, dropout=dropout)
     if load_gen:
+        # gen_model = load_model(f"weights/gen.h5",  custom_objects={"StackedLSTM": Model, "CuDNNLSTM": LSTM});
+        gen_model.load_weights(f"weights/gen.h5")
         #gen_model = load_model(f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}", custom_objects={"StackedLSTM": Model, "CuDNNLSTM": LSTM})
         # gen_model.load_weights(f"saved_models/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}_{'_'.join(feature_list)}")
         print('Loaded generalised model')
@@ -68,10 +69,12 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
     # Create the general model
 
     gen_model.compile(optimizer=optimizer, loss=loss)
+    print(loss)
     history = gen_model.fit([X_train] + zero_states, y_train, validation_data=([X_val] + zero_states, y_val),
                             epochs=gen_epochs,
                             verbose=1,
                             shuffle=False,
+                            callbacks=[ModelCheckpoint('weights/gen.h5', period=1, save_weights_only=True) ],
                             batch_size=batch_size)
     #gen_model.load_weights("best-weights.hdf5")
 
@@ -133,8 +136,8 @@ def main(gen_epochs=0, spec_epochs=0, load_gen=True, load_spec=False, model_gene
         print('Val: ', evaluation)
         train_evaluation = evaluate(result_train, y_train_inv)
         print('Training:', train_evaluation)
-        # plot('Training', np.array(stock_list).reshape(-1), result_train[:3], y_train_inv[:3])
-        # plot('Val', np.array(stock_list).reshape(-1), result_val[:3], y_val_inv[:3])
+        # plot('Training', np.array(stock_list).reshape(-1), result_train[:], y_train_inv[:])
+        plot('Val', np.array(stock_list).reshape(-1), result_val[:], y_val_inv[:])
 
         if type_search == 'feature':
             with open(f"hyperparameter_search/{type_search}_{seed}_{'_'.join( str(x) for x in layer_sizes)}_{'bidir' if is_bidir else 'stacked'}{'_context' if has_context else ''}", "a") as file:
@@ -267,21 +270,21 @@ arguments = {
     'load_spec': False,
     'dropout': .0,
     'optimizer': Adam(.001),
-    'loss': 'MAE'
+    'loss': 'MAPE'
 }
-if type_search == 'hyper':
-    # Hyperparameter search
-    print('hyper search')
-    possible_hyperparameters = {
-        'dropout': [0, .2, .5],
-        'layer_sizes': [[32], [128], [160]],
-        'loss': ['MAE', 'MSE']
-    }
-    hyperparameter_search(possible_hyperparameters, arguments)
-elif type_search == 'feature':
-    # Feature search
-    print('feature search')
-    feature_search(arguments)
+# if type_search == 'hyper':
+#     # Hyperparameter search
+#     print('hyper search')
+#     possible_hyperparameters = {
+#         'dropout': [0, .2, .5],
+#         'layer_sizes': [[32], [128], [160]],
+#         'loss': ['MAE', 'MSE']
+#     }
+#     hyperparameter_search(possible_hyperparameters, arguments)
+# elif type_search == 'feature':
+#     # Feature search
+#     print('feature search')
+#     feature_search(arguments)
 
 
 # result = np.load('plot_data/feature_0_64_bidir_price_trendscore_result_context.npy')
@@ -300,3 +303,12 @@ elif type_search == 'feature':
 #
 # plot_one('Loss history', xs=[list(map(float,data[0][100:])),list(map(float,data[1][100:]))], legends=['Validation loss', 'Training loss'], axises=[ 'Epoch', 'MAE loss'])
 
+main(layer_sizes=layer_sizes,
+     feature_list= trading_features[0] ,
+     # feature_list= sum(trading_features + sentiment_features + trendscore_features, []),
+     load_gen=True,
+     gen_epochs=10,
+     spec_epochs=0,
+     model_generator=StackedLSTM,
+     loss='MSE',
+     filename='test')
