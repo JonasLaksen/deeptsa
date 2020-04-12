@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from src.lstm_one_output import LSTMOneOutput
 from src.models.stacked_lstm import StackedLSTM
-from src.utils import load_data, get_features
+from src.utils import load_data, get_features, plot, plot_one
 
 seed = int(sys.argv[1]) if sys.argv[1] else 0
 type_search = sys.argv[2] if sys.argv[2] else 'hyper'
@@ -30,8 +30,12 @@ def experiment_train_on_individual_stocks():
     description = 'Gå gjennom en og en aksje og noter evalueringen'
     feature_list = get_features()
     X, y, y_dir, X_stocks, scaler_y = load_data(feature_list)
+    X,y,y_dir,X_stocks = X, y,y_dir,X_stocks
     training_size = int(.9 * len(X[0]))
     stock_list = [np.arange(len(X)).reshape((len(X), 1, 1))]
+
+    all_losses = []
+    all_val_losses = []
 
     for i in range(X.shape[0]):
         X_stock, X_train, y_train, X_val, y_val = X_stocks[i:i + 1], \
@@ -58,8 +62,8 @@ def experiment_train_on_individual_stocks():
             'batch_size': batch_size,
             'stock_list': stock_list
         })
-        lstm.train(
-            gen_epochs=10,
+        losses = lstm.train(
+            gen_epochs=500,
             spech_epochs=0,
             copy_weights_from_gen_to_spec=False,
             load_spec=False,
@@ -71,11 +75,23 @@ def experiment_train_on_individual_stocks():
         )
         pathlib.Path(f'results/{os.path.basename(__file__)}/{experiment_timestamp}/aksje-{i}').mkdir(parents=True,
                                                                                                      exist_ok=True)
+        all_losses.append(losses['general_loss'])
+        all_val_losses.append(losses['general_val_loss'])
+
+        with open(f'results/{os.path.basename(__file__)}/{experiment_timestamp}/aksje-{i}/loss_history.txt', 'a+') as f:
+            f.write(str(losses['general_loss']))
+            f.write(str(losses['general_val_loss']))
         with open(f'results/{os.path.basename(__file__)}/{experiment_timestamp}/aksje-{i}/evaluation.txt', 'a+') as f:
             f.write(f'Training evaluation: {train_eval}\n')
             f.write(f'Validation evaluation: {val_eval}')
         with open(f'results/{os.path.basename(__file__)}/{experiment_timestamp}/aksje-{i}/meta.txt', 'a+') as f:
             f.write(lstm.meta(description))
+    print(all_losses)
+    np_all_losses = np.array(all_losses)
+    np_all_val_losses = np.array(all_val_losses)
+    means = np.mean(np_all_losses, axis=0)
+    val_means = np.mean(np_all_val_losses, axis=0)
+    plot_one('Loss history',[means, val_means], ['Training loss', 'Validation loss'], ['Epoch', 'Loss'])
 
 
 experiment_train_on_individual_stocks()

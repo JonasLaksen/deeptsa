@@ -3,7 +3,7 @@ import tensorflow as tf
 
 tf.random.set_seed(0)
 from datetime import datetime
-from keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 from src.models.spec_network import SpecializedNetwork
 from src.models.stacked_lstm import StackedLSTM
@@ -11,7 +11,8 @@ from src.utils import evaluate, plot
 
 
 class LSTMOneOutput:
-    def __init__(self, X_train, y_train, X_val, y_val, model_generator, dropout, optimizer, loss, stock_list, seed, feature_list,
+    def __init__(self, X_train, y_train, X_val, y_val, model_generator, dropout, optimizer, loss, stock_list, seed,
+                 feature_list,
                  n_features, batch_size, layer_sizes, X_stocks) -> None:
         self.X_train = X_train
         self.y_train = y_train
@@ -63,12 +64,15 @@ class LSTMOneOutput:
     def train(self, gen_epochs, spech_epochs, copy_weights_from_gen_to_spec, load_spec,
               load_gen, train_general, train_specialized):
         print(f"Training on {self.X_train.shape[0]} stocks")
+        losses = {}
         if load_gen:
             self.gen_model.load_weights(f'weights/{str(self.gen_model)}')
             print('Loaded general model')
 
         if train_general:
-            self.train_general( gen_epochs, self.n_features, self.batch_size)
+            general_loss, general_val_loss = self.train_general(gen_epochs, self.n_features, self.batch_size)
+            losses['general_loss'] = general_loss
+            losses['general_val_loss'] = general_val_loss
 
         if copy_weights_from_gen_to_spec:
             self.decoder.set_weights(self.gen_model.get_weights())
@@ -78,38 +82,48 @@ class LSTMOneOutput:
             print('Loaded specialised model')
 
         if train_specialized:
-            self.train_spec(self.X_train, self.y_train, self.X_val, self.y_val, spech_epochs, self.n_features, self.batch_size)
+            spec_loss, spec_val_loss = self.train_spec(self.X_train, self.y_train, self.X_val, self.y_val, spech_epochs,
+                                                       self.n_features, self.batch_size)
+            losses['spec_loss'] = spec_loss
+            losses['spec_val_loss'] = spec_val_loss
+        return losses
 
     def train_general(self, epochs, n_features, batch_size):
         is_bidir = self.model_generator is not StackedLSTM
         zero_states = [np.zeros((batch_size, self.layer_sizes[0]))] * len(self.layer_sizes) * 2 * (2 if is_bidir else 1)
-        history = self.gen_model.fit([self.X_train] + zero_states, self.y_train, validation_data=([self.X_val] + zero_states, self.y_val),
+        history = self.gen_model.fit([self.X_train] + zero_states, self.y_train,
+                                     validation_data=([self.X_val] + zero_states, self.y_val),
                                      epochs=epochs,
                                      verbose=0,
                                      shuffle=False,
                                      batch_size=batch_size)
         # gen_model.load_weights("best-weights.hdf5")
 
-        self.gen_pred_model = self.model_generator(n_features=n_features, layer_sizes=self.layer_sizes, return_states=True,
+        self.gen_pred_model = self.model_generator(n_features=n_features, layer_sizes=self.layer_sizes,
+                                                   return_states=True,
                                                    dropout=self.dropout)
         self.gen_pred_model.set_weights(self.gen_model.get_weights())
+        return history.history['loss'], history.history['val_loss']
 
     def train_spec(self, epochs, n_features, batch_size):
         is_bidir = self.model_generator is not StackedLSTM
         # Create the context model, set the decoder = the gen model
-        self.spec_model.fit([self.X_train] + self.stock_list, self.y_train, validation_data=([self.X_val] + self.stock_list, self.y_val),
-                            batch_size=batch_size, epochs=epochs, shuffle=False,
-                            callbacks=[ModelCheckpoint('weights/spec.h5', period=1, save_weights_only=True)])
+        history = self.spec_model.fit([self.X_train] + self.stock_list, self.y_train,
+                                      validation_data=([self.X_val] + self.stock_list, self.y_val),
+                                      batch_size=batch_size, epochs=epochs, shuffle=False,
+                                      callbacks=[ModelCheckpoint('weights/spec.h5', period=1, save_weights_only=True)])
         # write_to_csv(f'plot_data/spec/loss/{filename}.csv', history.history)
         spec_pred_model = SpecializedNetwork(n_features=n_features, num_stocks=len(self.X_train),
                                              layer_sizes=self.layer_sizes,
                                              return_states=True, decoder=self.spec_model.decoder, is_bidir=is_bidir)
         spec_pred_model.set_weights(self.spec_model.get_weights())
+        return history.history['loss'], history.history['val_loss']
 
     def generate_general_model_results(self, scaler_y):
         print(str(self))
         model = self.gen_pred_model
-        zero_states = [np.zeros((self.batch_size, self.layer_sizes[0]))] * len(self.layer_sizes) * 2 * (2 if self.is_bidir else 1)
+        zero_states = [np.zeros((self.batch_size, self.layer_sizes[0]))] * len(self.layer_sizes) * 2 * (
+            2 if self.is_bidir else 1)
         init_state = zero_states
 
         result_train, *new_states = model.predict([self.X_train] + init_state)
