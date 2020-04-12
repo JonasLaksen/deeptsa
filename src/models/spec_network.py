@@ -1,4 +1,4 @@
-from keras import Model, Input
+from tensorflow.keras import Model, Input
 
 from src.models.encoder import Encoder
 

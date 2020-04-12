@@ -1,5 +1,5 @@
-from keras import Model, Input
-from keras.layers import Reshape, Embedding
+from tensorflow.keras import Model, Input
+from tensorflow.keras.layers import Reshape, Embedding
 
 
 class Encoder(Model):
