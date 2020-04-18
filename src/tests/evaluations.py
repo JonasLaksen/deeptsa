@@ -33,5 +33,10 @@ class TestEvaluations(unittest.TestCase):
         print(DA.round(3))
         assert DA.round(3) == .750
 
+        r2 = np.asarray([1, 2, 3 ]).reshape((1,1,3))
+        y2 = np.asarray([1, 2, -1 ]).reshape((1,1,3))
+        DA2 = evaluate(r2, y2, y_type='price')['DA']
+        assert DA2.round(3) ==  0.5
+
 if __name__ == '__main__':
     unittest.main()
