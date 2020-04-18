@@ -50,6 +50,7 @@ def write_to_dataset_file():
     dfs = list(map(lambda x: data_from_stock(x), stock_list))
     for df in dfs:
         df['next_price'] = df['price'].shift(-1)
+        df['change'] = df['next_price'] - df['price']
         df['next_direction'] = df['direction'].shift(-1)
         for feature in ['price','volume','trendscore','positive','negative','neutral']:
             add_prev_feature(df, feature, 2)

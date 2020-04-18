@@ -5,7 +5,7 @@ from tensorflow import keras
 # if len(.tensorflow_backend._get_available_gpus()) > 0:
 if len(tf.config.experimental.list_physical_devices('GPU')) > 0:
     print('Using GPU')
-    from keras.layers import CuDNNLSTM as LSTM
+    from tensorflow.keras.layers import CuDNNLSTM as LSTM
 else:
     print('Using CPU')
     from tensorflow.keras.layers import LSTM
