@@ -49,6 +49,7 @@ class LSTMOneOutput:
             'features': ', '.join(self.feature_list),
             'model-type': {'bidir' if self.is_bidir else 'stacked'},
             'layer-sizes': f"[{', '.join(str(x) for x in self.layer_sizes)}]",
+            'loss': self.loss,
             'seed': self.seed,
             'description': description,
             'X-train-shape': self.X_train.shape,
@@ -94,7 +95,7 @@ class LSTMOneOutput:
         history = self.gen_model.fit([self.X_train] + zero_states, self.y_train,
                                      validation_data=([self.X_val] + zero_states, self.y_val),
                                      epochs=epochs,
-                                     verbose=0,
+                                     verbose=1,
                                      shuffle=False,
                                      batch_size=batch_size)
         # gen_model.load_weights("best-weights.hdf5")
@@ -147,4 +148,4 @@ class LSTMOneOutput:
         print('Training:', train_evaluation)
         plot('Training', np.array(self.stock_list).reshape(-1), result_train[:3], y_train_inv[:3])
         plot('Val', np.array(self.stock_list).reshape(-1), result_val[:3], y_val_inv[:3])
-        return train_evaluation, val_evaluation
+        return { 'training': train_evaluation, 'validation':val_evaluation}

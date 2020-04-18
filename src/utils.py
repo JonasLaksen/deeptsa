@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, FunctionTransformer
 
 
 def expand(x): return np.expand_dims(x, axis=0)
@@ -17,7 +17,7 @@ def expand(x): return np.expand_dims(x, axis=0)
 
 def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+    return np.mean(np.abs((y_true - y_pred) / (y_true + .0001))) * 100
 
 
 def evaluate(result, y):
@@ -47,10 +47,14 @@ def plot_one(title, xs, legends, axises):
 
 
 def direction_value(x, y):
-    if x > y:
-        return [0]
-    else:
+    if x >0 and y >0:
         return [1]
+    else:
+        return [0]
+    # if x > y:
+    #     return [0]
+    # else:
+    #     return [1]
 
 
 def mean_direction_eval(result, y):
@@ -137,7 +141,8 @@ def load_data(feature_list):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
     scaler_X = MinMaxScaler()
-    scaler_y = MinMaxScaler()
+    # scaler_y = MinMaxScaler()
+    scaler_y = FunctionTransformer(lambda x:x, lambda x:x)
 
     X = data['stock'].values.reshape(-1, 1)
 
@@ -151,7 +156,7 @@ def load_data(feature_list):
     if ('trendscore' in feature_list):
         X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
 
-    y = scaler_y.fit_transform(data['next_price'].values.reshape(-1, 1))
+    y = scaler_y.fit_transform(data['change'].values.reshape(-1, 1))
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
     y_dir = data['next_direction'].values.reshape(-1, 1)
     y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)

@@ -1,0 +1,9 @@
+time: 2020-04-09 15:45:56.027475
+features: price, volume, open, high, low, direction, positive_prop, negative_prop, neutral_prop, trendscore
+model-type: {'stacked'}
+layer-sizes: [64]
+seed: 0
+description: Gå gjennom en og en aksje og noter evalueringen
+X-train-shape: (1, 1494, 10)
+X-val-shape: (1, 167, 10)
+X-stocks: ['WMT']
