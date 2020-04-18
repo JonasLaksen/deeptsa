@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 from sklearn.svm import SVR
 from sklearn.linear_model import LinearRegression, Ridge
@@ -15,6 +16,13 @@ def naive_model(y_val, y_test):
 
     return result, y_test
 
+def random_model(y_test):
+
+    min_max_length = map(lambda x: (np.amin(x), np.amax(x), len(x)), y_test)
+
+    result = np.array(list(map(lambda x: [[random.uniform(x[0], x[1])] for i in range(x[2])], min_max_length)))
+
+    return result, y_test
 
 def svm(X_train, X_test, y_train, y_test):
 
