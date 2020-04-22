@@ -20,13 +20,13 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / (y_true + .0001))) * 100
 
 
-def evaluate(result, y):
+def evaluate(result, y, y_type = 'direction'):
     result = np.asarray(result).reshape((result.shape[0], -1))
     y = np.asarray(y).reshape((result.shape[0], -1))
     mape = mean_absolute_percentage_error(y, result)
     mae = mean_absolute_error(y, result)
     mse = mean_squared_error(y, result)
-    accuracy_direction = mean_direction_eval(result, y)
+    accuracy_direction = mean_direction_eval(result, y, y_type)
     return {'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
 
 
@@ -47,23 +47,25 @@ def plot_one(title, xs, legends, axises):
 
 
 def direction_value(x, y):
-    if x >0 and y >0:
-        return [1]
-    else:
+    if x > y:
         return [0]
-    # if x > y:
-    #     return [0]
-    # else:
-    #     return [1]
+    else:
+        return [1]
 
 
-def mean_direction_eval(result, y):
-    return np.mean(np.array(list(map(lambda x: direction_eval(x[0], x[1]), zip(result, y)))))
+def mean_direction_eval(result, y, y_type):
+    return np.mean(np.array(list(map(lambda x: direction_eval(x[0], x[1], y_type), zip(result, y)))))
 
 
-def direction_eval(result, y):
+def direction_eval(result, y, y_type = 'direction'):
     result_pair = list(map(lambda x, y: direction_value(x, y), result[:-1], result[1:]))
     y_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], y[1:]))
+    if(y_type == 'direction'):
+        n_same_dir = sum(list(map(lambda x,y: 1 if (x >= 0 and y >= 0) or (x < 0 and y<0) else 0, result, y)))
+        return n_same_dir/len(result)
+        # added_list = list(np.add(result_pair, y_pair))
+        # n_same_direction = len(list(filter(lambda x: x[0] == 0 or x[0] == 2, added_list)))
+        # return n_same_direction/len(added_list)
     return accuracy_score(y_pair, result_pair)
 
 
@@ -156,7 +158,8 @@ def load_data(feature_list):
     if ('trendscore' in feature_list):
         X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
 
-    y = scaler_y.fit_transform(data['change'].values.reshape(-1, 1))
+    y = scaler_y.fit_transform(data['next_price'].values.reshape(-1, 1))
+    # y = scaler_y.fit_transform(data['change'].values.reshape(-1, 1))
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
     y_dir = data['next_direction'].values.reshape(-1, 1)
     y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
