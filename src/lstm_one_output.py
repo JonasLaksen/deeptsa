@@ -120,7 +120,7 @@ class LSTMOneOutput:
         spec_pred_model.set_weights(self.spec_model.get_weights())
         return history.history['loss'], history.history['val_loss']
 
-    def generate_general_model_results(self, scaler_y):
+    def generate_general_model_results(self, scaler_y, y_type):
         print(str(self))
         model = self.gen_pred_model
         zero_states = [np.zeros((self.batch_size, self.layer_sizes[0]))] * len(self.layer_sizes) * 2 * (
@@ -142,8 +142,8 @@ class LSTMOneOutput:
             [result_train, result_val, self.y_train, self.y_val])
 
         y_train_inv = y_train_inv[:, 10:]
-        val_evaluation = evaluate(result_val, y_val_inv)
-        train_evaluation = evaluate(result_train, y_train_inv)
+        val_evaluation = evaluate(result_val, y_val_inv, y_type)
+        train_evaluation = evaluate(result_train, y_train_inv, y_type)
         print('Val: ', val_evaluation)
         print('Training:', train_evaluation)
         plot('Training', np.array(self.stock_list).reshape(-1), result_train[:3], y_train_inv[:3])
