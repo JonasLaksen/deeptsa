@@ -27,11 +27,10 @@ def calculate_n_features_and_batch_size(X_train):
     return X_train.shape[2], X_train.shape[0]
 
 
-def experiment_train_on_individual_stocks(epochs, n_stocks=100 ):
+def experiment_train_on_individual_stocks(epochs, n_stocks=100, y_type='next_price', feature_list=[] ):
     experiment_timestamp = datetime.now()
     description = 'Gå gjennom en og en aksje og noter evalueringen'
-    feature_list = get_features()
-    X, y, y_dir, X_stocks, scaler_y = load_data(feature_list)
+    X, y, y_dir, X_stocks, scaler_y = load_data(feature_list, y_type)
     X, y, y_dir, X_stocks = X, y, y_dir, X_stocks
     training_size = int(.9 * len(X[0]))
     stock_list = [np.arange(len(X)).reshape((len(X), 1, 1))]
@@ -45,6 +44,7 @@ def experiment_train_on_individual_stocks(epochs, n_stocks=100 ):
                                                   y[i:i + 1, :training_size], \
                                                   X[i:i + 1, training_size:], \
                                                   y[i:i + 1, training_size:]
+        lol = scaler_y.inverse_transform(y_train.reshape(1,-1))
         n_features, batch_size = calculate_n_features_and_batch_size(X_train)
         print(X_train.shape)
         lstm = LSTMOneOutput(**{
@@ -54,8 +54,8 @@ def experiment_train_on_individual_stocks(epochs, n_stocks=100 ):
             'X_val': X_val,
             'y_val': y_val,
             'feature_list': feature_list,
-            'dropout': .0,
-            'optimizer': tf.keras.optimizers.Adam(.1),
+            'dropout': .1,
+            'optimizer': tf.keras.optimizers.Adam(.001),
             'loss': 'MSE',
             'model_generator': StackedLSTM,
             'layer_sizes': layer_sizes,
@@ -73,7 +73,7 @@ def experiment_train_on_individual_stocks(epochs, n_stocks=100 ):
             train_general=True,
             train_specialized=False)
         evaluation = lstm.generate_general_model_results(
-            scaler_y=scaler_y
+            scaler_y=scaler_y, y_type=y_type
         )
         pathlib.Path(f'results/{os.path.basename(__file__)}/{experiment_timestamp}/aksje-{i}-{X_stocks[i]}').mkdir(
             parents=True,
@@ -124,5 +124,9 @@ def average_evaluation(filename):
         }, indent=4))
 
 
+feature_list = get_features()
 # average_evaluation('2020-04-13 13:12:51.674220')
-experiment_train_on_individual_stocks(200,1)
+# experiment_train_on_individual_stocks(500,1, 'change', get_features(trading=True, sentiment=False, trendscore=False ))
+experiment_train_on_individual_stocks(500,1, 'change', get_features(trading=False, sentiment=True, trendscore=False ))
+# experiment_train_on_individual_stocks(500,1, 'change', get_features(trading=False, sentiment=False, trendscore=True ))
+experiment_train_on_individual_stocks()

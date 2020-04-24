@@ -20,7 +20,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / (y_true + .0001))) * 100
 
 
-def evaluate(result, y, y_type = 'direction'):
+def evaluate(result, y, y_type = 'change'):
     result = np.asarray(result).reshape((result.shape[0], -1))
     y = np.asarray(y).reshape((result.shape[0], -1))
     mape = mean_absolute_percentage_error(y, result)
@@ -57,15 +57,12 @@ def mean_direction_eval(result, y, y_type):
     return np.mean(np.array(list(map(lambda x: direction_eval(x[0], x[1], y_type), zip(result, y)))))
 
 
-def direction_eval(result, y, y_type = 'direction'):
-    result_pair = list(map(lambda x, y: direction_value(x, y), result[:-1], result[1:]))
-    y_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], y[1:]))
-    if(y_type == 'direction'):
+def direction_eval(result, y, y_type = 'change'):
+    if(y_type == 'change'):
         n_same_dir = sum(list(map(lambda x,y: 1 if (x >= 0 and y >= 0) or (x < 0 and y<0) else 0, result, y)))
         return n_same_dir/len(result)
-        # added_list = list(np.add(result_pair, y_pair))
-        # n_same_direction = len(list(filter(lambda x: x[0] == 0 or x[0] == 2, added_list)))
-        # return n_same_direction/len(added_list)
+    result_pair = list(map(lambda x, y: direction_value(x, y), result[:-1], result[1:]))
+    y_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], y[1:]))
     return accuracy_score(y_pair, result_pair)
 
 
@@ -119,7 +116,6 @@ def get_feature_list_lags(features, lags=0):
     return all_features
 
 
-# dict: { data1: [1,2,3], data2: [4,5,6]}
 def write_to_csv(filename, dict):
     try:
         with open(filename, 'w') as file:
@@ -139,12 +135,12 @@ def from_filename_to_args(filename):
     return decompress(decoded)
 
 
-def load_data(feature_list):
+def load_data(feature_list, y_type='next_price'):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
     scaler_X = MinMaxScaler()
-    # scaler_y = MinMaxScaler()
-    scaler_y = FunctionTransformer(lambda x:x, lambda x:x)
+    scaler_y = MinMaxScaler()
+    # scaler_y = FunctionTransformer(lambda x:x, lambda x:x)
 
     X = data['stock'].values.reshape(-1, 1)
 
@@ -158,7 +154,7 @@ def load_data(feature_list):
     if ('trendscore' in feature_list):
         X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
 
-    y = scaler_y.fit_transform(data['next_price'].values.reshape(-1, 1))
+    y = scaler_y.fit_transform(data[y_type].values.reshape(-1, 1))
     # y = scaler_y.fit_transform(data['change'].values.reshape(-1, 1))
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
     y_dir = data['next_direction'].values.reshape(-1, 1)
@@ -174,7 +170,7 @@ def load_data(feature_list):
 
 
 trading_features = [['price', 'volume'], ['open', 'high', 'low'], ['direction']]
-sentiment_features = [['positive_prop', 'negative_prop', 'neutral_prop']]
+sentiment_features = [['positive', 'negative', 'neutral']]#,['positive_prop', 'negative_prop', 'neutral_prop']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
 temp = sum(map(lambda r: list(combinations(s, r)), range(1, len(s) + 1)), [])
