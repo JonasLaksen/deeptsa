@@ -43,8 +43,10 @@ class LSTMOneOutput:
         # self.spec_model.compile(optimizer=self.optimizer, loss=self.loss)
         super().__init__()
 
-    def meta(self, description):
+    def meta(self, description, epochs):
         dict = {
+            'dropout': self.dropout,
+            'epochs': epochs,
             'time': str(datetime.now()),
             'features': ', '.join(self.feature_list),
             'model-type': {'bidir' if self.is_bidir else 'stacked'},
