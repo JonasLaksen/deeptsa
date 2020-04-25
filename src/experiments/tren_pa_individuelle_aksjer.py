@@ -44,9 +44,7 @@ def experiment_train_on_individual_stocks(epochs, n_stocks=100, y_type='next_pri
                                                   y[i:i + 1, :training_size], \
                                                   X[i:i + 1, training_size:], \
                                                   y[i:i + 1, training_size:]
-        lol = scaler_y.inverse_transform(y_train.reshape(1,-1))
         n_features, batch_size = calculate_n_features_and_batch_size(X_train)
-        print(X_train.shape)
         lstm = LSTMOneOutput(**{
             'X_stocks': X_stock,
             'X_train': X_train,
@@ -92,7 +90,7 @@ def experiment_train_on_individual_stocks(epochs, n_stocks=100, y_type='next_pri
             f.write(json.dumps(evaluation, indent=4));
         with open(f'results/{os.path.basename(__file__)}/{experiment_timestamp}/aksje-{i}-{X_stocks[i]}/meta.txt',
                   'a+') as f:
-            f.write(lstm.meta(description))
+            f.write(lstm.meta(description, epochs))
     print(all_losses)
     np_all_losses = np.array(all_losses)
     np_all_val_losses = np.array(all_val_losses)
@@ -125,8 +123,11 @@ def average_evaluation(filename):
 
 
 feature_list = get_features()
-# average_evaluation('2020-04-13 13:12:51.674220')
-# experiment_train_on_individual_stocks(500,1, 'change', get_features(trading=True, sentiment=False, trendscore=False ))
-experiment_train_on_individual_stocks(500,1, 'change', get_features(trading=False, sentiment=True, trendscore=False ))
-# experiment_train_on_individual_stocks(500,1, 'change', get_features(trading=False, sentiment=False, trendscore=True ))
-experiment_train_on_individual_stocks()
+sentiment_features_prop = ['positive_prop', 'negative_prop', 'neutral_prop']
+sentiment_features_n = ['positive', 'negative', 'neutral']
+sentiment_features_both = sentiment_features_n + sentiment_features_prop
+# experiment_train_on_individual_stocks(2000,1, 'change', sentiment_features_prop)
+# experiment_train_on_individual_stocks(2000,1, 'change', sentiment_features_n)
+# experiment_train_on_individual_stocks(2000,1, 'change', sentiment_features_both)
+feature_list = ['price', 'prev_change_0','prev_change_1', 'prev_price_0', 'prev_price_1' ]
+experiment_train_on_individual_stocks(500,1, 'next_change', feature_list)
