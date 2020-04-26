@@ -80,7 +80,7 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
 
 def main():
-    X, y, y_dir, _, scaler_y = load_data(feature_list, y_type='change')
+    X, y, y_dir, _, scaler_y = load_data(feature_list, y_type='next_change')
     X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
 
     training_size = int(.9 * len(X[0]))
@@ -100,7 +100,7 @@ def main():
 
     # plot("Baseline model", stock_list, result, y)
 
-    print(evaluate(result, y, y_type='change'))
+    print(evaluate(result, y, y_type='next_change'))
 
 main()
 #
