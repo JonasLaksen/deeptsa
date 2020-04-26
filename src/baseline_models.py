@@ -100,8 +100,8 @@ def main():
 
     # result, y = naive_model(y_train, y_test)
     # result, y = linear_regression(X_train, X_test, y_train, y_test)
-    # result, y = ridge_regression(X_train, X_test, y_train, y_test)
-    result, y = random_model(y_train, y_test)
+    result, y = ridge_regression(X_train, X_test, y_train, y_test)
+    # result, y = random_model(y_train, y_test)
 
     # Not in use
     # result, y = gaussian_process(X_train, X_val, y_train, y_val)

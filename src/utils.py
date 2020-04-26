@@ -143,8 +143,8 @@ def load_data(feature_list):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
     scaler_X = MinMaxScaler()
-    # scaler_y = MinMaxScaler()
-    scaler_y = FunctionTransformer(lambda x:x, lambda x:x)
+    scaler_y = MinMaxScaler()
+    # scaler_y = FunctionTransformer(lambda x:x, lambda x:x)
 
     X = data['stock'].values.reshape(-1, 1)
 
