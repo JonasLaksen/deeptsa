@@ -63,7 +63,7 @@ def ridge_regression(X_train, X_test, y_train, y_test):
     result = []
 
     for i in range(X_train.shape[0]):
-        logistic_model = Ridge()
+        logistic_model = Ridge(alpha=0.0000000000001)
         y = y_train[i].reshape(-1)
         logistic_model.fit(X_train[i], y_train[i].reshape(-1))
         partial_result = logistic_model.predict(X_test[i])
@@ -100,8 +100,8 @@ def main():
 
     # result, y = naive_model(y_train, y_test)
     # result, y = linear_regression(X_train, X_test, y_train, y_test)
-    # result, y = ridge_regression(X_train, X_test, y_train, y_test)
-    result, y = random_model(y_train, y_test)
+    result, y = ridge_regression(X_train, X_test, y_train, y_test)
+    # result, y = random_model(y_train, y_test)
 
     # Not in use
     # result, y = gaussian_process(X_train, X_val, y_train, y_val)
