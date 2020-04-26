@@ -15,9 +15,9 @@ feature_list = ['price', 'high', 'low', 'open', 'volume', 'direction',
                 'trendscore']
 
 
-def naive_model(y_val, y_test):
-    result = np.append(y_val[:, -1:], y_test[:, :-1], axis=1)
-    # result = np.zeros((43, 167))
+def naive_model(y_val, y_test, scaler_y):
+    # result = np.append(y_val[:, -1:], y_test[:, :-1], axis=1)
+    result = scaler_y.transform(np.zeros((y_val.shape[0], 167)))
 
     return result, y_test
 
@@ -92,7 +92,8 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
 
 def main():
-    X, y, y_dir, _, scaler_y = load_data(feature_list)
+    X, y, y_dir, _, scaler_y = load_data(feature_list, y_type='next_change')
+    X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
 
     training_size = int(.9 * len(X[0]))
     X_train, y_train = X[:, :training_size], y[:, :training_size]
@@ -107,12 +108,12 @@ def main():
     # result, y = gaussian_process(X_train, X_val, y_train, y_val)
     # result, y = svm(X_train, X_test, y_train, y_test)
 
-    result = scaler_y.inverse_transform(result.reshape(43, -1))
-    y = scaler_y.inverse_transform(y.reshape(43, -1))
+    result = scaler_y.inverse_transform(result.reshape(X.shape[0], -1))
+    y = scaler_y.inverse_transform(y.reshape(X.shape[0], -1))
 
     # plot("Baseline model", stock_list, result, y)
 
-    print(evaluate(result, y, y_type='price'))
+    print(evaluate(result, y, y_type='next_change'))
 
 main()
 #
