@@ -20,7 +20,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / (y_true + .0001))) * 100
 
 
-def evaluate(result, y, y_type = 'change'):
+def evaluate(result, y, y_type = 'next_change'):
     result = np.asarray(result).reshape((result.shape[0], -1))
     y = np.asarray(y).reshape((result.shape[0], -1))
     mape = mean_absolute_percentage_error(y, result)
@@ -57,8 +57,8 @@ def mean_direction_eval(result, y, y_type):
     return np.mean(np.array(list(map(lambda x: direction_eval(x[0], x[1], y_type), zip(result, y)))))
 
 
-def direction_eval(result, y, y_type = 'change'):
-    if(y_type == 'change'):
+def direction_eval(result, y, y_type = 'next_change'):
+    if(y_type == 'next_change'):
         n_same_dir = sum(list(map(lambda x,y: 1 if (x >= 0 and y >= 0) or (x < 0 and y<0) else 0, result, y)))
         return n_same_dir/len(result)
     result_pair = list(map(lambda x, y: direction_value(x, y), result[:-1], result[1:]))
@@ -170,7 +170,8 @@ def load_data(feature_list, y_type='next_price'):
 
 
 trading_features = [['price', 'volume'], ['open', 'high', 'low'], ['direction']]
-sentiment_features = [['positive', 'negative', 'neutral']]#,['positive_prop', 'negative_prop', 'neutral_prop']]
+# sentiment_features = [['positive', 'negative', 'neutral']]#,['positive_prop', 'negative_prop', 'neutral_prop']]
+sentiment_features = [['positive_prop', 'negative_prop', 'neutral_prop']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
 temp = sum(map(lambda r: list(combinations(s, r)), range(1, len(s) + 1)), [])
