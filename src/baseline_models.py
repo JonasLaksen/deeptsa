@@ -10,9 +10,11 @@ from sklearn.svm import SVR
 
 from src.utils import load_data, evaluate
 
-feature_list = ['price', 'high', 'low', 'open', 'volume', 'direction',
-                'neutral_prop', 'positive_prop', 'negative_prop', 'negative', 'positive', 'neutral',
-                'trendscore']
+feature_list = [
+    'price', 'high', 'low', 'open', 'volume', 'direction',
+    'neutral_prop', 'positive_prop', 'negative_prop', 'negative', 'positive', 'neutral',
+    'trendscore'
+]
 
 
 def naive_model(y_val, y_test, scaler_y):
@@ -63,7 +65,7 @@ def ridge_regression(X_train, X_test, y_train, y_test):
     result = []
 
     for i in range(X_train.shape[0]):
-        logistic_model = Ridge(alpha=0.0000000000001)
+        logistic_model = Ridge(alpha=1.0)
         y = y_train[i].reshape(-1)
         logistic_model.fit(X_train[i], y_train[i].reshape(-1))
         partial_result = logistic_model.predict(X_test[i])
@@ -90,10 +92,28 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
     return result, y_test
 
+def leave_one_out():
+    y_type = 'next_price'
+    for feature in feature_list:
+        feature_list_updated = [f for f in feature_list if f != feature]
+        X, y, y_dir, _, scaler_y = load_data(feature_list_updated, y_type=y_type)
+        # X, y, y_dir = X[0:1, :], y[0:1, :], y_dir[0:1, :]
+
+        training_size = int(.9 * len(X[0]))
+        X_train, y_train = X[:, :training_size], y[:, :training_size]
+        X_test, y_test = X[:, training_size:], y[:, training_size:]
+
+        result, y = ridge_regression(X_train, X_test, y_train, y_test)
+
+        result = scaler_y.inverse_transform(result.reshape(X.shape[0], -1))
+        y = scaler_y.inverse_transform(y.reshape(X.shape[0], -1))
+
+        print(feature, evaluate(result, y, y_type=y_type))
 
 def main():
-    X, y, y_dir, _, scaler_y = load_data(feature_list, y_type='next_change')
-    X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
+    y_type = 'next_price'
+    X, y, y_dir, _, scaler_y = load_data(feature_list, y_type=y_type)
+    # X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
 
     training_size = int(.9 * len(X[0]))
     X_train, y_train = X[:, :training_size], y[:, :training_size]
@@ -113,9 +133,10 @@ def main():
 
     # plot("Baseline model", stock_list, result, y)
 
-    print(evaluate(result, y, y_type='next_change'))
+    print(evaluate(result, y, y_type=y_type))
 
 main()
+leave_one_out()
 #
 # {'MAPE': 99.28900686324292, 'MAE': 2.327998885949032, '
 # MSE': 53.22970058487674, 'DA': 0.5173374181868822}
