@@ -57,11 +57,13 @@ def mean_direction_eval(result, y, y_type):
     return np.mean(np.array(list(map(lambda x: direction_eval(x[0], x[1], y_type), zip(result, y)))))
 
 
-def direction_eval(result, y, y_type = 'next_change'):
-    if(y_type == 'next_change'):
+def direction_eval(result, y, y_type):
+    print(f'Direction Accuracy for {y_type}')
+    if y_type == 'next_change':
         n_same_dir = sum(list(map(lambda x,y: 1 if (x >= 0 and y >= 0) or (x < 0 and y<0) else 0, result, y)))
         return n_same_dir/len(result)
-    result_pair = list(map(lambda x, y: direction_value(x, y), result[:-1], result[1:]))
+
+    result_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], result[1:]))
     y_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], y[1:]))
     return accuracy_score(y_pair, result_pair)
 
