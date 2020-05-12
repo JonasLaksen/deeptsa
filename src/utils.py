@@ -35,7 +35,7 @@ def plot(title, stocklist, result, y, legends=['Predicted', 'True value']):
      range(len(result))]
 
 
-def plot_one(title, xs, legends, axises):
+def plot_one(title, xs, legends, axises, filename = ''):
     assert len(xs) == len(legends)
     pyplot.title(title)
     [pyplot.plot(x, label=legends[i]) for i, x in enumerate(xs)]
@@ -43,6 +43,8 @@ def plot_one(title, xs, legends, axises):
     pyplot.xlabel(axises[0])
     pyplot.ylabel(axises[1])
 
+    if(len(filename) > 0):
+        pyplot.savefig(filename, bbox_inches='tight')
     pyplot.show()
 
 

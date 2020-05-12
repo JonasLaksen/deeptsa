@@ -11,8 +11,8 @@ feature_list = ['price', 'high', 'low', 'open', 'volume', 'direction',
 
 
 def naive_model(y_val, y_test, scaler_y):
-    result = np.append(y_val[:, -1:], y_test[:, :-1], axis=1)
-    # result = scaler_y.transform(np.zeros((y_val.shape[0], 167)))
+    # result = np.append(y_val[:, -1:], y_test[:, :-1], axis=1)
+    result = scaler_y.transform(np.zeros((y_val.shape[0], 166)))
 
     return result, y_test
 
@@ -81,7 +81,7 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
 def main(y_type):
     X, y, y_dir, _, scaler_y = load_data(feature_list, y_type=y_type)
-    # X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
+    X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
     print(X.shape)
 
     training_size = int(.9 * len(X[0]))
@@ -103,4 +103,4 @@ def main(y_type):
 
     print(evaluate(result, y, y_type=y_type))
 
-main('next_price')
+main('next_change')

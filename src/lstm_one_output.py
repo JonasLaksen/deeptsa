@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import tensorflow as tf
 
@@ -5,9 +7,10 @@ tf.random.set_seed(0)
 from datetime import datetime
 from tensorflow.keras.callbacks import ModelCheckpoint
 
+
 from src.models.spec_network import SpecializedNetwork
 from src.models.stacked_lstm import StackedLSTM
-from src.utils import evaluate, plot
+from src.utils import evaluate, plot, plot_one
 
 
 class LSTMOneOutput:
@@ -122,32 +125,27 @@ class LSTMOneOutput:
         spec_pred_model.set_weights(self.spec_model.get_weights())
         return history.history['loss'], history.history['val_loss']
 
-    def generate_general_model_results(self, scaler_y, y_type):
+    def generate_general_model_results(self, scaler_y, y_type, title, filename):
         print(str(self))
         model = self.gen_pred_model
-        zero_states = [np.zeros((self.batch_size, self.layer_sizes[0]))] * len(self.layer_sizes) * 2 * (
-            2 if self.is_bidir else 1)
-        init_state = zero_states
+        X = np.concatenate(( self.X_train, self.X_val ), axis=1)
+        y = np.concatenate(( self.y_train, self.y_val ), axis=1)
+        result = model.predict([X])
+        results_inverse_scaled = scaler_y.inverse_transform(result.reshape(1, -1))
+        y_inverse_scaled = scaler_y.inverse_transform(y.reshape(1, -1))
+        training_size = self.X_train.shape[1]
+        result_train, result_val = results_inverse_scaled[0][:training_size].reshape(1, -1), results_inverse_scaled[0][
+                                                                                             training_size:].reshape(1,
+                                                                                                                     -1)
+        y_train, y_val = y_inverse_scaled[0][:training_size].reshape(1, -1), y_inverse_scaled[0][
+                                                                             training_size:].reshape(1, -1)
 
-        result_train, *new_states = model.predict([self.X_train] + init_state)
-        result_train = result_train[:, 10:]
-        result_val = None
-        for i in range(self.X_val.shape[1]):
-            temp, *new_states = model.predict([np.append(self.X_train, self.X_val[:, :i + 1], axis=1)] + new_states)
-            if result_val is None:
-                result_val = temp[:, -1:]
-            else:
-                result_val = np.append(result_val, temp[:, -1:], axis=1)
-
-        result_train, result_val, y_train_inv, y_val_inv = map(
-            lambda x: np.array(list(map(scaler_y.inverse_transform, x))),
-            [result_train, result_val, self.y_train, self.y_val])
-
-        y_train_inv = y_train_inv[:, 10:]
-        val_evaluation = evaluate(result_val, y_val_inv, y_type)
-        train_evaluation = evaluate(result_train, y_train_inv, y_type)
+        val_evaluation = evaluate(result_val, y_val, y_type)
+        train_evaluation = evaluate(result_train, y_train, y_type)
         print('Val: ', val_evaluation)
         print('Training:', train_evaluation)
-        plot('Training', np.array(self.stock_list).reshape(-1), result_train[:3], y_train_inv[:3])
-        plot('Val', np.array(self.stock_list).reshape(-1), result_val[:3], y_val_inv[:3])
+        plot_one(f'{title}: Training', [result_train[0], y_train[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-train.png')
+        plot_one(f'{title}: Test', [result_val[0], y_val[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-val.png')
+        np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
+        np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
         return { 'training': train_evaluation, 'validation':val_evaluation}
