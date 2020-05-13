@@ -126,7 +126,6 @@ class LSTMOneOutput:
         return history.history['loss'], history.history['val_loss']
 
     def generate_general_model_results(self, scaler_y, y_type, title, filename):
-        print(str(self))
         model = self.gen_pred_model
         X = np.concatenate(( self.X_train, self.X_val ), axis=1)
         y = np.concatenate(( self.y_train, self.y_val ), axis=1)
