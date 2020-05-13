@@ -53,8 +53,6 @@ def write_to_dataset_file():
         df['next_change'] = df['next_price'] - df['price']
         df['change'] = df['next_change'].shift(1)
         df['next_direction'] = df['direction'].shift(-1)
-        for feature in ['price','volume','trendscore','positive','negative','neutral','change']:
-            add_prev_feature(df, feature, 2)
 
         # df['change'] = df['next_price'] - df['price']
         # df['change_percent'] = (df['next_price'] - df['price'])/df['price']
@@ -62,6 +60,8 @@ def write_to_dataset_file():
         df['positive_prop'] = df['positive'] / total_sent
         df['negative_prop'] = df['negative'] / total_sent
         df['neutral_prop'] = df['neutral'] / total_sent
+        for feature in ['price','volume','trendscore','positive','negative','neutral','change','low','high','open','direction', 'positive_prop', 'negative_prop', 'neutral_prop']:
+            add_prev_feature(df, feature, 3)
 
     dfs = map(lambda x: x[1:-2], dfs)
     pd.concat(dfs).to_csv('dataset_v2.csv')

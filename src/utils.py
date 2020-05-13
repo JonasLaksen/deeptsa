@@ -35,7 +35,7 @@ def plot(title, stocklist, result, y, legends=['Predicted', 'True value']):
      range(len(result))]
 
 
-def plot_one(title, xs, legends, axises):
+def plot_one(title, xs, legends, axises, filename = ''):
     assert len(xs) == len(legends)
     pyplot.title(title)
     [pyplot.plot(x, label=legends[i]) for i, x in enumerate(xs)]
@@ -43,6 +43,8 @@ def plot_one(title, xs, legends, axises):
     pyplot.xlabel(axises[0])
     pyplot.ylabel(axises[1])
 
+    if(len(filename) > 0):
+        pyplot.savefig(filename, bbox_inches='tight')
     pyplot.show()
 
 
@@ -104,6 +106,7 @@ def group_by_stock(data):
 
     group_by_dict = {k: v for k, v in group_by_dict.items() if len(v) > 1600}
     data_size = len(min(group_by_dict.values(), key=len))
+    # data_size = 1661
     data = list(map(lambda x: np.array(group_by_dict[x][-data_size:]), group_by_dict.keys()))
     return np.array(data)
 
@@ -140,6 +143,10 @@ def from_filename_to_args(filename):
 def load_data(feature_list, y_type='next_price'):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
+    # data = data[data.stock =='AAPL']
+    feature_list_element_not_in_dataset = set(feature_list) - set(data.columns.values)
+    if(len(feature_list_element_not_in_dataset) > 0):
+        raise Exception(f'En feature ligger ikke i datasettet {feature_list_element_not_in_dataset}')
     scaler_X = MinMaxScaler()
     scaler_y = MinMaxScaler()
     # scaler_y = FunctionTransformer(lambda x:x, lambda x:x)
@@ -157,11 +164,13 @@ def load_data(feature_list, y_type='next_price'):
         X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
 
     y = scaler_y.fit_transform(data[y_type].values.reshape(-1, 1))
-    # y = scaler_y.fit_transform(data['change'].values.reshape(-1, 1))
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
     y_dir = data['next_direction'].values.reshape(-1, 1)
     y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
     X = group_by_stock(X)
+    if(X.shape[2] != len(feature_list)+1):
+        raise Exception('Lengden er feil')
+
     y = group_by_stock(y)
     y_dir = group_by_stock(y_dir)
     return X[:, :, 1:].astype(np.float), \
@@ -189,3 +198,6 @@ def get_features(trading=True, sentiment=True, trendscore=True):
     if (trendscore):
         list.extend(trendscore_features)
     return sum(list, [])
+
+def flatten_list(l):
+    return [item for sublist in l for item in sublist]
