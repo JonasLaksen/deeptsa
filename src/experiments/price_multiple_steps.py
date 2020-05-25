@@ -28,7 +28,7 @@ def calculate_n_features_and_batch_size(X_train):
 
 def experiment_price_multiple_steps(epochs, n_stocks=100, y_type='next_price', feature_list=[] ):
     experiment_timestamp = datetime.now()
-    description = 'Gå gjennom alle aksjer med priser bak i tid som features'
+    # description = 'Gå gjennom alle aksjer med priser bak i tid som features'
     X, y, y_dir, X_stocks, scaler_y = load_data(feature_list, y_type)
     X, y, y_dir, X_stocks = X, y, y_dir, X_stocks
     training_size = int(.9 * len(X[0]))
@@ -80,4 +80,4 @@ feature_list = get_features(trading=False)
 # feature_list = feature_list + feature_lags
 # feature_list = [feature for feature in feature_list if feature != 'price']
 print(feature_list)
-experiment_price_multiple_steps(1000, n_stocks=43, feature_list=feature_list)
+experiment_price_multiple_steps(10, n_stocks=43, feature_list=feature_list)
