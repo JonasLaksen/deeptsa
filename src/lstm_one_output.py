@@ -130,7 +130,7 @@ class LSTMOneOutput:
         init_state = zero_states
 
         result_train, *new_states = model.predict([self.X_train] + init_state)
-        result_train = result_train[:, 10:]
+        # result_train = result_train[:, 10:]
         result_val = None
         for i in range(self.X_val.shape[1]):
             temp, *new_states = model.predict([np.append(self.X_train, self.X_val[:, :i + 1], axis=1)] + new_states)
@@ -143,7 +143,7 @@ class LSTMOneOutput:
             lambda x: np.array(list(map(scaler_y.inverse_transform, x))),
             [result_train, result_val, self.y_train, self.y_val])
 
-        y_train_inv = y_train_inv[:, 10:]
+        # y_train_inv = y_train_inv[:, 10:]
         val_evaluation = evaluate(result_val, y_val_inv, y_type)
         train_evaluation = evaluate(result_train, y_train_inv, y_type)
         print('Val: ', val_evaluation)
