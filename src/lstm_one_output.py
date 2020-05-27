@@ -35,7 +35,7 @@ class LSTMOneOutput:
         self.gen_model = self.model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False,
                                               dropout=self.dropout)
 
-        self.gen_model.compile(optimizer=self.optimizer, loss=self.loss)
+        self.gen_model.compile(optimizer=self.optimizer, loss=self.loss, metrics=['mape', 'mae', 'mse'])
 
         self.decoder = self.model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=True,
                                             dropout=self.dropout)

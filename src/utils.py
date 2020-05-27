@@ -143,6 +143,11 @@ def from_filename_to_args(filename):
 def load_data(feature_list, y_type='next_price'):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
+    data['all_positive'] = data.groupby('date')['positive'].sum()
+    data['all_negative'] = data.groupby('date')['negative'].sum()
+    data['all_neutral'] = data.groupby('date')['neutral'].sum()
+    print(data.iloc[0][data.index])
+    print(data.iloc[0])
     # data = data[data.stock =='AAPL']
     feature_list_element_not_in_dataset = set(feature_list) - set(data.columns.values)
     if(len(feature_list_element_not_in_dataset) > 0):
@@ -182,7 +187,8 @@ def load_data(feature_list, y_type='next_price'):
 
 trading_features = [['price', 'volume'], ['open', 'high', 'low'], ['direction']]
 # sentiment_features = [['positive', 'negative', 'neutral']]#,['positive_prop', 'negative_prop', 'neutral_prop']]
-sentiment_features = [['positive_prop', 'negative_prop', 'neutral_prop']]
+# sentiment_features = [['positive_prop', 'negative_prop', 'neutral_prop']]
+sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop', 'neutral_prop'], ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
 temp = sum(map(lambda r: list(combinations(s, r)), range(1, len(s) + 1)), [])

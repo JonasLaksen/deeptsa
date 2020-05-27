@@ -48,6 +48,7 @@ def add_prev_feature(df, feature, n):
 
 def write_to_dataset_file():
     dfs = list(map(lambda x: data_from_stock(x), stock_list))
+    print(str([df.iloc[0]['stock'] for df in dfs]))
     for df in dfs:
         df['next_price'] = df['price'].shift(-1)
         df['next_change'] = df['next_price'] - df['price']
