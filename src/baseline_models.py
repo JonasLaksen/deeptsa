@@ -83,14 +83,14 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
 def main(y_type):
     X, y, y_dir, _, scaler_y = load_data(feature_list, y_type=y_type)
-    # X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
+    X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
     print(X.shape)
 
     training_size = int(.9 * len(X[0]))
     X_train, y_train = X[:, :training_size], y[:, :training_size]
     X_test, y_test = X[:, training_size:], y[:, training_size:]
 
-    result, y = naive_model(y_train, y_test, scaler_y)
+    result, y = naive_model(y_train, y_test, scaler_y, y_type)
     # result, y = linear_regression(X_train, X_test, y_train, y_test)
     # result, y = ridge_regression(X_train, X_test, y_train, y_test)
 
