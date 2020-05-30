@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from src import constants
+from statsmodels.tsa.seasonal import seasonal_decompose, STL
 
 
 def plot_correlation(data, x_name, y_name):
@@ -12,12 +13,13 @@ if __name__ == '__main__':
     all_data = pd.read_csv('dataset_v2.csv')
     for stock in constants.stock_list:
 
-
         data = all_data[all_data['stock'] == stock]
-        plot_correlation(data, 'direction', 'next_direction')
-
+        # plot_correlation(data, 'direction', 'next_direction')
+        data = data[['price']].reset_index(drop=True)
+        result = seasonal_decompose(data, period=261)
+        result.plot()
         plt.show()
-        break
+        plt.close()
 
         # acf = plot_acf(data[['price']].values, lags=200, title=stock + ' Autocorrelation')
         # pacf = plot_pacf(data[['price']].values, lags=85, title=stock + ' Partial Autocorrelation')
