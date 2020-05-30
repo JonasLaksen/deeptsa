@@ -26,9 +26,9 @@ def calculate_n_features_and_batch_size(X_train):
     return X_train.shape[2], X_train.shape[0]
 
 
-def experiment_price_multiple_steps(epochs, y_type='next_price', feature_list=[], experiment_name="default_multiple_steps"):
+def experiment_no_trading_data(epochs, y_type='next_price', feature_list=[], experiment_name="no_trading_data"):
     experiment_timestamp = datetime.now()
-    description = 'Analyse all stocks with multiple steps backwards and evaluate'
+    description = 'Analyse all stocks without trading data and evaluate'
     X, y, y_dir, X_stocks, scaler_y = load_data(feature_list, y_type)
     X, y, y_dir, X_stocks = X, y, y_dir, X_stocks
     training_size = int(.9 * len(X[0]))
@@ -80,7 +80,7 @@ def experiment_price_multiple_steps(epochs, y_type='next_price', feature_list=[]
     if not os.path.exists(directory):
         os.makedirs(directory)
     evaluation = lstm.generate_general_model_results(
-        scaler_y=scaler_y, y_type=y_type, title="Multiple steps back", filename=f
+        scaler_y=scaler_y, y_type=y_type, title="No trading data", filename=f
     '{ directory }/plot'
     )
     with open(
@@ -99,22 +99,10 @@ def experiment_price_multiple_steps(epochs, y_type='next_price', feature_list=[]
     plot_one('Loss history', [losses['general_loss'], losses['general_val_loss']], ['Training loss', 'Validation loss'], ['Epoch', 'Loss'])
 
 
-feature_list = get_features()
-feature_list = get_feature_list_lags(feature_list, lags=1);
-experiment_price_multiple_steps(5000, y_type="next_price", feature_list=feature_list, experiment_name="default_multiple_steps_1")
 
-feature_list = get_features()
-feature_list = get_feature_list_lags(feature_list, lags=2);
-experiment_price_multiple_steps(5000, y_type="next_price", feature_list=feature_list, experiment_name="default_multiple_steps_2")
 
-feature_list = get_features()
-feature_lags = get_feature_list_lags(["price"], lags=1);
-feature_list = feature_list + feature_lags
-experiment_price_multiple_steps(5000, y_type="next_price", feature_list=feature_list, experiment_name="default_multiple_price_steps_1")
+feature_list = get_features(trading=False)
+experiment_no_trading_data(5000, y_type="next_price", feature_list=feature_list)
 
-feature_list = get_features()
-feature_lags = get_feature_list_lags(["price"], lags=2);
-feature_list = feature_list + feature_lags
-experiment_price_multiple_steps(5000, y_type="next_price", feature_list=feature_list, experiment_name="default_multiple_price_steps_2")
 
 
