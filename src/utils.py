@@ -32,7 +32,7 @@ def evaluate(result, y, y_type = 'next_change'):
 
 
 def plot(title, stocklist, result, y, legends=['Predicted', 'True value']):
-    [plot_one(f'{title}: {s_l[i]}', [result[i], y[i]], ['Predicted', 'True value'], ['Day', 'Price $']) for i in
+    [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], ['Predicted', 'True value'], ['Day', 'Price $']) for i in
      range(len(result))]
 
 
