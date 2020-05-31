@@ -32,7 +32,7 @@ def calculate_n_features_and_batch_size(X_train):
 def experiment_train_on_individual_stocks(epochs, n_stocks, y_type, feature_list, layer_sizes):
     reset_seed()
     print(feature_list)
-    experiment_timestamp = datetime.now()
+    experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
     description = 'Gå gjennom en og en aksje og noter evalueringen'
     X, y, y_dir, X_stocks, scaler_y = load_data(feature_list, y_type)
     X, y, y_dir, X_stocks = X, y, y_dir, X_stocks
@@ -135,22 +135,22 @@ sentiment_features_prop = ['positive_prop', 'negative_prop', 'neutral_prop']
 sentiment_features_n = ['positive', 'negative', 'neutral']
 sentiment_features_both = sentiment_features_n + sentiment_features_prop
 prev_features = [f'prev_{feature}_{step}' for feature in [ "change", "price", "positive", "negative", "neutral", "trendscore", "volume" ] for step in range(3)]
-experiment_train_on_individual_stocks(100000,1, 'next_change', ['price'], layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', get_features(trading=True, sentiment=False, trendscore=False), layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', get_features(trading=False, sentiment=True, trendscore=False), layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', get_features(trading=False, sentiment=False, trendscore=True), layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', get_features(trading=True, sentiment=True, trendscore=False), layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', get_features(trading=True, sentiment=False, trendscore=True), layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', get_features(trading=False, sentiment=True, trendscore=True), layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', get_features(trading=True, sentiment=True, trendscore=True), layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', ['price'], layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=True, sentiment=False, trendscore=False), layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=False, sentiment=True, trendscore=False), layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=False, sentiment=False, trendscore=True), layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=True, sentiment=True, trendscore=False), layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=True, sentiment=False, trendscore=True), layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=False, sentiment=True, trendscore=True), layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=True, sentiment=True, trendscore=True), layer_sizes=[128])
 
 prev_features_trading = [f'prev_{feature}_{step}' for feature in get_features(trading=True, sentiment=False, trendscore=False) for step in range(3)]
 prev_features_sentiment = [f'prev_{feature}_{step}' for feature in sentiment_features_both for step in range(3)]
 prev_features_trend = [f'prev_{feature}_{step}' for feature in get_features(trading=False, sentiment=False, trendscore=True) for step in range(3)]
 prev_features_all = [f'prev_{feature}_{step}' for feature in get_features(trading=True, sentiment=False, trendscore=True) + sentiment_features_both for step in range(3)]
 
-experiment_train_on_individual_stocks(100000,1, 'next_change', feature_list + prev_features_trading, layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', feature_list + prev_features_sentiment, layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', feature_list + prev_features_trend, layer_sizes=[128])
-experiment_train_on_individual_stocks(100000,1, 'next_change', feature_list + prev_features_all, layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', feature_list + prev_features_trading, layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', feature_list + prev_features_sentiment, layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', feature_list + prev_features_trend, layer_sizes=[128])
+experiment_train_on_individual_stocks(10000,1, 'next_change', feature_list + prev_features_all, layer_sizes=[128])
 #
