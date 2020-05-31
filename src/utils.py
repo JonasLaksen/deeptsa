@@ -147,9 +147,6 @@ def load_data(feature_list, y_type='next_price'):
     data['all_positive'] = data.groupby('date')['positive'].sum()
     data['all_negative'] = data.groupby('date')['negative'].sum()
     data['all_neutral'] = data.groupby('date')['neutral'].sum()
-    print(data.iloc[0][data.index])
-    print(data.iloc[0])
-    # data = data[data.stock =='AAPL']
     feature_list_element_not_in_dataset = set(feature_list) - set(data.columns.values)
     if(len(feature_list_element_not_in_dataset) > 0):
         raise Exception(f'En feature ligger ikke i datasettet {feature_list_element_not_in_dataset}')
