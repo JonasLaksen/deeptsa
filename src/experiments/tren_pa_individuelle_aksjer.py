@@ -13,9 +13,7 @@ from src.lstm_one_output import LSTMOneOutput
 from src.models.stacked_lstm import StackedLSTM
 from src.utils import load_data, get_features, plot_one
 
-seed = int(sys.argv[1]) if sys.argv[1] else 0
-type_search = sys.argv[2] if sys.argv[2] else 'hyper'
-model_type = sys.argv[4] if sys.argv[4] else 'stacked'
+seed = 0
 os.environ['PYTHONHASHSEED'] = str(seed)
 
 def reset_seed():
