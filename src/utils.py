@@ -145,6 +145,7 @@ def from_filename_to_args(filename):
 def load_data(feature_list, y_type='next_price'):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
+    data = data[data['stock'] == 'AAPL']
     data['all_positive'] = data.groupby('date')['positive'].sum()
     data['all_negative'] = data.groupby('date')['negative'].sum()
     data['all_neutral'] = data.groupby('date')['neutral'].sum()
@@ -158,8 +159,10 @@ def load_data(feature_list, y_type='next_price'):
     X = data['stock'].values.reshape(-1, 1)
 
     try:
-        scaled_X = scaler_X.fit_transform(data[[x for x in feature_list if x is not 'trendscore']].values)
-        X = np.append(X, scaled_X, axis=1)
+        lol = data[[x for x in feature_list if x is not 'trendscore']].values
+        # scaled_X_training = scaler_X.fit_transform(data[[x for x in feature_list if x is not 'trendscore']].values)
+        # scaled_X_test = scaler_X.transform(data[[x for x in feature_list if x is not 'trendscore']].values)
+        X = np.append(X, lol, axis=1)
     except:
         # If there are no features to be scaled an error is thrown, e.g. when feature list only consists of trendscore
         pass
@@ -167,19 +170,39 @@ def load_data(feature_list, y_type='next_price'):
     if ('trendscore' in feature_list):
         X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
 
-    y = scaler_y.fit_transform(data[y_type].values.reshape(-1, 1))
+    # y = scaler_y.fit_transform(data[y_type].values.reshape(-1, 1))
+    y = data[y_type].values.reshape(-1, 1)
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
-    y_dir = data['next_direction'].values.reshape(-1, 1)
-    y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
+    y = group_by_stock(y)
+    # y = y[:, :, 1:]
+    # y_dir = group_by_stock(y_dir)
+    # y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
+    # y_dir = data['next_direction'].values.reshape(-1, 1)
+    # y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
     X = group_by_stock(X)
-    if(X.shape[2] != len(feature_list)+1):
+    train_size = int(X.shape[1]*.9)
+    test_size =int(X.shape[1]*.1)
+
+    X_train = X[:,:train_size,1:]
+    X_test = X[:,train_size:,1:]
+    y_train = y[:,:train_size, 1:]
+    y_test = y[:,train_size:, 1:]
+    for i in range(X_train.shape[0]):
+        X_train[i] = scaler_X.fit_transform(X_train[i])
+        y_train[i] = scaler_y.fit_transform(y_train[i])
+    for i in range(X_train.shape[0]):
+        X_test[i] = scaler_X.transform(X_test[i])
+        y_test[i] = scaler_y.transform(y_test[i])
+
+    X = np.append(X_train, X_test, axis=1)
+    y = np.append(y_train, y_test, axis=1)
+
+    if(X.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
 
-    y = group_by_stock(y)
-    y_dir = group_by_stock(y_dir)
-    return X[:, :, 1:].astype(np.float), \
-           y[:, :, 1:].astype(np.float), \
-           y_dir[:, :, 1:].astype(np.float), \
+    return X.astype(np.float), \
+           y.astype(np.float), \
+           'lol', \
            X[:, 0,0], \
            scaler_y
 
