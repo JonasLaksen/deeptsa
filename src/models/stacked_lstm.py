@@ -4,7 +4,7 @@ from tensorflow import keras
 
 if len(tf.config.experimental.list_physical_devices('GPU')) > 0:
     print('Using GPU')
-    from tensorflow.keras.layers import CuDNNLSTM as LSTM
+    from tensorflow.python.keras.layers import CuDNNLSTM as LSTM
 else:
     print('Using CPU')
     from tensorflow.keras.layers import LSTM
@@ -16,7 +16,7 @@ class StackedLSTM(keras.models.Model):
 
         output = X
         for i, size in enumerate(layer_sizes):
-            lstm = LSTM(size, return_sequences=True, return_state=True)
+            lstm = LSTM(size, return_sequences=True, return_state=True)#, dropout=dropout)
             output, *states = lstm(output)
             output = tf.keras.layers.Dropout(dropout)(output)
 
