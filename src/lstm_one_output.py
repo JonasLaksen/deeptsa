@@ -146,8 +146,8 @@ class LSTMOneOutput:
         train_evaluation = evaluate(result_train, y_train, y_type)
         print('Val: ', val_evaluation)
         print('Training:', train_evaluation)
-        # plot_one(f'{title}: Training', [result_train[0], y_train[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-train.png')
-        # plot_one(f'{title}: Test', [result_val[0], y_val[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-val.png')
-        # np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
-        # np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
+        plot_one(f'{title}: Training', [result_train[0], y_train[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-train.png')
+        plot_one(f'{title}: Test', [result_val[0], y_val[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-val.png')
+        np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
+        np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
         return { 'training': train_evaluation, 'validation':val_evaluation}
