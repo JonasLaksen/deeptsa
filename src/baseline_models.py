@@ -103,7 +103,8 @@ def leave_one_out():
         X_train, y_train = X[:, :training_size], y[:, :training_size]
         X_test, y_test = X[:, training_size:], y[:, training_size:]
 
-        result, y = ridge_regression(X_train, X_test, y_train, y_test)
+        # result, y = ridge_regression(X_train, X_test, y_train, y_test)
+        result, y = linear_regression(X_train, X_test, y_train, y_test)
 
         result = scaler_y.inverse_transform(result.reshape(X.shape[0], -1))
         y = scaler_y.inverse_transform(y.reshape(X.shape[0], -1))
