@@ -86,6 +86,8 @@ def experiment_train_on_individual_stocks(epochs, n_stocks, y_type, feature_list
         print(scores)
         all_losses.append(losses['general_loss'])
         all_val_losses.append(losses['general_val_loss'])
+        plot_one('Loss history', [losses['general_loss'], losses['general_val_loss']], ['Training loss', 'Test loss'], ['Epoch', 'Loss'],
+                 f'{directory}/loss_history.png')
 
         with open(
                 f'results/{os.path.basename(__file__)}/{experiment_timestamp}/aksje-{i}-{X_stocks[i]}/loss_history.txt',
@@ -104,7 +106,7 @@ def experiment_train_on_individual_stocks(epochs, n_stocks, y_type, feature_list
     np_all_val_losses = np.array(all_val_losses)
     means = np.mean(np_all_losses, axis=0)
     val_means = np.mean(np_all_val_losses, axis=0)
-    plot_one('Loss history', [means, val_means], ['Training loss', 'Validation loss'], ['Epoch', 'Loss'])
+    plot_one('Loss history', [means, val_means], ['Training loss', 'Validation loss'], ['Epoch', 'Loss'], f'{directory}/loss_history.png')
 
 
 def average_evaluation(filename):
