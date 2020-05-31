@@ -106,7 +106,7 @@ def experiment_train_on_individual_stocks(epochs, n_stocks, y_type, feature_list
     np_all_val_losses = np.array(all_val_losses)
     means = np.mean(np_all_losses, axis=0)
     val_means = np.mean(np_all_val_losses, axis=0)
-    plot_one('Loss history', [means, val_means], ['Training loss', 'Validation loss'], ['Epoch', 'Loss'], f'{directory}/loss_history.png')
+    # plot_one('Loss history', [means, val_means], ['Training loss', 'Validation loss'], ['Epoch', 'Loss'], f'{directory}/loss_history.png')
 
 
 def average_evaluation(filename):
@@ -137,7 +137,7 @@ sentiment_features_prop = ['positive_prop', 'negative_prop', 'neutral_prop']
 sentiment_features_n = ['positive', 'negative', 'neutral']
 sentiment_features_both = sentiment_features_n + sentiment_features_prop
 prev_features = [f'prev_{feature}_{step}' for feature in [ "change", "price", "positive", "negative", "neutral", "trendscore", "volume" ] for step in range(3)]
-experiment_train_on_individual_stocks(10000,1, 'next_change', ['price'], layer_sizes=[128])
+experiment_train_on_individual_stocks(100,1, 'next_change', ['price'], layer_sizes=[128])
 experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=True, sentiment=False, trendscore=False), layer_sizes=[128])
 experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=False, sentiment=True, trendscore=False), layer_sizes=[128])
 experiment_train_on_individual_stocks(10000,1, 'next_change', get_features(trading=False, sentiment=False, trendscore=True), layer_sizes=[128])
