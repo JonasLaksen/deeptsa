@@ -47,6 +47,7 @@ def plot_one(title, xs, legends, axises, filename = ''):
     if(len(filename) > 0):
         pyplot.savefig(filename, bbox_inches='tight')
     pyplot.show()
+    pyplot.close()
 
 
 def direction_value(x, y):
