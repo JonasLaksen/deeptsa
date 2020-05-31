@@ -10,6 +10,7 @@ import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler, FunctionTransformer
+from src.constants import stock_list as s_l
 
 
 def expand(x): return np.expand_dims(x, axis=0)
@@ -21,8 +22,8 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 
 def evaluate(result, y, y_type = 'next_change'):
-    result = np.asarray(result).reshape((result.shape[0], -1))
-    y = np.asarray(y).reshape((result.shape[0], -1))
+    # result = np.asarray(result).reshape((result.shape[0], -1))
+    # y = np.asarray(y).reshape((result.shape[0], -1))
     mape = mean_absolute_percentage_error(y, result)
     mae = mean_absolute_error(y, result)
     mse = mean_squared_error(y, result)
