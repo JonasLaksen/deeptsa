@@ -82,7 +82,6 @@ def experiment_train_on_individual_stocks(epochs, n_stocks, y_type, feature_list
         evaluation = lstm.generate_general_model_results(
             scaler_y=scaler_y, y_type=y_type, title=X_stock[0], filename=f'{ directory }/plot'
         )
-        lstm.gen_model.save_weights(f'{directory}/weights.h5')
         scores = lstm.gen_model.evaluate(X_val, y_val, batch_size=batch_size)
         print(scores)
         all_losses.append(losses['general_loss'])
