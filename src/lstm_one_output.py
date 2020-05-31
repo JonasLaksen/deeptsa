@@ -129,22 +129,25 @@ class LSTMOneOutput:
         model = self.gen_pred_model
         X = np.concatenate(( self.X_train, self.X_val ), axis=1)
         y = np.concatenate(( self.y_train, self.y_val ), axis=1)
+        n_stocks = self.X_train.shape[0]
         result = model.predict([X])
-        results_inverse_scaled = scaler_y.inverse_transform(result.reshape(1, -1))
-        y_inverse_scaled = scaler_y.inverse_transform(y.reshape(1, -1))
+        results_inverse_scaled = scaler_y.inverse_transform(result.reshape(n_stocks, -1))
+        y_inverse_scaled = scaler_y.inverse_transform(y.reshape(n_stocks, -1))
         training_size = self.X_train.shape[1]
-        result_train, result_val = results_inverse_scaled[0][:training_size].reshape(1, -1), results_inverse_scaled[0][
-                                                                                             training_size:].reshape(1,
-                                                                                                                     -1)
-        y_train, y_val = y_inverse_scaled[0][:training_size].reshape(1, -1), y_inverse_scaled[0][
-                                                                             training_size:].reshape(1, -1)
+
+        result_train = results_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
+        result_val   = results_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
+
+        y_train = y_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
+        y_val   = y_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
+
 
         val_evaluation = evaluate(result_val, y_val, y_type)
         train_evaluation = evaluate(result_train, y_train, y_type)
         print('Val: ', val_evaluation)
         print('Training:', train_evaluation)
-        plot_one(f'{title}: Training', [result_train[0], y_train[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-train.png')
-        plot_one(f'{title}: Test', [result_val[0], y_val[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-val.png')
-        np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
-        np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
+        # plot_one(f'{title}: Training', [result_train[0], y_train[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-train.png')
+        # plot_one(f'{title}: Test', [result_val[0], y_val[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-val.png')
+        # np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
+        # np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
         return { 'training': train_evaluation, 'validation':val_evaluation}

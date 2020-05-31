@@ -22,8 +22,8 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 
 def evaluate(result, y, y_type = 'next_change'):
-    result = np.asarray(result).reshape((result.shape[0], -1))
-    y = np.asarray(y).reshape((result.shape[0], -1))
+    # result = np.asarray(result).reshape((result.shape[0], -1))
+    # y = np.asarray(y).reshape((result.shape[0], -1))
     mape = mean_absolute_percentage_error(y, result)
     mae = mean_absolute_error(y, result)
     mse = mean_squared_error(y, result)
