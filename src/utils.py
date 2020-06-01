@@ -142,7 +142,7 @@ def from_filename_to_args(filename):
     return decompress(decoded)
 
 
-def load_data(feature_list, y_type='next_price'):
+def load_data(feature_list, y_type, train_portion):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
     data = data[data['stock'] == 'AAPL']
@@ -159,10 +159,8 @@ def load_data(feature_list, y_type='next_price'):
     X = data['stock'].values.reshape(-1, 1)
 
     try:
-        lol = data[[x for x in feature_list if x is not 'trendscore']].values
-        # scaled_X_training = scaler_X.fit_transform(data[[x for x in feature_list if x is not 'trendscore']].values)
-        # scaled_X_test = scaler_X.transform(data[[x for x in feature_list if x is not 'trendscore']].values)
-        X = np.append(X, lol, axis=1)
+        values = data[[x for x in feature_list if x is not 'trendscore']].values
+        X = np.append(X, values, axis=1)
     except:
         # If there are no features to be scaled an error is thrown, e.g. when feature list only consists of trendscore
         pass
@@ -170,18 +168,15 @@ def load_data(feature_list, y_type='next_price'):
     if ('trendscore' in feature_list):
         X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
 
-    # y = scaler_y.fit_transform(data[y_type].values.reshape(-1, 1))
     y = data[y_type].values.reshape(-1, 1)
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
     y = group_by_stock(y)
-    # y = y[:, :, 1:]
-    # y_dir = group_by_stock(y_dir)
-    # y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
-    # y_dir = data['next_direction'].values.reshape(-1, 1)
-    # y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
+    y_dir = data['next_direction'].values.reshape(-1, 1)
+    y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
+    y_dir = group_by_stock(y_dir)
+
     X = group_by_stock(X)
-    train_size = int(X.shape[1]*.9)
-    test_size =int(X.shape[1]*.1)
+    train_size = int(X.shape[1]*train_portion)
 
     X_train = X[:,:train_size,1:]
     X_test = X[:,train_size:,1:]
@@ -194,22 +189,17 @@ def load_data(feature_list, y_type='next_price'):
         X_test[i] = scaler_X.transform(X_test[i])
         y_test[i] = scaler_y.transform(y_test[i])
 
-    X = np.append(X_train, X_test, axis=1)
-    y = np.append(y_train, y_test, axis=1)
-
-    if(X.shape[2] != len(feature_list)):
+    if(X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
 
-    return X.astype(np.float), \
-           y.astype(np.float), \
-           'lol', \
+    return X_train.astype(np.float), y_train.astype(np.float), \
+           X_test.astype(np.float), y_test.astype(np.float), \
+           y_dir[:,:,1:], \
            X[:, 0,0], \
            scaler_y
 
 
-trading_features = [['price', 'volume'], ['open', 'high', 'low'], ['direction']]
-# sentiment_features = [['positive', 'negative', 'neutral']]#,['positive_prop', 'negative_prop', 'neutral_prop']]
-# sentiment_features = [['positive_prop', 'negative_prop', 'neutral_prop']]
+trading_features = [['price', 'volume', 'change'], ['open', 'high', 'low'], ['direction']]
 sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop', 'neutral_prop']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
