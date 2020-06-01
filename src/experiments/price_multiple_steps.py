@@ -33,19 +33,12 @@ def calculate_n_features_and_batch_size(X_train):
 def experiment_price_multiple_steps(epochs, y_type='next_price', feature_list=[], experiment_name="default_multiple_steps"):
     experiment_timestamp = datetime.now()
     description = 'Analyse all stocks with multiple steps backwards and evaluate'
-    X, y, y_dir, X_stocks, scaler_y = load_data(feature_list, y_type)
-    X, y, y_dir, X_stocks = X, y, y_dir, X_stocks
-    training_size = int(.9 * len(X[0]))
+    X_train, y_train, X_val, y_val, y_dir, X_stocks, scaler_y = load_data(feature_list, y_type, .9)
 
-    X_train, y_train = X[:, :training_size], y[:, :training_size]
-    X_val, y_val = X[:, training_size:], y[:, training_size:]
-
+    X = np.append(X_train, X_val, axis=1)
     n_features, batch_size = calculate_n_features_and_batch_size(X_train)
 
-
     stock_list = [np.arange(len(X)).reshape((len(X), 1, 1))]
-
-
 
     lstm = LSTMOneOutput(**{
             'X_stocks': X_stocks,
