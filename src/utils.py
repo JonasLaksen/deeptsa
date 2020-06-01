@@ -142,7 +142,7 @@ def from_filename_to_args(filename):
     return decompress(decoded)
 
 
-def load_data(feature_list, y_type, train_portion):
+def load_data(feature_list, y_type, train_portion, should_scale_y=True):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
     data = data[data['stock'] == 'AAPL']
@@ -153,8 +153,9 @@ def load_data(feature_list, y_type, train_portion):
     if(len(feature_list_element_not_in_dataset) > 0):
         raise Exception(f'En feature ligger ikke i datasettet {feature_list_element_not_in_dataset}')
     scaler_X = MinMaxScaler()
-    scaler_y = MinMaxScaler()
-    # scaler_y = FunctionTransformer(lambda x:x, lambda x:x)
+    scaler_y = MinMaxScaler() \
+        if should_scale_y \
+        else FunctionTransformer(lambda x:x, lambda x:x)
 
     X = data['stock'].values.reshape(-1, 1)
 
@@ -184,10 +185,12 @@ def load_data(feature_list, y_type, train_portion):
     y_test = y[:,train_size:, 1:]
     for i in range(X_train.shape[0]):
         X_train[i] = scaler_X.fit_transform(X_train[i])
-        y_train[i] = scaler_y.fit_transform(y_train[i])
+        if should_scale_y:
+            y_train[i] = scaler_y.fit_transform(y_train[i])
     for i in range(X_train.shape[0]):
         X_test[i] = scaler_X.transform(X_test[i])
-        y_test[i] = scaler_y.transform(y_test[i])
+        if should_scale_y:
+            y_test[i] = scaler_y.transform(y_test[i])
 
     if(X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
