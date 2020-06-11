@@ -31,8 +31,8 @@ def evaluate(result, y, y_type = 'next_change'):
     return {'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
 
 
-def plot(title, stocklist, result, y, legends=['Predicted', 'True value']):
-    [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], ['Predicted', 'True value'], ['Day', 'Price $']) for i in
+def plot(directory, title, stocklist, result, y, legends=['Predicted', 'True value'], axises=['Day', 'Price $'], ):
+    [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], legends, axises, f'{directory}/{title}-{i}.png') for i in
      range(len(result))]
 
 
@@ -62,7 +62,6 @@ def mean_direction_eval(result, y, y_type):
 
 
 def direction_eval(result, y, y_type):
-    print(f'Direction Accuracy for {y_type}')
     if y_type == 'next_change':
         n_same_dir = sum(list(map(lambda x,y: 1 if (x >= 0 and y >= 0) or (x < 0 and y<0) else 0, result, y)))
         return n_same_dir/len(result)
@@ -142,10 +141,10 @@ def from_filename_to_args(filename):
     return decompress(decoded)
 
 
-def load_data(feature_list, y_type, train_portion, should_scale_y=True):
+def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should_scale_y=True):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
-    data = data[data['stock'] == 'AAPL']
+    # data = data[data['stock'] == 'AAPL']
     data['all_positive'] = data.groupby('date')['positive'].sum()
     data['all_negative'] = data.groupby('date')['negative'].sum()
     data['all_neutral'] = data.groupby('date')['neutral'].sum()
@@ -178,11 +177,12 @@ def load_data(feature_list, y_type, train_portion, should_scale_y=True):
 
     X = group_by_stock(X)
     train_size = int(X.shape[1]*train_portion)
+    remove_size = int(X.shape[1]*remove_portion_at_end)
 
     X_train = X[:,:train_size,1:]
-    X_test = X[:,train_size:,1:]
+    X_test = X[:,train_size:-remove_size,1:]
     y_train = y[:,:train_size, 1:]
-    y_test = y[:,train_size:, 1:]
+    y_test = y[:,train_size:-remove_size, 1:]
     for i in range(X_train.shape[0]):
         X_train[i] = scaler_X.fit_transform(X_train[i])
         if should_scale_y:
