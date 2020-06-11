@@ -31,8 +31,8 @@ def evaluate(result, y, y_type = 'next_change'):
     return {'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
 
 
-def plot(title, stocklist, result, y, legends=['Predicted', 'True value']):
-    [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], ['Predicted', 'True value'], ['Day', 'Price $']) for i in
+def plot(directory, title, stocklist, result, y, legends=['Predicted', 'True value'], axises=['Day', 'Price $'], ):
+    [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], legends, axises, f'{directory}/{title}-{i}.png') for i in
      range(len(result))]
 
 
@@ -62,7 +62,6 @@ def mean_direction_eval(result, y, y_type):
 
 
 def direction_eval(result, y, y_type):
-    print(f'Direction Accuracy for {y_type}')
     if y_type == 'next_change':
         n_same_dir = sum(list(map(lambda x,y: 1 if (x >= 0 and y >= 0) or (x < 0 and y<0) else 0, result, y)))
         return n_same_dir/len(result)
@@ -142,9 +141,10 @@ def from_filename_to_args(filename):
     return decompress(decoded)
 
 
-def load_data(feature_list, y_type='next_price'):
+def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should_scale_y=True):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
+    # data = data[data['stock'] == 'AAPL']
     data['all_positive'] = data.groupby('date')['positive'].sum()
     data['all_negative'] = data.groupby('date')['negative'].sum()
     data['all_neutral'] = data.groupby('date')['neutral'].sum()
@@ -152,14 +152,15 @@ def load_data(feature_list, y_type='next_price'):
     if(len(feature_list_element_not_in_dataset) > 0):
         raise Exception(f'En feature ligger ikke i datasettet {feature_list_element_not_in_dataset}')
     scaler_X = MinMaxScaler()
-    scaler_y = MinMaxScaler()
-    # scaler_y = FunctionTransformer(lambda x:x, lambda x:x)
+    scaler_y = MinMaxScaler() \
+        if should_scale_y \
+        else FunctionTransformer(lambda x:x, lambda x:x)
 
     X = data['stock'].values.reshape(-1, 1)
 
     try:
-        scaled_X = scaler_X.fit_transform(data[[x for x in feature_list if x is not 'trendscore']].values)
-        X = np.append(X, scaled_X, axis=1)
+        values = data[[x for x in feature_list if x is not 'trendscore']].values
+        X = np.append(X, values, axis=1)
     except:
         # If there are no features to be scaled an error is thrown, e.g. when feature list only consists of trendscore
         pass
@@ -167,26 +168,41 @@ def load_data(feature_list, y_type='next_price'):
     if ('trendscore' in feature_list):
         X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
 
-    y = scaler_y.fit_transform(data[y_type].values.reshape(-1, 1))
+    y = data[y_type].values.reshape(-1, 1)
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
+    y = group_by_stock(y)
     y_dir = data['next_direction'].values.reshape(-1, 1)
     y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
+    y_dir = group_by_stock(y_dir)
+
     X = group_by_stock(X)
-    if(X.shape[2] != len(feature_list)+1):
+    train_size = int(X.shape[1]*train_portion)
+    remove_size = int(X.shape[1]*remove_portion_at_end)
+
+    X_train = X[:,:train_size,1:]
+    X_test = X[:,train_size:-remove_size,1:]
+    y_train = y[:,:train_size, 1:]
+    y_test = y[:,train_size:-remove_size, 1:]
+    for i in range(X_train.shape[0]):
+        X_train[i] = scaler_X.fit_transform(X_train[i])
+        if should_scale_y:
+            y_train[i] = scaler_y.fit_transform(y_train[i])
+    for i in range(X_train.shape[0]):
+        X_test[i] = scaler_X.transform(X_test[i])
+        if should_scale_y:
+            y_test[i] = scaler_y.transform(y_test[i])
+
+    if(X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
 
-    y = group_by_stock(y)
-    y_dir = group_by_stock(y_dir)
-    return X[:, :, 1:].astype(np.float), \
-           y[:, :, 1:].astype(np.float), \
-           y_dir[:, :, 1:].astype(np.float), \
+    return X_train.astype(np.float), y_train.astype(np.float), \
+           X_test.astype(np.float), y_test.astype(np.float), \
+           y_dir[:,:,1:], \
            X[:, 0,0], \
            scaler_y
 
 
-trading_features = [['price', 'volume'], ['open', 'high', 'low'], ['direction']]
-# sentiment_features = [['positive', 'negative', 'neutral']]#,['positive_prop', 'negative_prop', 'neutral_prop']]
-# sentiment_features = [['positive_prop', 'negative_prop', 'neutral_prop']]
+trading_features = [['price', 'volume', 'change'], ['open', 'high', 'low'], ['direction']]
 sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop', 'neutral_prop']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
