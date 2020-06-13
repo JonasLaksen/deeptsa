@@ -125,4 +125,4 @@ experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
 for layer in layers:
     for dropout_rate in dropout_rates:
         for loss_function in loss_functions:
-            experiment_hyperparameter_search(experiment_timestamp, layer, dropout_rate, loss_function, 10, 1, 'next_price', feature_list, layer_sizes=[128])
+            experiment_hyperparameter_search(experiment_timestamp, layer, dropout_rate, loss_function, 5000, 1, 'next_price', feature_list, layer_sizes=[128])
