@@ -184,9 +184,13 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     y_train = y[:,:train_size, 1:]
     y_test = y[:,train_size:-remove_size, 1:]
     for i in range(X_train.shape[0]):
-        X_train[i] = scaler_X.fit_transform(X_train[i])
+        scaler_X.fit(X_train[i])
         if should_scale_y:
-            y_train[i] = scaler_y.fit_transform(y_train[i])
+            scaler_y.fit(y_train[i])
+    for i in range(X_train.shape[0]):
+        X_train[i] = scaler_X.transform(X_train[i])
+        if should_scale_y:
+            y_train[i] = scaler_y.transform(y_train[i])
     for i in range(X_train.shape[0]):
         X_test[i] = scaler_X.transform(X_test[i])
         if should_scale_y:

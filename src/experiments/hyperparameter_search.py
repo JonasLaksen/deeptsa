@@ -46,10 +46,17 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
     print('Val: ', val_evaluation)
     print('Training:', train_evaluation)
     y_axis_label = 'Change $' if y_type == 'next_change' else 'Price $'
+
+    # stocklist = stocklist[0:4,]
+    # result_train = result_train[0:4,]
+    # y_train = y_train[0:4,]
+    # result_val = result_val[0:4,]
+    # y_val = y_val[0:4,]
+
     plot(directory, f'Training', stocklist, result_train, y_train, ['Predicted', 'True value'], ['Day', y_axis_label] )
     plot(directory, 'Validation', stocklist, result_val, y_val, ['Predicted', 'True value'], ['Day', y_axis_label])
-    # np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
-    # np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
+    np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
+    np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
     return {'training': train_evaluation, 'validation': val_evaluation}
 
 
