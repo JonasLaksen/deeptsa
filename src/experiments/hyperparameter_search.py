@@ -123,8 +123,8 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
         meta = lstm.meta(description, epochs)
         f.write(json.dumps(meta, indent=4))
 
-# feature_list = get_features()
-feature_list = ['price']
+feature_list = get_features()
+# feature_list = ['price', 'positive']
 layers = [[32], [128], [160]]
 dropout_rates = [0, .2, .5]
 loss_functions = ['mse', 'mae']

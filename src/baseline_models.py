@@ -82,7 +82,7 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
 
 def main(y_type):
-    X_train, y_train, X_test, y_test, y_dir, _, scaler_y = load_data(feature_list, y_type, .9)
+    X_train, y_train, X_test, y_test, y_dir, _, scaler_y = load_data(feature_list, y_type, .8, .1)
     X = np.append(X_train, X_test, axis=1)
     y = np.append(y_train, y_test, axis=1)
     # X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
@@ -100,11 +100,11 @@ def main(y_type):
     # result, y = gaussian_process(X_train, X_val, y_train, y_val)
     # result, y = svm(X_train, X_test, y_train, y_test)
 
-    result = scaler_y.inverse_transform(result.reshape(X.shape[0], -1))
-    y = scaler_y.inverse_transform(y.reshape(X.shape[0], -1))
+    result = scaler_y.inverse_transform(result.reshape(X.shape[0], -1).T).T
+    y = scaler_y.inverse_transform(y.reshape(X.shape[0], -1).T).T
 
     # plot("Baseline model", stock_list, result, y)
 
     print(evaluate(result, y, y_type=y_type))
 
-main('next_change')
+main('next_price')

@@ -177,26 +177,42 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     remove_size = int(X.shape[1]*remove_portion_at_end)
 
     X_train = X[:,:train_size,1:]
-    X_test = X[:,train_size:-remove_size,1:]
+    X_test = X[:,train_size:( -remove_size if remove_size > 0 else 99999999 ),1:]
     y_train = y[:,:train_size, 1:]
-    y_test = y[:,train_size:-remove_size, 1:]
+    y_test = y[:,train_size:( -remove_size if remove_size > 0 else 99999999 ), 1:]
 
     scaler_X = MinMaxScaler()
     scaler_y =  MinMaxScaler() \
                      if should_scale_y \
                      else FunctionTransformer(lambda x:x, lambda x:x)
 
-    X_train_reshaped = X_train.reshape((X_train.shape[0], -1)).T
-    scaler_X.fit(X_train_reshaped)
+    #### Scaling Xs
+    # X_train_reshaped = X_train.reshape((X_train.shape[0], -1)).T
+    # scaler_X.fit(X_train_reshaped)
+    # X_test_reshaped = X_test.reshape((X_test.shape[0], -1)).T
+    # X_train = scaler_X.transform(X_train_reshaped).T.reshape(X_train.shape)
+    # X_test = scaler_X.transform(X_test_reshaped).T.reshape(X_test.shape)
 
+    X_train_list = []
+    X_test_list = []
+    for i in range(X_train.shape[0]):
+        scaler = MinMaxScaler()
+        X_train_current = X_train[i,:,]
+        X_test_current = X_test[i,:,]
+        X_train_current_reshaped = X_train_current.reshape((X_train_current.shape[0], -1))
+        X_test_current_reshaped = X_test_current.reshape((X_test_current.shape[0], -1))
+        scaler.fit(X_train_current_reshaped)
+        X_train_list.append(scaler.transform(X_train_current_reshaped))
+        X_test_list.append(scaler.transform(X_test_current_reshaped))
+    X_train = np.array(X_train_list)
+    X_test = np.array(X_test_list)
+
+
+    #### Scaling ys
     y_train_reshaped = y_train.reshape( (y_train.shape[0], -1)).T
     y_test_reshaped = y_test.reshape( (y_test.shape[0], -1)).T
     scaler_y.fit(y_train_reshaped)
 
-    X_test_reshaped = X_test.reshape((X_test.shape[0], -1)).T
-
-    X_train = scaler_X.transform(X_train_reshaped).T.reshape(X_train.shape)
-    X_test = scaler_X.transform(X_test_reshaped).T.reshape(X_test.shape)
 
     y_train = scaler_y.transform(y_train_reshaped).T.reshape(y_train.shape)
     y_test = scaler_y.transform(y_test_reshaped).T.reshape(y_test.shape)
