@@ -55,8 +55,8 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
 
     plot(directory, f'Training', stocklist, result_train, y_train, ['Predicted', 'True value'], ['Day', y_axis_label] )
     plot(directory, 'Validation', stocklist, result_val, y_val, ['Predicted', 'True value'], ['Day', y_axis_label])
-    np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
-    np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
+    #np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
+    #np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
     return {'training': train_evaluation, 'validation': val_evaluation}
 
 
