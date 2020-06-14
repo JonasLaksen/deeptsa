@@ -52,16 +52,16 @@ class LSTMOneOutput:
             'epochs': epochs,
             'time': str(datetime.now()),
             'features': ', '.join(self.feature_list),
-            'model-type': {'bidir' if self.is_bidir else 'stacked'},
+            'model-type': 'bidir' if self.is_bidir else 'stacked',
             'layer-sizes': f"[{', '.join(str(x) for x in self.layer_sizes)}]",
             'loss': self.loss,
             'seed': self.seed,
             'description': description,
-            'X-train-shape': self.X_train.shape,
-            'X-val-shape': self.X_val.shape,
-            'X-stocks': self.X_stocks
+            'X-train-shape': list(self.X_train.shape),
+            'X-val-shape': list(self.X_val.shape),
+            'X-stocks': list(self.X_stocks)
         }
-        return '\n'.join([f'{key}: {value}' for (key, value) in dict.items()])
+        return dict
 
     def __str__(self):
         # To decide where to save data

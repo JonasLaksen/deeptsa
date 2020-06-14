@@ -32,7 +32,7 @@ def evaluate(result, y, y_type = 'next_change'):
 
 
 def plot(directory, title, stocklist, result, y, legends=['Predicted', 'True value'], axises=['Day', 'Price $'], ):
-    [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], legends, axises, f'{directory}/{title}-{i}.png') for i in
+    [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], legends, axises, f'{directory}/{title}-{i}.svg') for i in
      range(len(result))]
 
 
@@ -44,6 +44,7 @@ def plot_one(title, xs, legends, axises, filename = ''):
     pyplot.xlabel(axises[0])
     pyplot.ylabel(axises[1])
 
+    pyplot.grid(linestyle='--')
     if(len(filename) > 0):
         pyplot.savefig(filename, bbox_inches='tight')
     pyplot.show()
@@ -151,10 +152,6 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     feature_list_element_not_in_dataset = set(feature_list) - set(data.columns.values)
     if(len(feature_list_element_not_in_dataset) > 0):
         raise Exception(f'En feature ligger ikke i datasettet {feature_list_element_not_in_dataset}')
-    scaler_X = MinMaxScaler()
-    scaler_y = MinMaxScaler() \
-        if should_scale_y \
-        else FunctionTransformer(lambda x:x, lambda x:x)
 
     X = data['stock'].values.reshape(-1, 1)
 
@@ -183,18 +180,26 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     X_test = X[:,train_size:-remove_size,1:]
     y_train = y[:,:train_size, 1:]
     y_test = y[:,train_size:-remove_size, 1:]
-    for i in range(X_train.shape[0]):
-        scaler_X.fit(X_train[i])
-        if should_scale_y:
-            scaler_y.fit(y_train[i])
-    for i in range(X_train.shape[0]):
-        X_train[i] = scaler_X.transform(X_train[i])
-        if should_scale_y:
-            y_train[i] = scaler_y.transform(y_train[i])
-    for i in range(X_train.shape[0]):
-        X_test[i] = scaler_X.transform(X_test[i])
-        if should_scale_y:
-            y_test[i] = scaler_y.transform(y_test[i])
+
+    scaler_X = MinMaxScaler()
+    scaler_y =  MinMaxScaler() \
+                     if should_scale_y \
+                     else FunctionTransformer(lambda x:x, lambda x:x)
+
+    X_train_reshaped = X_train.reshape((X_train.shape[0], -1)).T
+    scaler_X.fit(X_train_reshaped)
+
+    y_train_reshaped = y_train.reshape( (y_train.shape[0], -1)).T
+    y_test_reshaped = y_test.reshape( (y_test.shape[0], -1)).T
+    scaler_y.fit(y_train_reshaped)
+
+    X_test_reshaped = X_test.reshape((X_test.shape[0], -1)).T
+
+    X_train = scaler_X.transform(X_train_reshaped).T.reshape(X_train.shape)
+    X_test = scaler_X.transform(X_test_reshaped).T.reshape(X_test.shape)
+
+    y_train = scaler_y.transform(y_train_reshaped).T.reshape(y_train.shape)
+    y_test = scaler_y.transform(y_test_reshaped).T.reshape(y_test.shape)
 
     if(X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
