@@ -129,11 +129,12 @@ layers = [[160], [128], [32]]
 dropout_rates = [.5, .2, 0]
 loss_functions = ['mse', 'mae']
 
-number_of_epochs = 20000
-for seed in range(3):
-    for layer in layers:
-        for dropout_rate in dropout_rates:
-            for loss_function in loss_functions:
+n = 1000
+number_of_epochs = 5000
+for seed in range(3)[:n]:
+    for layer in layers[:n]:
+        for dropout_rate in dropout_rates[:n]:
+            for loss_function in loss_functions[:n]:
                 experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, number_of_epochs, 'next_price', feature_list)
 
 
@@ -186,4 +187,4 @@ def print_for_master_thesis(experiment_timestamp):
 
         print(output)
 
-# print_for_master_thesis('2020-06-14_14.15.55')
+print_for_master_thesis('2020-06-14_23.34.32')

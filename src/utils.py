@@ -192,30 +192,52 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     # X_test_reshaped = X_test.reshape((X_test.shape[0], -1)).T
     # X_train = scaler_X.transform(X_train_reshaped).T.reshape(X_train.shape)
     # X_test = scaler_X.transform(X_test_reshaped).T.reshape(X_test.shape)
-
     X_train_list = []
+    y_train_list = []
     X_test_list = []
+    y_test_list = []
     for i in range(X_train.shape[0]):
-        scaler = MinMaxScaler()
-        X_train_current = X_train[i,:,]
-        X_test_current = X_test[i,:,]
-        X_train_current_reshaped = X_train_current.reshape((X_train_current.shape[0], -1))
-        X_test_current_reshaped = X_test_current.reshape((X_test_current.shape[0], -1))
-        scaler.fit(X_train_current_reshaped)
-        X_train_list.append(scaler.transform(X_train_current_reshaped))
-        X_test_list.append(scaler.transform(X_test_current_reshaped))
+        scaler_X.partial_fit(X_train[i,:,])
+        scaler_y.partial_fit(y_train[i,:,])
+
+
+    for i in range(X_train.shape[0]):
+        transformed_X = scaler_X.transform(X_train[i,:,])
+        X_train_list.append(transformed_X)
+
+        transformed_y = scaler_y.transform(y_train[i,:,])
+        y_train_list.append(transformed_y)
+
+        transformed_X = scaler_X.transform(X_test[i, :, ])
+        X_test_list.append(transformed_X)
+
+        transformed_y = scaler_y.transform(y_test[i, :, ])
+        y_test_list.append(transformed_y)
+
+    # X_train_list = []
+    # X_test_list = []
+    # for i in range(X_train.shape[0]):
+    #     X_train_current = X_train[i,:,]
+    #     X_test_current = X_test[i,:,]
+    #     X_train_current_reshaped = X_train_current.reshape((X_train_current.shape[0], -1))
+    #     X_test_current_reshaped = X_test_current.reshape((X_test_current.shape[0], -1))
+    #     scaler.fit(X_train_current_reshaped)
+    #     X_train_list.append(scaler.transform(X_train_current_reshaped))
+    #     X_test_list.append(scaler.transform(X_test_current_reshaped))
     X_train = np.array(X_train_list)
     X_test = np.array(X_test_list)
+    y_train = np.array(y_train_list)
+    y_test = np.array(y_test_list)
 
 
     #### Scaling ys
-    y_train_reshaped = y_train.reshape( (y_train.shape[0], -1)).T
-    y_test_reshaped = y_test.reshape( (y_test.shape[0], -1)).T
-    scaler_y.fit(y_train_reshaped)
+    # y_train_reshaped = y_train.reshape( (y_train.shape[0], -1)).T
+    # y_test_reshaped = y_test.reshape( (y_test.shape[0], -1)).T
+    # scaler_y.fit(y_train_reshaped)
 
 
-    y_train = scaler_y.transform(y_train_reshaped).T.reshape(y_train.shape)
-    y_test = scaler_y.transform(y_test_reshaped).T.reshape(y_test.shape)
+    # y_train = scaler_y.transform(y_train_reshaped).T.reshape(y_train.shape)
+    # y_test = scaler_y.transform(y_test_reshaped).T.reshape(y_test.shape)
 
     if(X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
@@ -228,7 +250,7 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
 
 
 trading_features = [['price', 'volume', 'change'], ['open', 'high', 'low'], ['direction']]
-sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop', 'neutral_prop'], ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
+sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop', 'neutral_prop']]#, ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
 temp = sum(map(lambda r: list(combinations(s, r)), range(1, len(s) + 1)), [])
