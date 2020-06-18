@@ -125,11 +125,11 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
 
 feature_list = get_features()
 # feature_list = ['price', 'positive']
-layers = [[32], [128], [160]]
-dropout_rates = [0, .2, .5]
+layers = [[160], [128], [32]]
+dropout_rates = [.5, .2, 0]
 loss_functions = ['mse', 'mae']
 
-number_of_epochs = 5000
+number_of_epochs = 20000
 for seed in range(3):
     for layer in layers:
         for dropout_rate in dropout_rates:
