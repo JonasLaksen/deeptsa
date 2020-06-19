@@ -120,7 +120,7 @@ n = 1000
 number_of_epochs = 5000
 for seed in range(3)[:n]:
     for features in haha[:n]:
-        experiment_hyperparameter_search(seed=seed, layer=[128], dropout_rate=0, loss_function='mae',
+        experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0, loss_function='mae',
                                          epochs=number_of_epochs, y_type='next_price', feature_list=features)
 
 

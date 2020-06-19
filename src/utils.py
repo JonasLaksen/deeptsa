@@ -343,7 +343,7 @@ def print_for_master_thesis(path):
     list_of_groups = zip(*(iter(list_of_rows),) * 3)
 
     for group in list_of_groups:
-        output = f'''{group[0]['dropout']},{group[0]['layer']},{group[0]['loss']}
+        output = f'''{group[0]['dropout']},{group[0]['layer']},{group[0]['loss']} \\\\
         { group[0]['seed'] } & { ' '.join([f"{group[0][metric]} &" for metric in metrics])} \\\\
         { group[1]['seed'] } & { ' '.join([f"{group[1][metric]} &" for metric in metrics])} \\\\
         { group[2]['seed'] } & { ' '.join([f"{group[2][metric]} &" for metric in metrics])} \\\\

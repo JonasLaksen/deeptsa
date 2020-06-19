@@ -8,7 +8,7 @@ import tensorflow as tf
 from datetime import datetime
 from src.lstm_one_output import LSTMOneOutput
 from src.models.stacked_lstm import StackedLSTM
-from src.utils import load_data, get_features, plot_one, plot, evaluate, predict_plots
+from src.utils import load_data, get_features, plot_one, plot, evaluate, predict_plots, print_for_master_thesis
 from glob import glob
 
 seed = 0
@@ -100,7 +100,7 @@ layers = [[160], [128], [32]]
 dropout_rates = [.5, .2, 0]
 loss_functions = ['mse', 'mae']
 
-n = 1
+n = 0
 number_of_epochs = 5000
 for seed in range(3)[:n]:
     for layer in layers[:n]:
@@ -108,5 +108,5 @@ for seed in range(3)[:n]:
             for loss_function in loss_functions[:n]:
                 experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, number_of_epochs, 'next_price', feature_list)
 
-print_folder = f'results/{os.path.basename(__file__)}/{experiment_timestamp}/*/'
-# print_for_master_thesis('2020-06-14_23.34.32')
+print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-18_20.09.57/*/'
+print_for_master_thesis(print_folder)
