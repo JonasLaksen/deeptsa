@@ -2,10 +2,12 @@ import copy
 import csv
 import json
 from base64 import b64encode, b64decode
+from glob import glob
 from itertools import combinations
 from zlib import compress, decompress
 
 import numpy as np
+import pandas
 import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
@@ -269,3 +271,86 @@ def get_features(trading=True, sentiment=True, trendscore=True):
 
 def flatten_list(l):
     return [item for sublist in l for item in sublist]
+
+def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stocklist, directory ):
+    X = np.concatenate((X_train, X_val), axis=1)
+    y = np.concatenate((y_train, y_val), axis=1)
+
+    n_stocks = X_train.shape[0]
+
+    result = model.predict([X])
+    results_inverse_scaled = scaler_y.inverse_transform(result.reshape(n_stocks, -1).T).T
+    y_inverse_scaled = scaler_y.inverse_transform(y.reshape(n_stocks, -1).T).T
+    training_size = X_train.shape[1]
+
+    result_train = results_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
+    result_val = results_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
+
+    y_train = y_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
+    y_val = y_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
+
+    val_evaluation = evaluate(result_val, y_val, y_type)
+    train_evaluation = evaluate(result_train, y_train, y_type)
+    print('Val: ', val_evaluation)
+    print('Training:', train_evaluation)
+    y_axis_label = 'Change $' if y_type == 'next_change' else 'Price $'
+
+    plot(directory, f'Training', stocklist, result_train, y_train, ['Predicted', 'True value'], ['Day', y_axis_label] )
+    plot(directory, 'Validation', stocklist, result_val, y_val, ['Predicted', 'True value'], ['Day', y_axis_label])
+    np.savetxt(f'{directory}/y.txt', y_inverse_scaled.reshape(-1))
+    np.savetxt(f"{directory}/result.txt", results_inverse_scaled.reshape(-1))
+    return {'training': train_evaluation, 'validation': val_evaluation}
+
+
+def write_to_json_file(dictionary, filepath):
+    with open( filepath, 'a+') as f:
+        f.write(json.dumps(dictionary, indent=4))
+
+def print_for_master_thesis(path):
+    subdirectories = glob(path)
+
+    subexperiments = []
+    for subdirectory in subdirectories:
+        meta_path = f'{subdirectory}meta.json'
+        with open(meta_path, 'r') as json_file:
+            meta = json.load(json_file)
+
+        evaluation_path = f'{subdirectory}evaluation.json'
+        with open(evaluation_path, 'r') as json_file:
+            evaluation = json.load(json_file)
+
+        print(evaluation)
+        subexperiments.append({'seed': meta['seed'],
+                               'layer': meta['layer-sizes'],
+                               'dropout': meta['dropout'],
+                               'loss': meta['loss'],
+                               'mape': evaluation['validation']['MAPE'],
+                               'mae': evaluation['validation']['MAE'],
+                               'mse': evaluation['validation']['MSE'],
+                               'da': evaluation['validation']['DA']})
+
+    df = pandas.DataFrame(subexperiments)
+    metrics = ['mape', 'mae', 'mse', 'da']
+    for metric in metrics:
+        df[f'mean_{metric}'] = df.groupby([ 'layer', 'dropout', 'loss' ])[metric].transform('mean')
+        df[f'mean_{metric}_rank'] = df[f'mean_{metric}'].rank(method='dense', ascending=metric != 'da')
+        df[metric] = df[metric].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
+        df[f'mean_{metric}'] = df[f'mean_{metric}'].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
+
+    df['sum_ranks'] = df[[f'mean_{metric}_rank' for metric in metrics ]].sum(axis=1)
+    df = df.sort_values([ 'sum_ranks', 'layer', 'dropout', 'loss', 'seed' ])
+    list_of_rows = df.to_dict('records')
+    list_of_groups = zip(*(iter(list_of_rows),) * 3)
+
+    for group in list_of_groups:
+        output = f'''{group[0]['dropout']},{group[0]['layer']},{group[0]['loss']}
+        { group[0]['seed'] } & { ' '.join([f"{group[0][metric]} &" for metric in metrics])} \\\\
+        { group[1]['seed'] } & { ' '.join([f"{group[1][metric]} &" for metric in metrics])} \\\\
+        { group[2]['seed'] } & { ' '.join([f"{group[2][metric]} &" for metric in metrics])} \\\\
+        \midrule
+        Mean & { ' '.join([f'{group[0][f"mean_{metric}"]} &' for metric in metrics])} \\\\
+        Mean Rank & { ' '.join([f'{int(group[0][f"mean_{metric}_rank"])} &' for metric in metrics])} \\\\
+        Sum rank & {int(group[0]['sum_ranks'])} \\\\
+        \midrule '''
+
+        print(output)
