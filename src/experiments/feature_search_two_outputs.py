@@ -11,6 +11,7 @@ import tensorflow as tf
 
 from src.lstm_one_output import LSTMOneOutput
 from src.models.stacked_lstm import StackedLSTM
+from src.models.stacked_lstm_modified import StackedLSTM_Modified
 from src.utils import load_data, get_features, plot_one, predict_plots, write_to_json_file, print_for_master_thesis
 
 seed = 0
@@ -37,7 +38,7 @@ experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
 experiment_results_directory = f'results/{os.path.basename(__file__)}/{experiment_timestamp}'
 
 
-def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, epochs, y_type, feature_list):
+def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, epochs, y_features, feature_list):
     set_seed(seed)
     print(feature_list)
     sub_experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
@@ -45,8 +46,11 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
 
     description = 'Hyperparameter søk'
     train_portion, validation_portion, test_portion = .8, .1, .1
-    X_train, y_train, X_val, y_val, _, X_stocks, scaler_y = load_data(feature_list, y_type, train_portion, test_portion,
-                                                                      True)
+    X_train, y_train, X_val, y_val, X_stocks, scaler_y = load_data(feature_list, y_features, train_portion, test_portion,
+                                                                      True )
+
+    y_train = y_train[:,:,-1:]
+    y_val = y_val[:,:,-1:]
     X = np.append(X_train, X_val, axis=1)
     y = np.append(y_train, y_val, axis=1)
     stock_list = [np.arange(len(X)).reshape((len(X), 1, 1))]
@@ -61,10 +65,11 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
         'y_val': y_val,
         'feature_list': feature_list,
         'dropout': dropout_rate,
-        # 'optimizer': tf.keras.optimizers.Adam(.001),
         'optimizer': 'adam',
         'loss': loss_function,
-        'model_generator': StackedLSTM,
+        # 'loss': ,
+        'model_generator': StackedLSTM_Modified,
+        # 'model_generator': StackedLSTM,
         'layer_sizes': layer,
         'seed': seed,
         'n_features': n_features,
@@ -81,10 +86,15 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
         train_specialized=False)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_type, X_stocks, directory)
-    scores = lstm.gen_model.evaluate(X_val, y_val, batch_size=batch_size)
+
+    # evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_type, X_stocks, directory)
+    # lol = lstm.gen_model.ev
+    evaluation = {
+        'results': str(lstm.gen_model.evaluate(X_val, y_val, batch_size=batch_size)),
+        'metric_names': str(lstm.gen_model.metrics_names)
+    }
     meta = lstm.meta(description, epochs)
-    print(scores)
+    # print(scores)
     plot_one('Loss history', [losses['general_loss'], losses['general_val_loss']], ['Training loss', 'Test loss'],
              ['Epoch', 'Loss'],
              f'{directory}/loss_history.png')
@@ -117,13 +127,13 @@ lol = list(powerset(all_features))
 hehe = list(map(lambda subsets: sum(subsets, []), lol))
 haha = list(filter(lambda x: len(x) != 0, hehe))
 
-n = 0
+n = 1
 number_of_epochs = 5000
 for seed in range(3)[:n]:
     for features in haha[:n]:
-        experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0, loss_function='mae',
-                                         epochs=number_of_epochs, y_type='next_price', feature_list=features)
+        experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0, loss_function='binary_crossentropy',
+                                         epochs=number_of_epochs, y_features=['next_direction'], feature_list=feature_list)
 
 
-print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-19_08.29.38/*/'
-print_for_master_thesis(print_folder, ['features'])
+# print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-19_08.29.38/*/'
+# print_for_master_thesis(print_folder, ['features'])

@@ -35,7 +35,7 @@ class LSTMOneOutput:
         self.gen_model = self.model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False,
                                               dropout=self.dropout)
 
-        self.gen_model.compile(optimizer=self.optimizer, loss=self.loss, metrics=['mape', 'mae', 'mse'])
+        self.gen_model.compile(optimizer=self.optimizer, loss=self.loss, metrics=['mape', 'mae', 'mse', 'binary_accuracy'])
 
         self.decoder = self.model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=True,
                                             dropout=self.dropout)
@@ -97,8 +97,10 @@ class LSTMOneOutput:
     def train_general(self, epochs, n_features, batch_size):
         is_bidir = self.model_generator is not StackedLSTM
         zero_states = [np.zeros((batch_size, self.layer_sizes[0]))] * len(self.layer_sizes) * 2 * (2 if is_bidir else 1)
-        history = self.gen_model.fit([self.X_train] + zero_states, self.y_train,
-                                     validation_data=([self.X_val] + zero_states, self.y_val),
+        y_train_list = [self.y_train[:,:,i] for i in range(self.y_train.shape[2])]
+        y_val_list = [self.y_val[:,:,i] for i in range(self.y_val.shape[2])]
+        history = self.gen_model.fit(self.X_train, y_train_list,
+                                     validation_data=(self.X_val, y_val_list),
                                      epochs=epochs,
                                      verbose=1,
                                      shuffle=False,

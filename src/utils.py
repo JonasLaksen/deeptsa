@@ -13,6 +13,7 @@ from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler, FunctionTransformer
 from src.constants import stock_list as s_l
+from src.scaler import Scaler
 
 
 def expand(x): return np.expand_dims(x, axis=0)
@@ -144,7 +145,7 @@ def from_filename_to_args(filename):
     return decompress(decoded)
 
 
-def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should_scale_y=True):
+def load_data(feature_list, y_features, train_portion, remove_portion_at_end, should_scale_y=True, y_scalers_types = [MinMaxScaler, lambda: FunctionTransformer(lambda y: y)]):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
     # data = data[data['stock'] == 'AAPL']
@@ -167,12 +168,11 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     if ('trendscore' in feature_list):
         X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
 
-    y = data[y_type].values.reshape(-1, 1)
+
+    y = data[y_features].values
+    # y = data[y_type].values.reshape(-1, 1)
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
     y = group_by_stock(y)
-    y_dir = data['next_direction'].values.reshape(-1, 1)
-    y_dir = np.append(data['stock'].values.reshape(-1, 1), y_dir, axis=1)
-    y_dir = group_by_stock(y_dir)
 
     X = group_by_stock(X)
     train_size = int(X.shape[1]*train_portion)
@@ -194,20 +194,39 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     # X_test_reshaped = X_test.reshape((X_test.shape[0], -1)).T
     # X_train = scaler_X.transform(X_train_reshaped).T.reshape(X_train.shape)
     # X_test = scaler_X.transform(X_test_reshaped).T.reshape(X_test.shape)
-    X_train_list = []
-    y_train_list = []
-    X_test_list = []
-    y_test_list = []
-    for i in range(X_train.shape[0]):
-        scaler = MinMaxScaler()
-        X_train_list.append(scaler.fit_transform(X_train[i,:,:]))
-        X_test_list.append(scaler.transform(X_test[i,:,:]))
+    X_scaler = Scaler()
+    y_scaler = Scaler()
+    X_train, X_test = X_scaler.fit_on_training_and_transform_on_training_and_test(X_train, X_test)
+    y_train, y_test = y_scaler.fit_on_training_and_transform_on_training_and_test(y_train, y_test)
+
+    # X_train_list = []
+    # y_train_list = []
+    # X_test_list = []
+    # y_test_list = []
+    # y_scalers = []
+    # for i in range(X_train.shape[0]):
+    #     scaler = MinMaxScaler()
+    #     X_train_list.append(scaler.fit_transform(X_train[i,:,:]))
+    #     X_test_list.append(scaler.transform(X_test[i,:,:]))
+    #
+    #     ys_train_list = []
+    #     ys_test_list = []
+    #     ys_scalers = []
+    #     for j in range(y_train.shape[2]):
+    #         scaler_y = y_scalers_types[j]()
+    #         ys_train_list.append(scaler_y.fit_transform(y_train[i,:,]))
+    #         ys_test_list.append(scaler_y.transform(y_test[i,:,]))
+    #         ys_scalers.append(scaler_y)
+    #     y_train_list.append(ys_train_list)
+    #     y_test_list.append(ys_test_list)
+    #     y_scalers.append(ys_scalers)
+
         # scaler.fit_transform()
         # scaler_X.partial_fit(X_train[i,:,])
         # scaler_y.partial_fit(y_train[i,:,].T)
 
-    y_train = scaler_y.fit_transform(y_train.reshape(( y_train.shape[0], -1 )).T).T
-    y_test = scaler_y.transform(y_test.reshape(( y_test.shape[0], -1 )).T).T
+    # y_train = scaler_y.fit_transform(y_train.reshape(( y_train.shape[0], -1 )).T).T
+    # y_test = scaler_y.transform(y_test.reshape(( y_test.shape[0], -1 )).T).T
 
 
     # for i in range(X_train.shape[0]):
@@ -233,8 +252,8 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     #     scaler.fit(X_train_current_reshaped)
     #     X_train_list.append(scaler.transform(X_train_current_reshaped))
     #     X_test_list.append(scaler.transform(X_test_current_reshaped))
-    X_train = np.array(X_train_list)
-    X_test = np.array(X_test_list)
+    # X_train = np.array(X_train_list)
+    # X_test = np.array(X_test_list)
     # y_train = np.array(y_train_list)
     # y_test = np.array(y_test_list)
 
@@ -253,9 +272,8 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
 
     return X_train.astype(np.float), y_train.astype(np.float), \
            X_test.astype(np.float), y_test.astype(np.float), \
-           y_dir[:,:,1:], \
            X[:, 0,0], \
-           scaler_y
+           y_scaler
 
 
 trading_features = [['price', 'volume', 'change'], ['open', 'high', 'low'], ['direction']]
@@ -286,12 +304,15 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
     n_stocks = X_train.shape[0]
 
     result = model.predict([X])
-    results_inverse_scaled = scaler_y.inverse_transform(result.reshape(n_stocks, -1).T).T
-    y_inverse_scaled = scaler_y.inverse_transform(y.reshape(n_stocks, -1).T).T
+    # If multiple outputs keras returns list
+    if result is list:
+        result= np.concatenate(result, axis=2)
+    results_inverse_scaled = scaler_y.inverse_transform(result)
+    y_inverse_scaled = scaler_y.inverse_transform(y)
     training_size = X_train.shape[1]
 
     result_train = results_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
-    result_val = results_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
+    result_val = results_inverse_scaled[:, training_size: ].reshape(n_stocks, -1)
 
     y_train = y_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
     y_val = y_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
@@ -313,7 +334,7 @@ def write_to_json_file(dictionary, filepath):
     with open( filepath, 'a+') as f:
         f.write(json.dumps(dictionary, indent=4))
 
-def print_for_master_thesis(path, sort_by_fields):
+def print_for_master_thesis(path, group_fields, sort_by = ['sum_ranks']):
     subdirectories = glob(path)
 
     subexperiments = []
@@ -326,7 +347,6 @@ def print_for_master_thesis(path, sort_by_fields):
         with open(evaluation_path, 'r') as json_file:
             evaluation = json.load(json_file)
 
-        print(evaluation)
         subexperiments.append({'seed': meta['seed'],
                                'layer': meta['layer-sizes'],
                                'dropout': meta['dropout'],
@@ -335,31 +355,31 @@ def print_for_master_thesis(path, sort_by_fields):
                                'mape': evaluation['validation']['MAPE'],
                                'mae': evaluation['validation']['MAE'],
                                'mse': evaluation['validation']['MSE'],
-                               'da': evaluation['validation']['DA'],
+                               'da': evaluation['validation']['DA'] * 100,
                                })
 
     df = pandas.DataFrame(subexperiments)
-    metrics = ['mape', 'mae', 'mse', 'da']
-    for metric in metrics:
-        df[f'mean_{metric}'] = df.groupby(sort_by_fields)[metric].transform('mean')
+    metrics = [( 'mape', '\%' ), ( 'mae', '' ), ( 'mse','' ), ( 'da', '\%' )]
+    for ( metric,unit ) in metrics:
+        df[f'mean_{metric}'] = df.groupby(group_fields)[metric].transform('mean')
         df[f'mean_{metric}_rank'] = df[f'mean_{metric}'].rank(method='dense', ascending=metric != 'da')
         df[metric] = df[metric].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
         df[f'mean_{metric}'] = df[f'mean_{metric}'].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
 
-    df['sum_ranks'] = df[[f'mean_{metric}_rank' for metric in metrics ]].sum(axis=1)
-    df = df.sort_values([ 'sum_ranks'] + sort_by_fields + ['seed' ])
+    df['sum_ranks'] = df[[f'mean_{metric}_rank' for ( metric, unit ) in metrics ]].sum(axis=1)
+    df = df.sort_values(sort_by + group_fields + ['seed'])
     list_of_rows = df.to_dict('records')
     list_of_groups = zip(*(iter(list_of_rows),) * 3)
 
     backslashes = '\\\\'
     newline = '\n\t\t'
     for group in list_of_groups:
-        output = f'''{group[0][ 'features' ]} \\\\
-        { newline.join([ f"{group[i]['seed'] } & { ' '.join([f'{group[i][metric]} &' for metric in metrics])} {backslashes}" 
+        output = f'''{', '.join([str( group[0][field] ) for field in group_fields]) } \\\\
+        { newline.join([ f"{group[i]['seed'] } & { ' '.join([f'{group[i][metric]}{unit} &' for ( metric, unit ) in metrics])} {backslashes}" 
                          for i in range(3)])}
         \midrule
-        Mean & { ' '.join([f'{group[0][f"mean_{metric}"]} &' for metric in metrics])} \\\\
-        Mean Rank & { ' '.join([f'{int(group[0][f"mean_{metric}_rank"])} &' for metric in metrics])} \\\\
+        Mean & { ' '.join([f'{group[0][f"mean_{metric}"]}{unit} &' for ( metric, unit ) in metrics])} \\\\
+        Mean Rank & { ' '.join([f'{int(group[0][f"mean_{metric}_rank"])} &' for ( metric, unit ) in metrics])} \\\\
         Sum rank & {int(group[0]['sum_ranks'])} \\\\
         \midrule '''
 
