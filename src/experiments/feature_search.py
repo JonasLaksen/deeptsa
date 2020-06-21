@@ -11,12 +11,13 @@ import tensorflow as tf
 
 from src.lstm_one_output import LSTMOneOutput
 from src.models.stacked_lstm import StackedLSTM
-from src.utils import load_data, get_features, plot_one, predict_plots, write_to_json_file
+from src.utils import load_data, get_features, plot_one, predict_plots, write_to_json_file, print_for_master_thesis
 
 seed = 0
 os.environ['PYTHONHASHSEED'] = str(seed)
 pandas.set_option('display.max_columns', 500)
 pandas.set_option('display.width', 1000)
+pandas.set_option('display.max_rows', 1000)
 
 
 def set_seed(seed):
@@ -118,11 +119,11 @@ haha = list(filter(lambda x: len(x) != 0, hehe))
 
 n = 1000
 number_of_epochs = 5000
-for seed in range(3)[:n]:
+for seed in range(1)[:n]:
     for features in haha[:n]:
         experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0, loss_function='mae',
                                          epochs=number_of_epochs, y_type='next_price', feature_list=features)
 
 
-print_folder = f'results/{os.path.basename(__file__)}/{experiment_timestamp}/*/'
-# print_for_master_thesis('2020-06-14_23.34.32')
+# print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-19_08.29.38/*/'
+# print_for_master_thesis(print_folder, ['features'])

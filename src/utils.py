@@ -199,22 +199,29 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     X_test_list = []
     y_test_list = []
     for i in range(X_train.shape[0]):
-        scaler_X.partial_fit(X_train[i,:,])
-        scaler_y.partial_fit(y_train[i,:,])
+        scaler = MinMaxScaler()
+        X_train_list.append(scaler.fit_transform(X_train[i,:,:]))
+        X_test_list.append(scaler.transform(X_test[i,:,:]))
+        # scaler.fit_transform()
+        # scaler_X.partial_fit(X_train[i,:,])
+        # scaler_y.partial_fit(y_train[i,:,].T)
+
+    y_train = scaler_y.fit_transform(y_train.reshape(( y_train.shape[0], -1 )).T).T
+    y_test = scaler_y.transform(y_test.reshape(( y_test.shape[0], -1 )).T).T
 
 
-    for i in range(X_train.shape[0]):
-        transformed_X = scaler_X.transform(X_train[i,:,])
-        X_train_list.append(transformed_X)
-
-        transformed_y = scaler_y.transform(y_train[i,:,])
-        y_train_list.append(transformed_y)
-
-        transformed_X = scaler_X.transform(X_test[i, :, ])
-        X_test_list.append(transformed_X)
-
-        transformed_y = scaler_y.transform(y_test[i, :, ])
-        y_test_list.append(transformed_y)
+    # for i in range(X_train.shape[0]):
+    #     transformed_X = scaler_X.transform(X_train[i,:,])
+    #     X_train_list.append(transformed_X)
+    #
+    #     transformed_y = scaler_y.transform(y_train[i,:,])
+    #     y_train_list.append(transformed_y)
+    #
+    #     transformed_X = scaler_X.transform(X_test[i, :, ])
+    #     X_test_list.append(transformed_X)
+    #
+    #     transformed_y = scaler_y.transform(y_test[i, :, ])
+    #     y_test_list.append(transformed_y)
 
     # X_train_list = []
     # X_test_list = []
@@ -228,8 +235,8 @@ def load_data(feature_list, y_type, train_portion, remove_portion_at_end, should
     #     X_test_list.append(scaler.transform(X_test_current_reshaped))
     X_train = np.array(X_train_list)
     X_test = np.array(X_test_list)
-    y_train = np.array(y_train_list)
-    y_test = np.array(y_test_list)
+    # y_train = np.array(y_train_list)
+    # y_test = np.array(y_test_list)
 
 
     #### Scaling ys
@@ -306,7 +313,7 @@ def write_to_json_file(dictionary, filepath):
     with open( filepath, 'a+') as f:
         f.write(json.dumps(dictionary, indent=4))
 
-def print_for_master_thesis(path):
+def print_for_master_thesis(path, sort_by_fields):
     subdirectories = glob(path)
 
     subexperiments = []
@@ -324,33 +331,36 @@ def print_for_master_thesis(path):
                                'layer': meta['layer-sizes'],
                                'dropout': meta['dropout'],
                                'loss': meta['loss'],
+                               'features': meta['features'],
                                'mape': evaluation['validation']['MAPE'],
                                'mae': evaluation['validation']['MAE'],
                                'mse': evaluation['validation']['MSE'],
-                               'da': evaluation['validation']['DA']})
+                               'da': evaluation['validation']['DA'],
+                               })
 
     df = pandas.DataFrame(subexperiments)
     metrics = ['mape', 'mae', 'mse', 'da']
     for metric in metrics:
-        df[f'mean_{metric}'] = df.groupby([ 'layer', 'dropout', 'loss' ])[metric].transform('mean')
+        df[f'mean_{metric}'] = df.groupby(sort_by_fields)[metric].transform('mean')
         df[f'mean_{metric}_rank'] = df[f'mean_{metric}'].rank(method='dense', ascending=metric != 'da')
         df[metric] = df[metric].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
         df[f'mean_{metric}'] = df[f'mean_{metric}'].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
 
     df['sum_ranks'] = df[[f'mean_{metric}_rank' for metric in metrics ]].sum(axis=1)
-    df = df.sort_values([ 'sum_ranks', 'layer', 'dropout', 'loss', 'seed' ])
+    df = df.sort_values([ 'sum_ranks'] + sort_by_fields + ['seed' ])
     list_of_rows = df.to_dict('records')
     list_of_groups = zip(*(iter(list_of_rows),) * 3)
 
+    backslashes = '\\\\'
+    newline = '\n\t\t'
     for group in list_of_groups:
-        output = f'''{group[0]['dropout']},{group[0]['layer']},{group[0]['loss']} \\\\
-        { group[0]['seed'] } & { ' '.join([f"{group[0][metric]} &" for metric in metrics])} \\\\
-        { group[1]['seed'] } & { ' '.join([f"{group[1][metric]} &" for metric in metrics])} \\\\
-        { group[2]['seed'] } & { ' '.join([f"{group[2][metric]} &" for metric in metrics])} \\\\
+        output = f'''{group[0][ 'features' ]} \\\\
+        { newline.join([ f"{group[i]['seed'] } & { ' '.join([f'{group[i][metric]} &' for metric in metrics])} {backslashes}" 
+                         for i in range(3)])}
         \midrule
         Mean & { ' '.join([f'{group[0][f"mean_{metric}"]} &' for metric in metrics])} \\\\
         Mean Rank & { ' '.join([f'{int(group[0][f"mean_{metric}_rank"])} &' for metric in metrics])} \\\\
         Sum rank & {int(group[0]['sum_ranks'])} \\\\
         \midrule '''
 
-        print(output)
+        print(output.replace("_","\\_"))
