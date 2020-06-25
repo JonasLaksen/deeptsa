@@ -37,7 +37,7 @@ experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
 experiment_results_directory = f'results/{os.path.basename(__file__)}/{experiment_timestamp}'
 
 
-def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, epochs, y_type, feature_list):
+def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, epochs, y_features, feature_list):
     set_seed(seed)
     print(feature_list)
     sub_experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
@@ -45,7 +45,7 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
 
     description = 'Hyperparameter søk'
     train_portion, validation_portion, test_portion = .8, .1, .1
-    X_train, y_train, X_val, y_val, _, X_stocks, scaler_y = load_data(feature_list, y_type, train_portion, test_portion,
+    X_train, y_train, X_val, y_val, X_stocks, scaler_y = load_data(feature_list, y_features, train_portion, test_portion,
                                                                       True)
     X = np.append(X_train, X_val, axis=1)
     y = np.append(y_train, y_val, axis=1)
@@ -81,7 +81,7 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
         train_specialized=False)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_type, X_stocks, directory)
+    evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_features, X_stocks, directory)
     scores = lstm.gen_model.evaluate(X_val, y_val, batch_size=batch_size)
     meta = lstm.meta(description, epochs)
     print(scores)
@@ -118,12 +118,14 @@ hehe = list(map(lambda subsets: sum(subsets, []), lol))
 haha = list(filter(lambda x: len(x) != 0, hehe))
 
 n = 0
-number_of_epochs = 5000
+number_of_epochs = 500
+experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0.2, loss_function='mae',
+                                 epochs=number_of_epochs, y_features=['next_price'], feature_list=['price']  + get_features(trading=False, sentiment=True, trendscore=True))
 for seed in range(3)[:n]:
     for features in haha[:n]:
         experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0, loss_function='mae',
-                                         epochs=number_of_epochs, y_type='next_price', feature_list=features)
+                                         epochs=number_of_epochs, y_features=[ 'next_price' ], feature_list=features)
 
 
-print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-19_08.29.38/*/'
-print_for_master_thesis(print_folder, ['features'])
+# print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-19_08.29.38/*/'
+# print_for_master_thesis(print_folder, ['features'])

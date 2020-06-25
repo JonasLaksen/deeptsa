@@ -59,6 +59,8 @@ class LSTMOneOutput:
             'description': description,
             'X-train-shape': list(self.X_train.shape),
             'X-val-shape': list(self.X_val.shape),
+            'y-train-shape': list(self.y_train.shape),
+            'y-val-shape': list(self.y_val.shape),
             'X-stocks': list(self.X_stocks)
         }
         return dict

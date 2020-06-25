@@ -12,7 +12,7 @@ import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 from sklearn.preprocessing import MinMaxScaler, FunctionTransformer
-from src.constants import stock_list as s_l
+
 from src.scaler import Scaler
 
 
@@ -24,7 +24,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / (y_true + .0001))) * 100
 
 
-def evaluate(result, y, y_type = 'next_change'):
+def evaluate(result, y, y_type='next_change'):
     # result = np.asarray(result).reshape((result.shape[0], -1))
     # y = np.asarray(y).reshape((result.shape[0], -1))
     mape = mean_absolute_percentage_error(y, result)
@@ -39,7 +39,7 @@ def plot(directory, title, stocklist, result, y, legends=['Predicted', 'True val
      range(len(result))]
 
 
-def plot_one(title, xs, legends, axises, filename = ''):
+def plot_one(title, xs, legends, axises, filename=''):
     assert len(xs) == len(legends)
     pyplot.title(title)
     [pyplot.plot(x, label=legends[i]) for i, x in enumerate(xs)]
@@ -48,7 +48,7 @@ def plot_one(title, xs, legends, axises, filename = ''):
     pyplot.ylabel(axises[1])
 
     pyplot.grid(linestyle='--')
-    if(len(filename) > 0):
+    if (len(filename) > 0):
         pyplot.savefig(filename, bbox_inches='tight')
     pyplot.show()
     pyplot.close()
@@ -67,8 +67,8 @@ def mean_direction_eval(result, y, y_type):
 
 def direction_eval(result, y, y_type):
     if y_type == 'next_change':
-        n_same_dir = sum(list(map(lambda x,y: 1 if (x >= 0 and y >= 0) or (x < 0 and y<0) else 0, result, y)))
-        return n_same_dir/len(result)
+        n_same_dir = sum(list(map(lambda x, y: 1 if (x >= 0 and y >= 0) or (x < 0 and y < 0) else 0, result, y)))
+        return n_same_dir / len(result)
 
     result_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], result[1:]))
     y_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], y[1:]))
@@ -145,7 +145,8 @@ def from_filename_to_args(filename):
     return decompress(decoded)
 
 
-def load_data(feature_list, y_features, train_portion, remove_portion_at_end, should_scale_y=True, y_scalers_types = [MinMaxScaler, lambda: FunctionTransformer(lambda y: y)]):
+def load_data(feature_list, y_features, train_portion, remove_portion_at_end, should_scale_y=True,
+              y_scalers_types=[MinMaxScaler, lambda: FunctionTransformer(lambda y: y)]):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
     # data = data[data['stock'] == 'AAPL']
@@ -153,7 +154,7 @@ def load_data(feature_list, y_features, train_portion, remove_portion_at_end, sh
     data['all_negative'] = data.groupby('date')['negative'].sum()
     data['all_neutral'] = data.groupby('date')['neutral'].sum()
     feature_list_element_not_in_dataset = set(feature_list) - set(data.columns.values)
-    if(len(feature_list_element_not_in_dataset) > 0):
+    if (len(feature_list_element_not_in_dataset) > 0):
         raise Exception(f'En feature ligger ikke i datasettet {feature_list_element_not_in_dataset}')
 
     X = data['stock'].values.reshape(-1, 1)
@@ -168,116 +169,44 @@ def load_data(feature_list, y_features, train_portion, remove_portion_at_end, sh
     if ('trendscore' in feature_list):
         X = np.append(X, data['trendscore'].values.reshape(-1, 1), axis=1)
 
-
     y = data[y_features].values
     # y = data[y_type].values.reshape(-1, 1)
     y = np.append(data['stock'].values.reshape(-1, 1), y, axis=1)
     y = group_by_stock(y)
 
     X = group_by_stock(X)
-    train_size = int(X.shape[1]*train_portion)
-    remove_size = int(X.shape[1]*remove_portion_at_end)
+    train_size = int(X.shape[1] * train_portion)
+    remove_size = int(X.shape[1] * remove_portion_at_end)
 
-    X_train = X[:,:train_size,1:]
-    X_test = X[:,train_size:( -remove_size if remove_size > 0 else 99999999 ),1:]
-    y_train = y[:,:train_size, 1:]
-    y_test = y[:,train_size:( -remove_size if remove_size > 0 else 99999999 ), 1:]
+    X_train = X[:, :train_size, 1:]
+    X_test = X[:, train_size:(-remove_size if remove_size > 0 else 99999999), 1:]
+    y_train = y[:, :train_size, 1:]
+    y_test = y[:, train_size:(-remove_size if remove_size > 0 else 99999999), 1:]
 
-    scaler_X = MinMaxScaler()
-    scaler_y =  MinMaxScaler() \
-                     if should_scale_y \
-                     else FunctionTransformer(lambda x:x, lambda x:x)
+    # X_train = np.add.reduce(X_train, 0).reshape((1, X_train.shape[1], X_train.shape[2]))
+    # X_test = np.add.reduce(X_test, 0).reshape((1, X_test.shape[1], X_test.shape[2]))
+    # y_train = np.add.reduce(y_train, 0).reshape((1, y_train.shape[1], y_train.shape[2]))
+    # y_test = np.add.reduce(y_test, 0).reshape((1, y_test.shape[1], y_test.shape[2]))
 
-    #### Scaling Xs
-    # X_train_reshaped = X_train.reshape((X_train.shape[0], -1)).T
-    # scaler_X.fit(X_train_reshaped)
-    # X_test_reshaped = X_test.reshape((X_test.shape[0], -1)).T
-    # X_train = scaler_X.transform(X_train_reshaped).T.reshape(X_train.shape)
-    # X_test = scaler_X.transform(X_test_reshaped).T.reshape(X_test.shape)
     X_scaler = Scaler()
     y_scaler = Scaler()
     X_train, X_test = X_scaler.fit_on_training_and_transform_on_training_and_test(X_train, X_test)
     y_train, y_test = y_scaler.fit_on_training_and_transform_on_training_and_test(y_train, y_test)
 
-    # X_train_list = []
-    # y_train_list = []
-    # X_test_list = []
-    # y_test_list = []
-    # y_scalers = []
-    # for i in range(X_train.shape[0]):
-    #     scaler = MinMaxScaler()
-    #     X_train_list.append(scaler.fit_transform(X_train[i,:,:]))
-    #     X_test_list.append(scaler.transform(X_test[i,:,:]))
-    #
-    #     ys_train_list = []
-    #     ys_test_list = []
-    #     ys_scalers = []
-    #     for j in range(y_train.shape[2]):
-    #         scaler_y = y_scalers_types[j]()
-    #         ys_train_list.append(scaler_y.fit_transform(y_train[i,:,]))
-    #         ys_test_list.append(scaler_y.transform(y_test[i,:,]))
-    #         ys_scalers.append(scaler_y)
-    #     y_train_list.append(ys_train_list)
-    #     y_test_list.append(ys_test_list)
-    #     y_scalers.append(ys_scalers)
 
-        # scaler.fit_transform()
-        # scaler_X.partial_fit(X_train[i,:,])
-        # scaler_y.partial_fit(y_train[i,:,].T)
-
-    # y_train = scaler_y.fit_transform(y_train.reshape(( y_train.shape[0], -1 )).T).T
-    # y_test = scaler_y.transform(y_test.reshape(( y_test.shape[0], -1 )).T).T
-
-
-    # for i in range(X_train.shape[0]):
-    #     transformed_X = scaler_X.transform(X_train[i,:,])
-    #     X_train_list.append(transformed_X)
-    #
-    #     transformed_y = scaler_y.transform(y_train[i,:,])
-    #     y_train_list.append(transformed_y)
-    #
-    #     transformed_X = scaler_X.transform(X_test[i, :, ])
-    #     X_test_list.append(transformed_X)
-    #
-    #     transformed_y = scaler_y.transform(y_test[i, :, ])
-    #     y_test_list.append(transformed_y)
-
-    # X_train_list = []
-    # X_test_list = []
-    # for i in range(X_train.shape[0]):
-    #     X_train_current = X_train[i,:,]
-    #     X_test_current = X_test[i,:,]
-    #     X_train_current_reshaped = X_train_current.reshape((X_train_current.shape[0], -1))
-    #     X_test_current_reshaped = X_test_current.reshape((X_test_current.shape[0], -1))
-    #     scaler.fit(X_train_current_reshaped)
-    #     X_train_list.append(scaler.transform(X_train_current_reshaped))
-    #     X_test_list.append(scaler.transform(X_test_current_reshaped))
-    # X_train = np.array(X_train_list)
-    # X_test = np.array(X_test_list)
-    # y_train = np.array(y_train_list)
-    # y_test = np.array(y_test_list)
-
-
-    #### Scaling ys
-    # y_train_reshaped = y_train.reshape( (y_train.shape[0], -1)).T
-    # y_test_reshaped = y_test.reshape( (y_test.shape[0], -1)).T
-    # scaler_y.fit(y_train_reshaped)
-
-
-    # y_train = scaler_y.transform(y_train_reshaped).T.reshape(y_train.shape)
-    # y_test = scaler_y.transform(y_test_reshaped).T.reshape(y_test.shape)
-
-    if(X_train.shape[2] != len(feature_list)):
+    if (X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
+
 
     return X_train.astype(np.float), y_train.astype(np.float), \
            X_test.astype(np.float), y_test.astype(np.float), \
-           X[:, 0,0], \
+           X[:, 0, 0], \
            y_scaler
 
 
 trading_features = [['price', 'volume', 'change'], ['open', 'high', 'low'], ['direction']]
-sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop', 'neutral_prop']]#, ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
+sentiment_features = [['positive', 'negative', 'neutral']]#, ['positive_prop', 'negative_prop',
+                                                          #  'neutral_prop']]  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
 temp = sum(map(lambda r: list(combinations(s, r)), range(1, len(s) + 1)), [])
@@ -294,10 +223,12 @@ def get_features(trading=True, sentiment=True, trendscore=True):
         list.extend(trendscore_features)
     return sum(list, [])
 
+
 def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
-def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stocklist, directory ):
+
+def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stocklist, directory):
     X = np.concatenate((X_train, X_val), axis=1)
     y = np.concatenate((y_train, y_val), axis=1)
 
@@ -305,17 +236,17 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
 
     result = model.predict([X])
     # If multiple outputs keras returns list
-    if result is list:
-        result= np.concatenate(result, axis=2)
+    if isinstance(result, list):
+        result = np.concatenate(result, axis=2)
     results_inverse_scaled = scaler_y.inverse_transform(result)
     y_inverse_scaled = scaler_y.inverse_transform(y)
     training_size = X_train.shape[1]
 
-    result_train = results_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
-    result_val = results_inverse_scaled[:, training_size: ].reshape(n_stocks, -1)
+    result_train = results_inverse_scaled[:, :training_size,:1].reshape(n_stocks, -1)
+    result_val = results_inverse_scaled[:, training_size:,:1].reshape(n_stocks, -1)
 
-    y_train = y_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
-    y_val = y_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
+    y_train = y_inverse_scaled[:, :training_size,:1].reshape(n_stocks, -1)
+    y_val = y_inverse_scaled[:, training_size:,:1].reshape(n_stocks, -1)
 
     val_evaluation = evaluate(result_val, y_val, y_type)
     train_evaluation = evaluate(result_train, y_train, y_type)
@@ -323,7 +254,7 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
     print('Training:', train_evaluation)
     y_axis_label = 'Change $' if y_type == 'next_change' else 'Price $'
 
-    plot(directory, f'Training', stocklist, result_train, y_train, ['Predicted', 'True value'], ['Day', y_axis_label] )
+    plot(directory, f'Training', stocklist, result_train, y_train, ['Predicted', 'True value'], ['Day', y_axis_label])
     plot(directory, 'Validation', stocklist, result_val, y_val, ['Predicted', 'True value'], ['Day', y_axis_label])
     np.savetxt(f'{directory}/y.txt', y_inverse_scaled.reshape(-1))
     np.savetxt(f"{directory}/result.txt", results_inverse_scaled.reshape(-1))
@@ -331,10 +262,11 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
 
 
 def write_to_json_file(dictionary, filepath):
-    with open( filepath, 'a+') as f:
+    with open(filepath, 'a+') as f:
         f.write(json.dumps(dictionary, indent=4))
 
-def print_for_master_thesis(path, group_fields, sort_by = ['sum_ranks']):
+
+def print_for_master_thesis(path, group_fields, sort_by=['sum_ranks']):
     subdirectories = glob(path)
 
     subexperiments = []
@@ -359,14 +291,14 @@ def print_for_master_thesis(path, group_fields, sort_by = ['sum_ranks']):
                                })
 
     df = pandas.DataFrame(subexperiments)
-    metrics = [( 'mape', '\%' ), ( 'mae', '' ), ( 'mse','' ), ( 'da', '\%' )]
-    for ( metric,unit ) in metrics:
+    metrics = [('mape', '\%'), ('mae', ''), ('mse', ''), ('da', '\%')]
+    for (metric, unit) in metrics:
         df[f'mean_{metric}'] = df.groupby(group_fields)[metric].transform('mean')
         df[f'mean_{metric}_rank'] = df[f'mean_{metric}'].rank(method='dense', ascending=metric != 'da')
         df[metric] = df[metric].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
         df[f'mean_{metric}'] = df[f'mean_{metric}'].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
 
-    df['sum_ranks'] = df[[f'mean_{metric}_rank' for ( metric, unit ) in metrics ]].sum(axis=1)
+    df['sum_ranks'] = df[[f'mean_{metric}_rank' for (metric, unit) in metrics]].sum(axis=1)
     df = df.sort_values(sort_by + group_fields + ['seed'])
     list_of_rows = df.to_dict('records')
     list_of_groups = zip(*(iter(list_of_rows),) * 3)
@@ -374,13 +306,13 @@ def print_for_master_thesis(path, group_fields, sort_by = ['sum_ranks']):
     backslashes = '\\\\'
     newline = '\n\t\t'
     for group in list_of_groups:
-        output = f'''{', '.join([str( group[0][field] ) for field in group_fields]) } \\\\
-        { newline.join([ f"{group[i]['seed'] } & { ' '.join([f'{group[i][metric]}{unit} &' for ( metric, unit ) in metrics])} {backslashes}" 
-                         for i in range(3)])}
+        output = f'''{', '.join([str(group[0][field]) for field in group_fields])} \\\\
+        {newline.join([f"{group[i]['seed']} & {' '.join([f'{group[i][metric]}{unit} &' for (metric, unit) in metrics])} {backslashes}"
+                       for i in range(3)])}
         \midrule
-        Mean & { ' '.join([f'{group[0][f"mean_{metric}"]}{unit} &' for ( metric, unit ) in metrics])} \\\\
-        Mean Rank & { ' '.join([f'{int(group[0][f"mean_{metric}_rank"])} &' for ( metric, unit ) in metrics])} \\\\
+        Mean & {' '.join([f'{group[0][f"mean_{metric}"]}{unit} &' for (metric, unit) in metrics])} \\\\
+        Mean Rank & {' '.join([f'{int(group[0][f"mean_{metric}_rank"])} &' for (metric, unit) in metrics])} \\\\
         Sum rank & {int(group[0]['sum_ranks'])} \\\\
         \midrule '''
 
-        print(output.replace("_","\\_"))
+        print(output.replace("_", "\\_"))

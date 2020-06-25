@@ -24,6 +24,12 @@ class Scaler():
         self.scalers = scalers
         return X_train_transformed_arr, X_test_transformed_arr
 
+    def transform(self, X):
+        X_transformed = []
+        for i in range(X.shape[0]):
+            scaler = self.scalers[i]
+            X_transformed.append(scaler.transform(X[i,:,:]))
+        return np.asarray(X_transformed)
 
     def inverse_transform(self, X):
         X_inverse_transformed = []
