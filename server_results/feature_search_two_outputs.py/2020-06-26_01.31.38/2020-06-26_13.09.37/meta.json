@@ -1,0 +1,79 @@
+{
+    "dropout": 0,
+    "epochs": 5000,
+    "time": "2020-06-26 13:18:29.724359",
+    "features": "price, volume, change, open, high, low, direction, positive, negative, neutral, trendscore",
+    "model-type": "bidir",
+    "layer-sizes": "[160]",
+    "loss": [
+        "mae",
+        "binary_crossentropy"
+    ],
+    "seed": 2,
+    "description": "Hyperparameter s\u00f8k",
+    "X-train-shape": [
+        43,
+        1328,
+        11
+    ],
+    "X-val-shape": [
+        43,
+        166,
+        11
+    ],
+    "y-train-shape": [
+        43,
+        1328,
+        2
+    ],
+    "y-val-shape": [
+        43,
+        166,
+        2
+    ],
+    "X-stocks": [
+        "AAPL",
+        "AMD",
+        "AMZN",
+        "BIDU",
+        "DIS",
+        "FB",
+        "HD",
+        "INTC",
+        "KO",
+        "NFLX",
+        "NVDA",
+        "PFE",
+        "QCOM",
+        "TSLA",
+        "WMT",
+        "CSCO",
+        "CTSH",
+        "SBUX",
+        "EBAY",
+        "MDLZ",
+        "ATVI",
+        "EA",
+        "WDC",
+        "TXN",
+        "PEP",
+        "EXPE",
+        "ADBE",
+        "COST",
+        "HAS",
+        "SYMC",
+        "MSFT",
+        "SIRI",
+        "MU",
+        "GILD",
+        "MRVL",
+        "ODP",
+        "MAT",
+        "GRMN",
+        "PHG",
+        "BA",
+        "IBM",
+        "MCD",
+        "GS"
+    ]
+}
