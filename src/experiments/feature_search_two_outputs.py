@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from src.lstm_one_output import LSTMOneOutput
 from src.models.stacked_lstm_modified import StackedLSTM_Modified
-from src.utils import load_data, get_features, plot_one, write_to_json_file, predict_plots
+from src.utils import load_data, get_features, plot_one, write_to_json_file, predict_plots, print_for_master_thesis
 
 seed = 0
 os.environ['PYTHONHASHSEED'] = str(seed)
@@ -128,7 +128,7 @@ for seed in range(3)[:n]:
         experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0,
                                          loss_function=['mae', 'binary_crossentropy'],
                                          epochs=number_of_epochs, y_features=['next_price', 'next_direction'],
-                                         feature_list=feature_list)
+                                         feature_list=features)
 
-# print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-19_08.29.38/*/'
+# print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-26_01.31.38/*/'
 # print_for_master_thesis(print_folder, ['features'])
