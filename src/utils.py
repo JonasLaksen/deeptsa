@@ -146,7 +146,7 @@ def from_filename_to_args(filename):
 
 
 def load_data(feature_list, y_features, train_portion, remove_portion_at_end, should_scale_y=True,
-              y_scalers_types=[MinMaxScaler, lambda: FunctionTransformer(lambda y: y)]):
+              ):
     data = pd.read_csv('dataset_v2.csv', index_col=0)
     data = data.dropna()
     # data = data[data['stock'] == 'AAPL']

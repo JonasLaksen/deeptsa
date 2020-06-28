@@ -61,7 +61,6 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
         'y_val': y_val,
         'feature_list': feature_list,
         'dropout': dropout_rate,
-        # 'optimizer': tf.keras.optimizers.Adam(.001),
         'optimizer': 'adam',
         'loss': loss_function,
         'model_generator': StackedLSTM,
@@ -84,7 +83,6 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
     evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_features, X_stocks, directory)
     scores = lstm.gen_model.evaluate(X_val, y_val, batch_size=batch_size)
     meta = lstm.meta(description, epochs)
-    print(scores)
     plot_one('Loss history', [losses['general_loss'], losses['general_val_loss']], ['Training loss', 'Test loss'],
              ['Epoch', 'Loss'],
              f'{directory}/loss_history.png')
@@ -94,36 +92,22 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
     write_to_json_file(meta, f'{directory}/meta.json', )
 
 
-feature_list = get_features()
-# feature_list = ['price', 'positive']
-layers = [[160], [128], [32]]
-dropout_rates = [.5, .2, 0]
-loss_functions = ['mse', 'mae']
+trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
+sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
+                                                            'neutral_prop']  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
+trendscore_features = ['trendscore']
 
-trading_features = [['price'], ['open', 'high', 'low', 'volume', 'direction', 'change']]
-sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop',
-                                                            'neutral_prop']]  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
-trendscore_features = [['trendscore']]
+feature_subsets = [['price'] + trading_features,
+        ['price'] + trading_features,
+        ['price'] + sentiment_features,
+        ['price'] + trendscore_features]
 
+n = 10
+number_of_epochs = 5000
 
-def powerset(iterable):
-    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
-    # s = list(iterable)
-    return itertools.chain.from_iterable(itertools.combinations(iterable, r) for r in range(len(iterable) + 1))
-
-
-all_features = trading_features + sentiment_features + trendscore_features
-lol = list(powerset(all_features))
-hehe = list(map(lambda subsets: sum(subsets, []), lol))
-haha = list(filter(lambda x: len(x) != 0, hehe))
-
-n = 0
-number_of_epochs = 500
-experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0.2, loss_function='mae',
-                                 epochs=number_of_epochs, y_features=['next_price'], feature_list=['price']  + get_features(trading=False, sentiment=True, trendscore=True))
 for seed in range(3)[:n]:
-    for features in haha[:n]:
-        experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0, loss_function='mae',
+    for features in feature_subsets[:n]:
+        experiment_hyperparameter_search(seed=seed, layer=[54,53,53], dropout_rate=0, loss_function='mae',
                                          epochs=number_of_epochs, y_features=[ 'next_price' ], feature_list=features)
 
 
