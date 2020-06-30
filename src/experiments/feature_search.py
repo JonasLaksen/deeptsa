@@ -40,7 +40,7 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
     set_seed(seed)
     print(feature_list)
     sub_experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
-    directory = f'{experiment_results_directory}/{model_generator.__name__}-{str(layer)}-{sub_experiment_timestamp}'
+    directory = f'{experiment_results_directory}/{model_generator.__name__}-{"-".join([str(x) for x in layer ])}-{sub_experiment_timestamp}'
 
     description = 'Hyperparameter søk'
     train_portion, validation_portion, test_portion = .8, .1, .1
