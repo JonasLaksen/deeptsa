@@ -238,7 +238,7 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
             current_timestep = X_train.shape[1] + i
             current_X = X[:, : current_timestep + 1, :]
             prediction = model.predict_on_batch( current_X ).numpy()
-            result = np.concatenate((result, prediction[:, current_timestep: current_timestep + 1, ]), axis=1)
+            result = np.concatenate((result, prediction[:, -1:, ]), axis=1)
     else:
         result = model.predict([X])
 
