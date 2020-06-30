@@ -99,8 +99,8 @@ class LSTMOneOutput:
     def train_general(self, epochs, n_features, batch_size):
         is_bidir = self.model_generator is not StackedLSTM
         zero_states = [np.zeros((batch_size, self.layer_sizes[0]))] * len(self.layer_sizes) * 2 * (2 if is_bidir else 1)
-        y_train_list = [self.y_train[:,:,i] for i in range(self.y_train.shape[2])]
-        y_val_list = [self.y_val[:,:,i] for i in range(self.y_val.shape[2])]
+        y_train_list = [self.y_train[:,:,:i+1] for i in range(self.y_train.shape[2])]
+        y_val_list = [self.y_val[:,:,:i+1] for i in range(self.y_val.shape[2])]
         history = self.gen_model.fit(self.X_train, y_train_list,
                                      validation_data=(self.X_val, y_val_list),
                                      epochs=epochs,

@@ -41,7 +41,7 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
     set_seed(seed)
     print(feature_list)
     sub_experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
-    directory = f'{experiment_results_directory}/{sub_experiment_timestamp}'
+    directory = f'{experiment_results_directory}/{model_generator.__name__}-{str(layer)}-{sub_experiment_timestamp}'
 
     description = 'Hyperparameter søk'
     train_portion, validation_portion, test_portion = .8, .1, .1
@@ -53,7 +53,6 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
     stock_list = [np.arange(len(X)).reshape((len(X), 1, 1))]
 
     n_features, batch_size = calculate_n_features_and_batch_size(X_train)
-    batch_size = X_train.shape[0]
     lstm = LSTMOneOutput(**{
         'X_stocks': X_stocks,
         'X_train': X_train,
@@ -65,7 +64,6 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
         'optimizer': 'adam',
         'loss': loss_function,
         'model_generator': model_generator,
-        # 'model_generator': StackedLSTM,
         'layer_sizes': layer,
         'seed': seed,
         'n_features': n_features,
@@ -85,7 +83,6 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
     plot_model(lstm.gen_model, to_file=f'{directory}/model.svg')
     evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_features, X_stocks,
                                directory)
-    scores = lstm.gen_model.evaluate(X_val, y_val, batch_size=batch_size)
     meta = lstm.meta(description, epochs)
     plot_one('Loss history', [losses['general_loss'], losses['general_val_loss']], ['Training loss', 'Test loss'],
              ['Epoch', 'Loss'],
@@ -106,7 +103,18 @@ feature_subsets = [['price'],
                    ['price'] + sentiment_features,
                    ['price'] + trendscore_features]
 
-configurations = [{
+configurations = [
+    {
+        'lstm_type': BidirLSTM,
+        'layers': [80]
+    }, {
+        'lstm_type': BidirLSTM,
+        'layers': [40, 40]
+    }, {
+        'lstm_type': BidirLSTM,
+        'layers': [27, 26, 26]
+    },
+    {
     'lstm_type': StackedLSTM,
     'layers': [160]
 }, {
@@ -115,26 +123,21 @@ configurations = [{
 }, {
     'lstm_type': StackedLSTM,
     'layers': [54, 53, 53]
-}, {
-    'lstm_type': BidirLSTM,
-    'layers': [80]
-}, {
-    'lstm_type': BidirLSTM,
-    'layers': [40, 40]
-}, {
-    'lstm_type': BidirLSTM,
-    'layers': [27, 26, 26]
-}]
+},
+]
 
-n = 10
+n = 1000
 number_of_epochs = 5000
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
         for configuration in configurations:
-            experiment_hyperparameter_search(seed=seed, layer=configuration['layers'], dropout_rate=0,
+            experiment_hyperparameter_search(seed=seed, layer=configuration['layers'],
+                                             dropout_rate=0,
                                              loss_function='mae',
-                                             epochs=number_of_epochs, y_features=['next_price'], feature_list=features,
+                                             epochs=number_of_epochs,
+                                             y_features=['next_price'],
+                                             feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
 # print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-19_08.29.38/*/'

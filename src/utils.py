@@ -11,7 +11,6 @@ import pandas
 import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
-from sklearn.preprocessing import MinMaxScaler, FunctionTransformer
 
 from src.scaler import Scaler
 
@@ -193,10 +192,8 @@ def load_data(feature_list, y_features, train_portion, remove_portion_at_end, sh
     X_train, X_test = X_scaler.fit_on_training_and_transform_on_training_and_test(X_train, X_test)
     y_train, y_test = y_scaler.fit_on_training_and_transform_on_training_and_test(y_train, y_test)
 
-
     if (X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
-
 
     return X_train.astype(np.float), y_train.astype(np.float), \
            X_test.astype(np.float), y_test.astype(np.float), \
@@ -205,8 +202,8 @@ def load_data(feature_list, y_features, train_portion, remove_portion_at_end, sh
 
 
 trading_features = [['price', 'volume', 'change'], ['open', 'high', 'low'], ['direction']]
-sentiment_features = [['positive', 'negative', 'neutral']]#, ['positive_prop', 'negative_prop',
-                                                          #  'neutral_prop']]  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
+sentiment_features = [['positive', 'negative', 'neutral']]  # , ['positive_prop', 'negative_prop',
+#  'neutral_prop']]  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = [['trendscore']]
 s = trading_features + sentiment_features + trendscore_features
 temp = sum(map(lambda r: list(combinations(s, r)), range(1, len(s) + 1)), [])
@@ -234,7 +231,17 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
 
     n_stocks = X_train.shape[0]
 
-    result = model.predict([X])
+    if(model.name == 'LSTM_bidir'):
+        result = y_train
+        for i in range(X_val.shape[1]):
+            current_timestep = X_train.shape[1] + i
+            with_masked = np.full((X.shape[0], X.shape[1] - current_timestep - 1, X.shape[2]), -1.0)
+            current_X = np.concatenate((X[:, : current_timestep + 1, :], with_masked), axis=1)
+            prediction = model.predict(current_X)
+            result = np.concatenate((result, prediction[:, current_timestep: current_timestep + 1, ]), axis=1)
+    else:
+        result = model.predict([X])
+
     # If multiple outputs keras returns list
     if isinstance(result, list):
         result = np.concatenate(result, axis=2)
@@ -242,11 +249,11 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
     y_inverse_scaled = scaler_y.inverse_transform(y)
     training_size = X_train.shape[1]
 
-    result_train = results_inverse_scaled[:, :training_size,:1].reshape(n_stocks, -1)
-    result_val = results_inverse_scaled[:, training_size:,:1].reshape(n_stocks, -1)
+    result_train = results_inverse_scaled[:, :training_size, :1].reshape(n_stocks, -1)
+    result_val = results_inverse_scaled[:, training_size:, :1].reshape(n_stocks, -1)
 
-    y_train = y_inverse_scaled[:, :training_size,:1].reshape(n_stocks, -1)
-    y_val = y_inverse_scaled[:, training_size:,:1].reshape(n_stocks, -1)
+    y_train = y_inverse_scaled[:, :training_size, :1].reshape(n_stocks, -1)
+    y_val = y_inverse_scaled[:, training_size:, :1].reshape(n_stocks, -1)
 
     val_evaluation = evaluate(result_val, y_val, y_type)
     train_evaluation = evaluate(result_train, y_train, y_type)

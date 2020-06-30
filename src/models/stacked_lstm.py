@@ -13,8 +13,9 @@ else:
 class StackedLSTM(keras.models.Model):
     def __init__(self, n_features, layer_sizes, return_states=True, dropout=.2, **_):
         X = tf.keras.layers.Input(shape=(None, n_features), name='X')
+        masking = tf.keras.layers.Masking(mask_value=-1.0)(X)
 
-        output = X
+        output = masking
         for i, size in enumerate(layer_sizes):
             lstm = LSTM(size, return_sequences=True, return_state=True)#, dropout=dropout)
             output, *states = lstm(output)
