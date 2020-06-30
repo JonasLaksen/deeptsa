@@ -17,7 +17,7 @@ class BidirLSTM(keras.models.Model):
         output = X
         #output = masking
         for i, size in enumerate(layer_sizes):
-            lstm = tf.keras.layers.Bidirectional( LSTM(size, return_sequences=True, return_state=True), merge_mode='ave')
+            lstm = tf.keras.layers.Bidirectional( LSTM(size, return_sequences=True, return_state=True), merge_mode='ave', dtype='float64')
             output, *states = lstm(output)
             output = tf.keras.layers.Dropout(dropout)(output)
 
