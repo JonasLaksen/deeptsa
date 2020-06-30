@@ -5,7 +5,6 @@ from datetime import datetime
 import numpy as np
 import pandas
 import tensorflow as tf
-from tensorflow_core.python.keras.utils.vis_utils import plot_model
 
 from src.lstm_one_output import LSTMOneOutput
 from src.models.bidir import BidirLSTM
@@ -80,7 +79,7 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
         train_specialized=False)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    plot_model(lstm.gen_model, to_file=f'{directory}/model.svg')
+    #plot_model(lstm.gen_model, to_file=f'{directory}/model.svg')
     evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_features, X_stocks,
                                directory)
     meta = lstm.meta(description, epochs)

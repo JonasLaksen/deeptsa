@@ -235,8 +235,10 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
         result = y_train
         for i in range(X_val.shape[1]):
             current_timestep = X_train.shape[1] + i
-            with_masked = np.full((X.shape[0], X.shape[1] - current_timestep - 1, X.shape[2]), -1.0)
-            current_X = np.concatenate((X[:, : current_timestep + 1, :], with_masked), axis=1)
+            #with_masked = np.full((X.shape[0], X.shape[1] - current_timestep - 1, X.shape[2]), -1.0)
+            #current_X = np.concatenate((X[:, : current_timestep + 1, :], with_masked), axis=1)
+
+            current_X = X[:, : X_train.shape[1] + current_timestep + 1, :]
             prediction = model.predict(current_X)
             result = np.concatenate((result, prediction[:, current_timestep: current_timestep + 1, ]), axis=1)
     else:
