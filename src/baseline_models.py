@@ -14,7 +14,7 @@ def naive_model(y_val, y_test, scaler_y, y_type):
     if y_type == 'next_price':
         result = np.append(y_val[:, -1:], y_test[:, :-1], axis=1)
     else:
-        result = scaler_y.transform(np.zeros((y_val.shape[0], y_test.shape[1])))
+        result = scaler_y.transform(np.zeros((y_val.shape[0], y_test.shape[1], 1)))
 
     return result, y_test
 
@@ -82,17 +82,17 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
 
 def main(y_type):
-    X_train, y_train, X_test, y_test, y_dir, _, scaler_y = load_data(feature_list, y_type, .9)
+    X_train, y_train, X_test, y_test, y_dir, scaler_y = load_data(feature_list, y_type, .8, .1)
     X = np.append(X_train, X_test, axis=1)
     y = np.append(y_train, y_test, axis=1)
     # X, y, y_dir = X[0:1,:], y[0:1,:], y_dir[0:1,:]
     print(X.shape)
 
     training_size = X_train.shape[1]
-    X_train, y_train = X[:, :training_size], y[:, :training_size]
-    X_test, y_test = X[:, training_size:], y[:, training_size:]
+    X_train, y_train = X[:, :training_size,], y[:, :training_size,]
+    X_test, y_test = X[:, training_size:,], y[:, training_size:,]
 
-    result, y = naive_model(y_train, y_test, scaler_y, y_type)
+    result, y = naive_model(y_train, y_test, scaler_y, y_type[0])
     # result, y = linear_regression(X_train, X_test, y_train, y_test)
     # result, y = ridge_regression(X_train, X_test, y_train, y_test)
 
@@ -100,11 +100,11 @@ def main(y_type):
     # result, y = gaussian_process(X_train, X_val, y_train, y_val)
     # result, y = svm(X_train, X_test, y_train, y_test)
 
-    result = scaler_y.inverse_transform(result.reshape(X.shape[0], -1))
-    y = scaler_y.inverse_transform(y.reshape(X.shape[0], -1))
+    result = scaler_y.inverse_transform(result)
+    y = scaler_y.inverse_transform(y)
 
     # plot("Baseline model", stock_list, result, y)
 
-    print(evaluate(result, y, y_type=y_type))
+    print(evaluate(result.reshape((result.shape[0], -1)), y.reshape((y.shape[0], -1)), y_type=y_type[0]))
 
-main('next_change')
+main([ 'next_price' ])
