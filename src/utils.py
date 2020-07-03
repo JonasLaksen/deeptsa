@@ -225,7 +225,7 @@ def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
 
-def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stocklist, directory):
+def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stocklist, directory, additional_data=[]):
     X = np.concatenate((X_train, X_val), axis=1)
     y = np.concatenate((y_train, y_val), axis=1)
 
@@ -240,7 +240,7 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
             prediction = model.predict_on_batch( current_X ).numpy()
             result = np.concatenate((result, prediction[:, -1:, ]), axis=1)
     else:
-        result = model.predict([X])
+        result = model.predict([X] + additional_data)
 
     # If multiple outputs keras returns list
     if isinstance(result, list):

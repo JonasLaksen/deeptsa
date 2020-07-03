@@ -1,16 +1,14 @@
-import json
-
 import numpy as np
 import tensorflow as tf
 
+from src.models.bidir import BidirLSTM
+from src.models.spec_network import SpecializedNetwork
+
 tf.random.set_seed(0)
 from datetime import datetime
-from tensorflow.keras.callbacks import ModelCheckpoint
 
-
-from src.models.spec_network import SpecializedNetwork
 from src.models.stacked_lstm import StackedLSTM
-from src.utils import evaluate, plot, plot_one
+from src.utils import evaluate, plot_one
 
 
 class LSTMOneOutput:
@@ -35,15 +33,16 @@ class LSTMOneOutput:
         self.gen_model = self.model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False,
                                               dropout=self.dropout)
 
-        self.gen_model.compile(optimizer=self.optimizer, loss=self.loss, metrics=['mape', 'mae', 'mse', 'binary_accuracy'])
+        self.gen_model.compile(optimizer=self.optimizer, loss=self.loss,
+                               metrics=['mape', 'mae', 'mse', 'binary_accuracy'])
 
         self.decoder = self.model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=True,
                                             dropout=self.dropout)
 
-        self.is_bidir = self.model_generator is not StackedLSTM
-        # self.spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(stock_list), layer_sizes=layer_sizes,
-        #                                      decoder=self.decoder, is_bidir=self.is_bidir)
-        # self.spec_model.compile(optimizer=self.optimizer, loss=self.loss)
+        self.is_bidir = self.model_generator is BidirLSTM
+        self.spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(stock_list), layer_sizes=layer_sizes,
+                                             decoder=self.decoder)
+        self.spec_model.compile(optimizer=self.optimizer, loss=self.loss)
         super().__init__()
 
     def meta(self, description, epochs):
@@ -90,8 +89,7 @@ class LSTMOneOutput:
             print('Loaded specialised model')
 
         if train_specialized:
-            spec_loss, spec_val_loss = self.train_spec(self.X_train, self.y_train, self.X_val, self.y_val, spech_epochs,
-                                                       self.n_features, self.batch_size)
+            spec_loss, spec_val_loss = self.train_spec(spech_epochs)
             losses['spec_loss'] = spec_loss
             losses['spec_val_loss'] = spec_val_loss
         return losses
@@ -99,8 +97,8 @@ class LSTMOneOutput:
     def train_general(self, epochs, n_features, batch_size):
         is_bidir = self.model_generator is not StackedLSTM
         zero_states = [np.zeros((batch_size, self.layer_sizes[0]))] * len(self.layer_sizes) * 2 * (2 if is_bidir else 1)
-        y_train_list = [self.y_train[:,:,:i+1] for i in range(self.y_train.shape[2])]
-        y_val_list = [self.y_val[:,:,:i+1] for i in range(self.y_val.shape[2])]
+        y_train_list = [self.y_train[:, :, :i + 1] for i in range(self.y_train.shape[2])]
+        y_val_list = [self.y_val[:, :, :i + 1] for i in range(self.y_val.shape[2])]
         history = self.gen_model.fit(self.X_train, y_train_list,
                                      validation_data=(self.X_val, y_val_list),
                                      epochs=epochs,
@@ -115,24 +113,24 @@ class LSTMOneOutput:
         self.gen_pred_model.set_weights(self.gen_model.get_weights())
         return history.history['loss'], history.history['val_loss']
 
-    def train_spec(self, epochs, n_features, batch_size):
-        is_bidir = self.model_generator is not StackedLSTM
+    def train_spec(self, epochs):
+        # is_bidir = self.model_generator is not StackedLSTM
         # Create the context model, set the decoder = the gen model
         history = self.spec_model.fit([self.X_train] + self.stock_list, self.y_train,
                                       validation_data=([self.X_val] + self.stock_list, self.y_val),
-                                      batch_size=batch_size, epochs=epochs, shuffle=False,
-                                      callbacks=[ModelCheckpoint('weights/spec.h5', period=1, save_weights_only=True)])
+                                      batch_size=self.batch_size, epochs=epochs, shuffle=False,
+                                      )
         # write_to_csv(f'plot_data/spec/loss/{filename}.csv', history.history)
-        spec_pred_model = SpecializedNetwork(n_features=n_features, num_stocks=len(self.X_train),
-                                             layer_sizes=self.layer_sizes,
-                                             return_states=True, decoder=self.spec_model.decoder, is_bidir=is_bidir)
-        spec_pred_model.set_weights(self.spec_model.get_weights())
+        # spec_pred_model = SpecializedNetwork(n_features=n_features, num_stocks=len(self.X_train),
+        #                                      layer_sizes=self.layer_sizes,
+        #                                      return_states=True, decoder=self.spec_model.decoder, is_bidir=is_bidir)
+        # spec_pred_model.set_weights(self.spec_model.get_weights())
         return history.history['loss'], history.history['val_loss']
 
     def generate_general_model_results(self, scaler_y, y_type, title, filename):
         model = self.gen_pred_model
-        X = np.concatenate(( self.X_train, self.X_val ), axis=1)
-        y = np.concatenate(( self.y_train, self.y_val ), axis=1)
+        X = np.concatenate((self.X_train, self.X_val), axis=1)
+        y = np.concatenate((self.y_train, self.y_val), axis=1)
         n_stocks = self.X_train.shape[0]
         result = model.predict([X])
         results_inverse_scaled = scaler_y.inverse_transform(result.reshape(n_stocks, -1))
@@ -140,18 +138,19 @@ class LSTMOneOutput:
         training_size = self.X_train.shape[1]
 
         result_train = results_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
-        result_val   = results_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
+        result_val = results_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
 
         y_train = y_inverse_scaled[:, :training_size].reshape(n_stocks, -1)
-        y_val   = y_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
-
+        y_val = y_inverse_scaled[:, training_size:].reshape(n_stocks, -1)
 
         val_evaluation = evaluate(result_val, y_val, y_type)
         train_evaluation = evaluate(result_train, y_train, y_type)
         print('Val: ', val_evaluation)
         print('Training:', train_evaluation)
-        plot_one(f'{title}: Training', [result_train[0], y_train[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-train.png')
-        plot_one(f'{title}: Test', [result_val[0], y_val[0]], ['Predicted', 'True value'], ['Day', 'Change $'], f'{filename}-val.png')
+        plot_one(f'{title}: Training', [result_train[0], y_train[0]], ['Predicted', 'True value'], ['Day', 'Change $'],
+                 f'{filename}-train.png')
+        plot_one(f'{title}: Test', [result_val[0], y_val[0]], ['Predicted', 'True value'], ['Day', 'Change $'],
+                 f'{filename}-val.png')
         np.savetxt(f'{filename}-y.txt', y_inverse_scaled.reshape(-1))
         np.savetxt(f"{filename}-result.txt", results_inverse_scaled.reshape(-1))
-        return { 'training': train_evaluation, 'validation':val_evaluation}
+        return {'training': train_evaluation, 'validation': val_evaluation}
