@@ -9,6 +9,7 @@ import tensorflow as tf
 from src.lstm_one_output import LSTMOneOutput
 from src.models.bidir import BidirLSTM
 from src.models.stacked_lstm import StackedLSTM
+from src.pretty_print import print_for_master_thesis
 from src.utils import load_data, plot_one, predict_plots, write_to_json_file
 
 seed = 0
@@ -125,8 +126,8 @@ configurations = [
 },
 ]
 
-n = 1000
-number_of_epochs = 5000
+n = 0
+number_of_epochs = 0
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
@@ -139,5 +140,6 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-# print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-19_08.29.38/*/'
-# print_for_master_thesis(print_folder, ['features'])
+print_folder = f'server_results/feature_search.py/2020-07-02_20.50.01/*/'
+# print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
+print_for_master_thesis(print_folder, ['features', 'layer', 'model-type'] )

@@ -8,7 +8,8 @@ import tensorflow as tf
 from datetime import datetime
 from src.lstm_one_output import LSTMOneOutput
 from src.models.stacked_lstm import StackedLSTM
-from src.utils import load_data, get_features, plot_one, plot, evaluate, predict_plots, print_for_master_thesis
+from src.pretty_print import print_for_master_thesis_compact
+from src.utils import load_data, get_features, plot_one, plot, evaluate, predict_plots
 from glob import glob
 
 seed = 0
@@ -109,4 +110,5 @@ for seed in range(3)[:n]:
                 experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, number_of_epochs, 'next_price', feature_list)
 
 print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-18_20.09.57/*/'
-print_for_master_thesis(print_folder, ['dropout', 'layer', 'loss'], ['mean_da_rank'])
+# print_for_master_thesis(print_folder, ['dropout', 'layer', 'loss'], ['mean_da_rank'])
+print_for_master_thesis_compact(print_folder, ['dropout', 'layer', 'loss'], fields_to_show=['dropout', 'layer', 'loss'], show_model=False)

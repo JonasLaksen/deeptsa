@@ -113,27 +113,27 @@ configurations = [
         'lstm_type': StackedLSTMWithState,
         'layers': [160]
     },
-    # {
-    #     'lstm_type': StackedLSTM,
-    #     'layers': [80, 80]
-    # }, {
-    #     'lstm_type': StackedLSTM,
-    #     'layers': [54, 53, 53]
-    # },
-    # {
-    #     'lstm_type': BidirLSTM,
-    #     'layers': [80]
-    # }, {
-    #     'lstm_type': BidirLSTM,
-    #     'layers': [40, 40]
-    # }, {
-    #     'lstm_type': BidirLSTM,
-    #     'layers': [27, 26, 26]
-    # },
+    {
+        'lstm_type': StackedLSTM,
+        'layers': [80, 80]
+    }, {
+        'lstm_type': StackedLSTM,
+        'layers': [54, 53, 53]
+    },
+    {
+        'lstm_type': BidirLSTM,
+        'layers': [80]
+    }, {
+        'lstm_type': BidirLSTM,
+        'layers': [40, 40]
+    }, {
+        'lstm_type': BidirLSTM,
+        'layers': [27, 26, 26]
+    },
 ]
 
 n = 1000
-number_of_epochs = 5
+number_of_epochs = 5000
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:

@@ -237,7 +237,7 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
             print(i)
             current_timestep = X_train.shape[1] + i
             current_X = X[:, : current_timestep + 1, :]
-            prediction = model.predict_on_batch( current_X ).numpy()
+            prediction = model.predict_on_batch(current_X).numpy()
             result = np.concatenate((result, prediction[:, -1:, ]), axis=1)
     else:
         result = model.predict([X] + additional_data)
@@ -273,53 +273,3 @@ def write_to_json_file(dictionary, filepath):
         f.write(json.dumps(dictionary, indent=4))
 
 
-def print_for_master_thesis(path, group_fields, sort_by=['sum_ranks']):
-    subdirectories = glob(path)
-
-    subexperiments = []
-    for subdirectory in subdirectories:
-        meta_path = f'{subdirectory}meta.json'
-        with open(meta_path, 'r') as json_file:
-            meta = json.load(json_file)
-
-        evaluation_path = f'{subdirectory}evaluation.json'
-        with open(evaluation_path, 'r') as json_file:
-            evaluation = json.load(json_file)
-
-        subexperiments.append({'seed': meta['seed'],
-                               'layer': meta['layer-sizes'],
-                               'dropout': meta['dropout'],
-                               'loss': meta['loss'],
-                               'features': meta['features'],
-                               'mape': evaluation['validation']['MAPE'],
-                               'mae': evaluation['validation']['MAE'],
-                               'mse': evaluation['validation']['MSE'],
-                               'da': evaluation['validation']['DA'] * 100,
-                               })
-
-    df = pandas.DataFrame(subexperiments)
-    metrics = [('mape', '\%'), ('mae', ''), ('mse', ''), ('da', '\%')]
-    for (metric, unit) in metrics:
-        df[f'mean_{metric}'] = df.groupby(group_fields)[metric].transform('mean')
-        df[f'mean_{metric}_rank'] = df[f'mean_{metric}'].rank(method='dense', ascending=metric != 'da')
-        df[metric] = df[metric].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
-        df[f'mean_{metric}'] = df[f'mean_{metric}'].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
-
-    df['sum_ranks'] = df[[f'mean_{metric}_rank' for (metric, unit) in metrics]].sum(axis=1)
-    df = df.sort_values(sort_by + group_fields + ['seed'])
-    list_of_rows = df.to_dict('records')
-    list_of_groups = zip(*(iter(list_of_rows),) * 3)
-
-    backslashes = '\\\\'
-    newline = '\n\t\t'
-    for group in list_of_groups:
-        output = f'''{', '.join([str(group[0][field]) for field in group_fields])} \\\\
-        {newline.join([f"{group[i]['seed']} & {' '.join([f'{group[i][metric]}{unit} &' for (metric, unit) in metrics])} {backslashes}"
-                       for i in range(3)])}
-        \midrule
-        Mean & {' '.join([f'{group[0][f"mean_{metric}"]}{unit} &' for (metric, unit) in metrics])} \\\\
-        Mean Rank & {' '.join([f'{int(group[0][f"mean_{metric}_rank"])} &' for (metric, unit) in metrics])} \\\\
-        Sum rank & {int(group[0]['sum_ranks'])} \\\\
-        \midrule '''
-
-        print(output.replace("_", "\\_"))
