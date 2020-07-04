@@ -107,4 +107,4 @@ def main(y_type):
 
     print(evaluate(result.reshape((result.shape[0], -1)), y.reshape((y.shape[0], -1)), y_type=y_type[0]))
 
-main([ 'next_price' ])
+main([ 'next_change' ])

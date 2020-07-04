@@ -5,6 +5,7 @@ from datetime import datetime
 import numpy as np
 import pandas
 import tensorflow as tf
+from tensorflow_core.python.keras.utils.vis_utils import plot_model
 
 from src.lstm_one_output import LSTMOneOutput
 from src.models.bidir import BidirLSTM
@@ -77,6 +78,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     decoder = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False,
                                    dropout=dropout_rate)
 
+    plot_model(decoder, 'bidir_with_states.svg')
     is_bidir = isinstance(decoder, BidirLSTMWithState)
     initial_states_per_layer = 4 if is_bidir else 2
     spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(stock_list), layer_sizes=layer_sizes,
@@ -126,27 +128,29 @@ configurations = [
     },
     {
         'lstm_type': BidirLSTMWithState,
+        'layers': [27, 27, 27]
+    },
+    {
+        'lstm_type': BidirLSTMWithState,
         'layers': [80]
     }, {
         'lstm_type': BidirLSTMWithState,
         'layers': [40, 40]
-    }, {
-        'lstm_type': BidirLSTMWithState,
-        'layers': [27, 27, 27]
-    },
+    }
+    ,
 ]
 
-n = 1000
-number_of_epochs = 5000
+n = 1
+number_of_epochs = 1000
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
         for configuration in configurations:
             experiment_hyperparameter_search(seed=seed, layer_sizes=configuration['layers'],
-                                             dropout_rate=0,
-                                             loss_function='mae',
+                                             dropout_rate=0.2,
+                                             loss_function='mse',
                                              epochs=number_of_epochs,
-                                             y_features=['next_price'],
+                                             y_features=['next_change'],
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
