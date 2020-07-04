@@ -8,6 +8,7 @@ import tensorflow as tf
 
 from src.lstm_one_output import LSTMOneOutput
 from src.models.bidir import BidirLSTM
+from src.models.bidir_state import BidirLSTMWithState
 from src.models.encoder import Encoder
 from src.models.spec_network import SpecializedNetwork
 from src.models.stacked_lstm import StackedLSTM
@@ -40,6 +41,7 @@ experiment_results_directory = f'results/{os.path.basename(__file__)}/{experimen
 
 def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_function, epochs, y_features, feature_list,
                                      model_generator):
+    print(layer_sizes)
     set_seed(seed)
     print(feature_list)
     sub_experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
@@ -72,11 +74,13 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
         'batch_size': batch_size,
         'stock_list': stock_list
     })
-    decoder = StackedLSTMWithState(n_features=n_features, layer_sizes=layer_sizes, return_states=False,
+    decoder = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False,
                                    dropout=dropout_rate)
 
+    is_bidir = isinstance(decoder, BidirLSTMWithState)
+    initial_states_per_layer = 4 if is_bidir else 2
     spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(stock_list), layer_sizes=layer_sizes,
-                                    decoder=decoder)
+                                    decoder=decoder, n_states_per_layer=initial_states_per_layer)
     spec_model.compile(optimizer='adam', loss=loss_function)
 
     history = spec_model.fit([X_train, stock_list], y_train,
@@ -88,7 +92,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     if not os.path.exists(directory):
         os.makedirs(directory)
     evaluation = predict_plots(spec_model, X_train, y_train, X_val, y_val, scaler_y, y_features, X_stocks,
-                               directory, [ stock_list ])
+                               directory, [ stock_list ], is_bidir=is_bidir)
     meta = lstm.meta(description, epochs)
     plot_one('Loss history', [history.history['loss'], history.history['loss']], ['Training loss', 'Test loss'],
              ['Epoch', 'Loss'],
@@ -114,21 +118,21 @@ configurations = [
         'layers': [160]
     },
     {
-        'lstm_type': StackedLSTM,
+        'lstm_type': StackedLSTMWithState,
         'layers': [80, 80]
     }, {
-        'lstm_type': StackedLSTM,
-        'layers': [54, 53, 53]
+        'lstm_type': StackedLSTMWithState,
+        'layers': [54, 54, 54]
     },
     {
-        'lstm_type': BidirLSTM,
+        'lstm_type': BidirLSTMWithState,
         'layers': [80]
     }, {
-        'lstm_type': BidirLSTM,
+        'lstm_type': BidirLSTMWithState,
         'layers': [40, 40]
     }, {
-        'lstm_type': BidirLSTM,
-        'layers': [27, 26, 26]
+        'lstm_type': BidirLSTMWithState,
+        'layers': [27, 27, 27]
     },
 ]
 

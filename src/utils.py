@@ -12,6 +12,8 @@ import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 
+from src.models.bidir import BidirLSTM
+from src.models.bidir_state import BidirLSTMWithState
 from src.scaler import Scaler
 
 
@@ -225,21 +227,23 @@ def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
 
-def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stocklist, directory, additional_data=[]):
+def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stocklist, directory, additional_data=[], is_bidir=False):
     X = np.concatenate((X_train, X_val), axis=1)
     y = np.concatenate((y_train, y_val), axis=1)
 
     n_stocks = X_train.shape[0]
 
-    if model.name == 'LSTM_bidir':
+    if is_bidir:
+        print('Bidirectional model')
         result = y_train
         for i in range(X_val.shape[1]):
             print(i)
             current_timestep = X_train.shape[1] + i
             current_X = X[:, : current_timestep + 1, :]
-            prediction = model.predict_on_batch(current_X).numpy()
+            prediction = model.predict_on_batch([ current_X ] + additional_data).numpy()
             result = np.concatenate((result, prediction[:, -1:, ]), axis=1)
     else:
+        print('Stacked LSTM model')
         result = model.predict([X] + additional_data)
 
     # If multiple outputs keras returns list

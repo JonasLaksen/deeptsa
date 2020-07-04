@@ -40,9 +40,9 @@ class LSTMOneOutput:
                                             dropout=self.dropout)
 
         self.is_bidir = self.model_generator is BidirLSTM
-        self.spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(stock_list), layer_sizes=layer_sizes,
-                                             decoder=self.decoder)
-        self.spec_model.compile(optimizer=self.optimizer, loss=self.loss)
+        # self.spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(stock_list), layer_sizes=layer_sizes,
+        #                                      decoder=self.decoder)
+        # self.spec_model.compile(optimizer=self.optimizer, loss=self.loss)
         super().__init__()
 
     def meta(self, description, epochs):

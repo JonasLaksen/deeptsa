@@ -30,5 +30,3 @@ def StackedLSTM_Modified(output_layers):
                                               name='LSTM_stacked_modified')
     return StackedLSTM
 
-def get_stacked_lstm(output_layers):
-    StackedLSTM_Modified
