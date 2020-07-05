@@ -103,18 +103,19 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     write_to_json_file(evaluation, f'{directory}/evaluation.json')
     write_to_json_file(meta, f'{directory}/meta.json', )
 
-trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
+trading_features = ['price', 'open', 'high', 'low', 'volume', 'direction', 'change']
 sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
                       'neutral_prop']  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = ['trendscore']
 
-feature_subsets = [['price'],
-                   ['price'] + trading_features,
-                   ['price'] + sentiment_features,
-                   ['price'] + trendscore_features,
+feature_subsets = [
                    trading_features,
                    sentiment_features,
-                   trendscore_features
+                   trendscore_features,
+                   trading_features + sentiment_features,
+                   trading_features + trendscore_features,
+                   sentiment_features + trendscore_features,
+                   trading_features + sentiment_features + trendscore_features
                    ]
 
 configurations = [

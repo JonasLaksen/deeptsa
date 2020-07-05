@@ -5,7 +5,6 @@ from datetime import datetime
 import numpy as np
 import pandas
 import tensorflow as tf
-from tensorflow_core.python.keras.utils.vis_utils import plot_model
 
 from src.lstm_one_output import LSTMOneOutput
 from src.models.bidir import BidirLSTM
@@ -67,24 +66,35 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     }
 
     model = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False,
-                              dropout=dropout_rate)
+                            dropout=dropout_rate)
     model.compile(optimizer='adam', loss=loss_function)
-    plot_model(model,'model_with_shapes.svg', show_shapes=True, expand_nested=True)
     history = model.fit(X_train, y_train,
                         validation_data=([X_val, y_val]),
                         batch_size=batch_size, epochs=epochs, shuffle=False)
+
+    print(model.layers)
+    intermediate_model = tf.keras.models.Model(inputs=model.layers[0].input,
+                               outputs=[l.output for l in model.layers[1:2]])
+    # intermediate_model.predict(features)  # outputs a list of 4 arrays
+
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    evaluation = predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_features[0], X_stocks,
-                               directory)
-    plot_one('Loss history', [history.history['loss'], history.history['val_loss']], ['Training loss', 'Test loss'],
-             ['Epoch', 'Loss'],
-             f'{directory}/loss_history.png')
+    for i in range(X_val.shape[1]):
+        print(i)
+        current_X = np.concatenate((X_train, X_val[:, : i + 1, :]), axis=1)
+        current_X2 = current_X[::-1,:,:]
+        prediction = intermediate_model.predict(current_X)
+        prediction2 = intermediate_model.predict(current_X2)
+        print(prediction)
 
-    write_to_json_file(history.history, f'{directory}/loss_history.json', )
-    write_to_json_file(evaluation, f'{directory}/evaluation.json')
-    write_to_json_file(meta, f'{directory}/meta.json', )
+    # plot_one('Loss history', [history.history['loss'], history.history['val_loss']], ['Training loss', 'Test loss'],
+    #          ['Epoch', 'Loss'],
+    #          f'{directory}/loss_history.png')
+
+    # write_to_json_file(history.history, f'{directory}/loss_history.json', )
+    # write_to_json_file(evaluation, f'{directory}/evaluation.json')
+    # write_to_json_file(meta, f'{directory}/meta.json', )
 
 
 trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
@@ -102,26 +112,18 @@ feature_subsets = [['price'],
                    ]
 
 configurations = [
-    # {
-    #     'lstm_type': BidirLSTM,
-    #     'layers': [80]
-    # }, {
+    {
+        'lstm_type': BidirLSTM,
+        'layers': [80]
+    }
+    # , {
     #     'lstm_type': BidirLSTM,
     #     'layers': [40, 40]
     # }, {
     #     'lstm_type': BidirLSTM,
     #     'layers': [27, 26, 26]
     # },
-    {
-    'lstm_type': StackedLSTM,
-    'layers': [160]
-}, {
-    'lstm_type': StackedLSTM,
-    'layers': [80, 80]
-}, {
-    'lstm_type': StackedLSTM,
-    'layers': [54, 53, 53]
-},
+
 ]
 
 n = 1
@@ -142,4 +144,4 @@ print_folder = f'/Users/jonasl/master/deeptsa/server_results/feature_search.py/2
 # print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
 # print_for_master_thesis(print_folder, ['features', 'layer', 'model-type'] )
 
-print_for_master_thesis_compact(print_folder, ['features', 'layer'])
+# print_for_master_thesis_compact(print_folder, ['features', 'layer'])

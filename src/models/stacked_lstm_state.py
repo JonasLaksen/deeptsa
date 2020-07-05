@@ -10,18 +10,15 @@ else:
 
 
 class StackedLSTMWithState(keras.models.Model):
-    def __init__(self, n_features, layer_sizes, return_states=False, dropout=.2, **_):
+    def __init__(self, n_features, layer_sizes, dropout=.2, **_):
         X = tf.keras.layers.Input(shape=(None, n_features), name='X')
         init_states = [tf.keras.layers.Input(shape=(layer_sizes[0],), name='State_{}'.format(i)) for i in range(len(layer_sizes) * 2)]
-        new_states = []
 
         output = X
         for i, size in enumerate(layer_sizes):
-            lstm = LSTM(size, return_sequences=True, return_state=True)
-            output, *states = lstm(output, initial_state=init_states[i * 2:(i * 2) + 2])
-            new_states = new_states + states
+            lstm = LSTM(size, return_sequences=True, return_state=False)
+            output = lstm(output, initial_state=init_states[i * 2:(i * 2) + 2])
             output = tf.keras.layers.Dropout(dropout)(output)
 
         next_price = tf.keras.layers.Dense(1, activation='linear')(output)
-        super(StackedLSTMWithState, self).__init__([X] + init_states, [next_price] + (new_states if return_states else []),
-                                          name='LSTM_stacked')
+        super(StackedLSTMWithState, self).__init__([X] + init_states, [next_price], name='LSTM_stacked')

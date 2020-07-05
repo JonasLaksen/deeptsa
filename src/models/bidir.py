@@ -17,8 +17,8 @@ class BidirLSTM(keras.models.Model):
         output = X
         #output = masking
         for i, size in enumerate(layer_sizes):
-            lstm = tf.keras.layers.Bidirectional( LSTM(size, return_sequences=True, return_state=True), merge_mode='ave', dtype='float64')
-            output, *states = lstm(output)
+            lstm = tf.keras.layers.Bidirectional( LSTM(size, return_sequences=True, return_state=False), merge_mode='concat', dtype='float64')
+            output = lstm(output)
             output = tf.keras.layers.Dropout(dropout)(output)
 
         next_price = tf.keras.layers.Dense(1, activation='linear')(output)
