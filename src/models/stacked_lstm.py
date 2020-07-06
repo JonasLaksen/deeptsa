@@ -16,7 +16,7 @@ class StackedLSTM(keras.models.Model):
 
         output = X
         for i, size in enumerate(layer_sizes):
-            lstm = LSTM(size, activation='relu', return_sequences=True, return_state=False)
+            lstm = LSTM(size, return_sequences=True, return_state=False)
             output = lstm(output)
             # output = tf.keras.layers.Dropout(dropout)(output)
 
