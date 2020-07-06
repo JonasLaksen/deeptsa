@@ -34,7 +34,7 @@ def print_for_master_thesis_compact(path, group_fields, sort_by=['sum_ranks'], f
     for (metric, unit) in metrics:
         df[f'mean_{metric}'] = df.groupby(group_fields)[metric].transform('mean')
         df[f'mean_{metric}_rank'] = df[f'mean_{metric}'].rank(method='dense', ascending=metric != 'da')
-        df[metric] = df[metric].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
+        df[metric] = df[metric].transform(lambda x: f'{x:.4}' if x < 1000 else int(x))
         df[f'mean_{metric}'] = df[f'mean_{metric}'].transform(lambda x: f'{x:.4}' if x < 1000 else int(x))
 
     df['sum_ranks'] = df[[f'mean_{metric}_rank' for (metric, unit) in metrics]].sum(axis=1)
@@ -97,8 +97,8 @@ def print_for_master_thesis(path, group_fields, sort_by=['sum_ranks']):
     for (metric, unit) in metrics:
         df[f'mean_{metric}'] = df.groupby(group_fields)[metric].transform('mean')
         df[f'mean_{metric}_rank'] = df[f'mean_{metric}'].rank(method='dense', ascending=metric != 'da')
-        df[metric] = df[metric].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
-        df[f'mean_{metric}'] = df[f'mean_{metric}'].transform(lambda x: f'{x:.4}' if x < 10000 else int(x))
+        df[metric] = df[metric].transform(lambda x: f'{x:.4}' if x < 1000 else int(x))
+        df[f'mean_{metric}'] = df[f'mean_{metric}'].transform(lambda x: f'{x:.4}' if x < 1000 else int(x))
 
     df['sum_ranks'] = df[[f'mean_{metric}_rank' for (metric, unit) in metrics]].sum(axis=1)
     df = df.sort_values(sort_by + group_fields + ['seed'])

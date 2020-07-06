@@ -8,7 +8,7 @@ import tensorflow as tf
 from tensorflow_core.python.keras.utils.vis_utils import plot_model
 
 from src.models.stacked_lstm import StackedLSTM
-from src.pretty_print import print_for_master_thesis_compact
+from src.pretty_print import print_for_master_thesis_compact, print_for_master_thesis
 from src.utils import load_data, plot_one, predict_plots, write_to_json_file
 
 seed = 0
@@ -134,7 +134,7 @@ configurations = [
     # },
 ]
 
-n = 1000
+n = 0
 number_of_epochs = 5000
 
 for seed in range(3)[:n]:
@@ -148,8 +148,8 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-# print_folder = f'/Users/jonasl/master/deeptsa/server_results/feature_search.py/2020-07-05_00.44.54/*/'
+print_folder = f'server_results/feature_search.py/2020-07-06_13.15.53/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
 # print_for_master_thesis(print_folder, ['features', 'layer', 'model-type'] )
 
-# print_for_master_thesis_compact(print_folder, ['features', 'layer'])
+print_for_master_thesis_compact(print_folder, ['features', 'layer'])

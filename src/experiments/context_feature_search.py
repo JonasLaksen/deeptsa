@@ -62,7 +62,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
         'y_val': y_val,
         'feature_list': feature_list,
         'dropout': dropout_rate,
-        'optimizer': tf.keras.optimizers.RMSprop(learning_rate=.0001),
+        'optimizer': 'adam',
         'loss': loss_function,
         'model_generator': model_generator,
         'layer_sizes': layer_sizes,
@@ -78,11 +78,11 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     initial_states_per_layer = 4 if is_bidir else 2
     spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(stock_list), layer_sizes=layer_sizes,
                                     decoder=decoder, n_states_per_layer=initial_states_per_layer)
-    spec_model.compile(optimizer=tf.keras.optimizers.RMSprop(learning_rate=.0001), loss=loss_function)
+    spec_model.compile(optimizer='adam', loss=loss_function)
 
     history = spec_model.fit([X_train, stock_list], y_train,
                              validation_data=([X_val, stock_list], y_val),
-                             batch_size=32, epochs=epochs, shuffle=False,
+                             batch_size=batch_size, epochs=epochs, shuffle=False,
                              callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                                          patience=100, restore_best_weights=True)]
                              )
@@ -128,16 +128,16 @@ configurations = [
 ]
 
 n = 1000
-number_of_epochs = 1
+number_of_epochs = 5000
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
         for configuration in configurations:
             experiment_hyperparameter_search(seed=seed, layer_sizes=configuration['layers'],
-                                             dropout_rate=0.2,
+                                             dropout_rate=0,
                                              loss_function='mae',
                                              epochs=number_of_epochs,
-                                             y_features=['next_change'],
+                                             y_features=['next_price'],
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
