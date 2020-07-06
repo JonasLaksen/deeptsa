@@ -7,10 +7,8 @@ import pandas
 import tensorflow as tf
 from tensorflow_core.python.keras.utils.vis_utils import plot_model
 
-from src.lstm_one_output import LSTMOneOutput
-from src.models.bidir import BidirLSTM
 from src.models.stacked_lstm import StackedLSTM
-from src.pretty_print import print_for_master_thesis, print_for_master_thesis_compact
+from src.pretty_print import print_for_master_thesis_compact
 from src.utils import load_data, plot_one, predict_plots, write_to_json_file
 
 seed = 0
@@ -67,12 +65,14 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     }
 
     model = model_generator(n_features=n_features, layer_sizes=layer_sizes, return_states=False,
-                              dropout=dropout_rate)
+                            dropout=dropout_rate)
     model.compile(optimizer='adam', loss=loss_function)
-    plot_model(model,'model_with_shapes.svg', show_shapes=True, expand_nested=True)
     history = model.fit(X_train, y_train,
                         validation_data=([X_val, y_val]),
-                        batch_size=batch_size, epochs=epochs, shuffle=False)
+                        batch_size=batch_size, epochs=epochs, shuffle=False,
+                        callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                                    patience=100, restore_best_weights=True)]
+                        )
     if not os.path.exists(directory):
         os.makedirs(directory)
 
@@ -88,17 +88,26 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
 
 
 trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
+trading_features_with_price = ['price'] + trading_features
 sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
                       'neutral_prop']  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = ['trendscore']
+
+# feature_subsets = [
+#     trading_features_with_price,
+#     sentiment_features,
+#     trendscore_features,
+#     trading_features_with_price + sentiment_features,
+#     trading_features_with_price + trendscore_features,
+#     sentiment_features + trendscore_features,
+#     trading_features_with_price + sentiment_features + trendscore_features
+# ]
 
 feature_subsets = [['price'],
                    ['price'] + trading_features,
                    ['price'] + sentiment_features,
                    ['price'] + trendscore_features,
-                   trading_features,
-                   sentiment_features,
-                   trendscore_features
+                   ['price'] + trading_features + sentiment_features + trendscore_features
                    ]
 
 configurations = [
@@ -113,19 +122,20 @@ configurations = [
     #     'layers': [27, 26, 26]
     # },
     {
-    'lstm_type': StackedLSTM,
-    'layers': [160]
-}, {
-    'lstm_type': StackedLSTM,
-    'layers': [80, 80]
-}, {
-    'lstm_type': StackedLSTM,
-    'layers': [54, 53, 53]
-},
+        'lstm_type': StackedLSTM,
+        'layers': [160]
+    }
+    # , {
+    #     'lstm_type': StackedLSTM,
+    #     'layers': [80, 80]
+    # }, {
+    #     'lstm_type': StackedLSTM,
+    #     'layers': [54, 53, 53]
+    # },
 ]
 
-n = 1
-number_of_epochs = 1
+n = 1000
+number_of_epochs = 5000
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
@@ -138,8 +148,8 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-print_folder = f'/Users/jonasl/master/deeptsa/server_results/feature_search.py/2020-07-05_00.44.54/*/'
+# print_folder = f'/Users/jonasl/master/deeptsa/server_results/feature_search.py/2020-07-05_00.44.54/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
 # print_for_master_thesis(print_folder, ['features', 'layer', 'model-type'] )
 
-print_for_master_thesis_compact(print_folder, ['features', 'layer'])
+# print_for_master_thesis_compact(print_folder, ['features', 'layer'])

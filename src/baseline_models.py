@@ -11,7 +11,7 @@ feature_list = ['price', 'high', 'low', 'open', 'volume', 'direction',
 
 
 def naive_model(y_val, y_test, scaler_y, y_type):
-    if y_type == 'next_price':
+    if y_type == 'next_price' or y_type == 'next_open':
         result = np.append(y_val[:, -1:], y_test[:, :-1], axis=1)
     else:
         result = scaler_y.transform(np.zeros((y_val.shape[0], y_test.shape[1], 1)))
@@ -107,4 +107,4 @@ def main(y_type):
 
     print(evaluate(result.reshape((result.shape[0], -1)), y.reshape((y.shape[0], -1)), y_type=y_type[0]))
 
-main([ 'next_change' ])
+main([ 'next_open' ])

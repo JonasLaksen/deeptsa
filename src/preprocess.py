@@ -51,6 +51,7 @@ def write_to_dataset_file():
     for df in dfs:
         df['next_price'] = df['price'].shift(-1)
         df['next_change'] = df['next_price'] - df['price']
+        df['next_open'] = df['open'].shift(-1)
         df['change'] = df['next_change'].shift(1)
         df['next_direction'] = df['direction'].shift(-1)
 
