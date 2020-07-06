@@ -107,4 +107,14 @@ def main(y_type):
 
     print(evaluate(result.reshape((result.shape[0], -1)), y.reshape((y.shape[0], -1)), y_type=y_type[0]))
 
-main([ 'next_open' ])
+def naive_next_price_using_next_open():
+    X_train, y_train, X_test, y_test, y_dir, scaler_y = load_data(['next_open'], [ 'next_price' ], .8, .1, should_scale_y=False)
+    # X_train, y_train, X_test, y_test, y_dir, scaler_y = load_data(['price'], [ 'next_open' ], .8, .1, should_scale_y=False)
+    result = np.concatenate((X_train, X_test), axis=1)
+    y = np.concatenate((y_train, y_test), axis=1)
+    print(evaluate(result.reshape((result.shape[0], -1)), y.reshape((y.shape[0], -1)), y_type='next_price'))
+
+
+
+# main([ 'next_price' ])
+naive_next_price_using_next_open()

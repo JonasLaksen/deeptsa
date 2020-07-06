@@ -87,6 +87,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     write_to_json_file(meta, f'{directory}/meta.json', )
 
 
+price = ['price']
 trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
 trading_features_with_price = ['price'] + trading_features
 sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
@@ -103,11 +104,16 @@ trendscore_features = ['trendscore']
 #     trading_features_with_price + sentiment_features + trendscore_features
 # ]
 
-feature_subsets = [['price'],
-                   ['price'] + trading_features,
-                   ['price'] + sentiment_features,
-                   ['price'] + trendscore_features,
-                   ['price'] + trading_features + sentiment_features + trendscore_features
+price = ['prev_price_0', 'prev_price_1', 'prev_price_2'] + ['price']
+trading_features = ['prev_volume_0', 'prev_volume_1', 'prev_volume_2'] + trading_features
+sentiment_features = [f'prev_{feature}_{i}' for i, feature in enumerate(['positive', 'negative','neutral'])] + sentiment_features
+trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
+
+feature_subsets = [price,
+                   price + trading_features,
+                   price + sentiment_features,
+                   price + trendscore_features,
+                   price + trading_features + sentiment_features + trendscore_features
                    ]
 
 configurations = [
@@ -134,7 +140,7 @@ configurations = [
     # },
 ]
 
-n = 0
+n = 10000
 number_of_epochs = 5000
 
 for seed in range(3)[:n]:
@@ -144,12 +150,12 @@ for seed in range(3)[:n]:
                                              dropout_rate=.0,
                                              loss_function='mae',
                                              epochs=number_of_epochs,
-                                             y_features=['next_change'],
+                                             y_features=['next_price'],
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-print_folder = f'server_results/feature_search.py/2020-07-06_13.15.53/*/'
+# print_folder = f'server_results/feature_search.py/2020-07-06_19.56.31/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
-# print_for_master_thesis(print_folder, ['features', 'layer', 'model-type'] )
+# print_for_master_thesis(print_folder, ['features', 'layer'] )
 
-print_for_master_thesis_compact(print_folder, ['features', 'layer'])
+# print_for_master_thesis_compact(print_folder, ['features', 'layer'])

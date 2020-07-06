@@ -191,8 +191,9 @@ def load_data(feature_list, y_features, train_portion, remove_portion_at_end, sh
 
     X_scaler = Scaler()
     y_scaler = Scaler()
-    X_train, X_test = X_scaler.fit_on_training_and_transform_on_training_and_test(X_train, X_test)
-    y_train, y_test = y_scaler.fit_on_training_and_transform_on_training_and_test(y_train, y_test)
+    if should_scale_y:
+        X_train, X_test = X_scaler.fit_on_training_and_transform_on_training_and_test(X_train, X_test)
+        y_train, y_test = y_scaler.fit_on_training_and_transform_on_training_and_test(y_train, y_test)
 
     if (X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
