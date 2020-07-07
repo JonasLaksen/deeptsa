@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from src.lstm_one_output import LSTMOneOutput
 from src.models.stacked_lstm_modified import StackedLSTM_Modified
-from src.utils import load_data, get_features, plot_one, write_to_json_file, predict_plots, print_for_master_thesis
+from src.utils import load_data, get_features, plot_one, write_to_json_file, predict_plots
 
 seed = 0
 os.environ['PYTHONHASHSEED'] = str(seed)
@@ -35,7 +35,7 @@ experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
 experiment_results_directory = f'results/{os.path.basename(__file__)}/{experiment_timestamp}'
 
 
-def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, epochs, y_features, feature_list):
+def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_function, epochs, y_features, feature_list):
     set_seed(seed)
     print(feature_list)
     sub_experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
@@ -47,8 +47,6 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
                                                                    test_portion,
                                                                    True)
 
-    # y_train = y_train[:, :, -1:]
-    # y_val = y_val[:, :, -1:]
     X = np.append(X_train, X_val, axis=1)
     y = np.append(y_train, y_val, axis=1)
     stock_list = [np.arange(len(X)).reshape((len(X), 1, 1))]
@@ -69,31 +67,38 @@ def experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, e
         'model_generator': StackedLSTM_Modified([tf.keras.layers.Dense(1, activation='linear'),
                                                  tf.keras.layers.Dense(1, activation='sigmoid')]),
         # 'model_generator': StackedLSTM,
-        'layer_sizes': layer,
+        'layer_sizes': layer_sizes,
         'seed': seed,
         'n_features': n_features,
         'batch_size': batch_size,
         'stock_list': stock_list
     })
-    losses = lstm.train(
-        gen_epochs=epochs,
-        spech_epochs=0,
-        copy_weights_from_gen_to_spec=False,
-        load_spec=False,
-        load_gen=False,
-        train_general=True,
-        train_specialized=False)
+    model = StackedLSTM_Modified([tf.keras.layers.Dense(1, activation='linear'),
+                                  tf.keras.layers.Dense(1, activation='sigmoid')])(n_features=n_features,
+                                                                                   layer_sizes=layer_sizes,
+                                                                                   return_states=False,
+                                                                                   dropout=dropout_rate)
+    model.compile(optimizer='adam', loss=loss_function)
+    y_train_list = [y_train[:, :, i:i + 1] for i in range(y_train.shape[2])]
+    y_val_list = [y_val[:, :, i:i + 1] for i in range(y_val.shape[2])]
+    history = model.fit(X_train, y_train_list,
+                        validation_data=([X_val, y_val_list]),
+                        batch_size=batch_size, epochs=epochs, shuffle=False,
+                        callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                                    patience=100, restore_best_weights=True)]
+                        )
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_features, X_stocks, directory)
+    evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_features, X_stocks,
+                               directory)
     meta = lstm.meta(description, epochs)
     # print(scores)
-    plot_one('Loss history', [losses['general_loss'], losses['general_val_loss']], ['Training loss', 'Test loss'],
+    plot_one('Loss history', [history.history['loss'], history.history['val_loss']], ['Training loss', 'Test loss'],
              ['Epoch', 'Loss'],
              f'{directory}/loss_history.png')
 
-    write_to_json_file(losses, f'{directory}/loss_history.json', )
+    write_to_json_file(str( history.history ), f'{directory}/loss_history.json', )
     write_to_json_file(evaluation, f'{directory}/evaluation.json')
     write_to_json_file(meta, f'{directory}/meta.json', )
 
@@ -104,10 +109,12 @@ layers = [[160], [128], [32]]
 dropout_rates = [.5, .2, 0]
 loss_functions = ['mse', 'mae']
 
-trading_features = [['price'], ['open', 'high', 'low', 'volume', 'direction', 'change']]
-sentiment_features = [['positive', 'negative', 'neutral'], ['positive_prop', 'negative_prop',
-                                                            'neutral_prop']]  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
-trendscore_features = [['trendscore']]
+price = ['price']
+trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
+trading_features_with_price = ['price'] + trading_features
+sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
+                      'neutral_prop']  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
+trendscore_features = ['trendscore']
 
 
 def powerset(iterable):
@@ -116,16 +123,18 @@ def powerset(iterable):
     return itertools.chain.from_iterable(itertools.combinations(iterable, r) for r in range(len(iterable) + 1))
 
 
-all_features = trading_features + sentiment_features + trendscore_features
-lol = list(powerset(all_features))
-hehe = list(map(lambda subsets: sum(subsets, []), lol))
-haha = list(filter(lambda x: len(x) != 0, hehe))
+feature_subsets = [price,
+                   price + trading_features,
+                   price + sentiment_features,
+                   price + trendscore_features,
+                   price + trading_features + sentiment_features + trendscore_features
+                   ]
 
 n = 1000
 number_of_epochs = 5000
 for seed in range(3)[:n]:
-    for features in haha[:n]:
-        experiment_hyperparameter_search(seed=seed, layer=[160], dropout_rate=0,
+    for features in feature_subsets[:n]:
+        experiment_hyperparameter_search(seed=seed, layer_sizes=[160], dropout_rate=0,
                                          loss_function=['mae', 'binary_crossentropy'],
                                          epochs=number_of_epochs, y_features=['next_price', 'next_direction'],
                                          feature_list=features)
