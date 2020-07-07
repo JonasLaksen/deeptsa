@@ -7,6 +7,7 @@ import pandas
 import tensorflow as tf
 from tensorflow_core.python.keras.utils.vis_utils import plot_model
 
+from src.models.bidir import BidirLSTM
 from src.models.stacked_lstm import StackedLSTM
 from src.pretty_print import print_for_master_thesis_compact, print_for_master_thesis
 from src.utils import load_data, plot_one, predict_plots, write_to_json_file
@@ -76,8 +77,11 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+    print('is bidir?')
+    print(model_generator == BidirLSTM)
+
     evaluation = predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_features[0], X_stocks,
-                               directory)
+                               directory, is_bidir=model_generator == BidirLSTM)
     plot_one('Loss history', [history.history['loss'], history.history['val_loss']], ['Training loss', 'Test loss'],
              ['Epoch', 'Loss'],
              f'{directory}/loss_history.png')
@@ -117,30 +121,30 @@ feature_subsets = [price,
                    ]
 
 configurations = [
-    # {
-    #     'lstm_type': BidirLSTM,
-    #     'layers': [80]
-    # }, {
-    #     'lstm_type': BidirLSTM,
-    #     'layers': [40, 40]
-    # }, {
-    #     'lstm_type': BidirLSTM,
-    #     'layers': [27, 26, 26]
-    # },
+    {
+        'lstm_type': BidirLSTM,
+        'layers': [160]
+    }, {
+        'lstm_type': BidirLSTM,
+        'layers': [80, 80]
+    }, {
+        'lstm_type': BidirLSTM,
+        'layers': [54, 53, 53]
+    },
     {
         'lstm_type': StackedLSTM,
         'layers': [160]
     }
-    # , {
-    #     'lstm_type': StackedLSTM,
-    #     'layers': [80, 80]
-    # }, {
-    #     'lstm_type': StackedLSTM,
-    #     'layers': [54, 53, 53]
-    # },
+    , {
+        'lstm_type': StackedLSTM,
+        'layers': [80, 80]
+    }, {
+        'lstm_type': StackedLSTM,
+        'layers': [54, 53, 53]
+    },
 ]
 
-n = 10000
+n = 1000
 number_of_epochs = 5000
 
 for seed in range(3)[:n]:
@@ -154,8 +158,8 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-# print_folder = f'server_results/feature_search.py/2020-07-06_19.56.31/*/'
+# print_folder = f'server_results/feature_search.py/2020-07-07_00.14.21/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
-# print_for_master_thesis(print_folder, ['features', 'layer'] )
+# print_for_master_thesis(print_folder, ['features', 'model-type', 'layer'] )
 
-# print_for_master_thesis_compact(print_folder, ['features', 'layer'])
+# print_for_master_thesis_compact(print_folder, ['features', 'layer', 'model-type'])

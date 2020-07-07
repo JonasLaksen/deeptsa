@@ -49,7 +49,7 @@ def print_for_master_thesis_compact(path, group_fields, sort_by=['sum_ranks'], f
     newline2 = '\\newline'
     newline_after_result = newline2
     for group in list_of_groups:
-        if(group[0]["model-type"] == 'bidir'):
+        if(group[0]["model-type"] == 'BidirLSTM'):
             model_type = 'Bidirectional'
         elif len(group[0]["layer"].split(',')) == 1:
             model_type = 'Vanilla'
