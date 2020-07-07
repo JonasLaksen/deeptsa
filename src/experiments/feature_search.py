@@ -108,10 +108,10 @@ trendscore_features = ['trendscore']
 #     trading_features_with_price + sentiment_features + trendscore_features
 # ]
 
-price = ['prev_price_0', 'prev_price_1', 'prev_price_2'] + ['price']
-trading_features = ['prev_volume_0', 'prev_volume_1', 'prev_volume_2'] + trading_features
-sentiment_features = [f'prev_{feature}_{i}' for i, feature in enumerate(['positive', 'negative','neutral'])] + sentiment_features
-trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
+# price = ['prev_price_0', 'prev_price_1', 'prev_price_2'] + ['price']
+# trading_features = ['prev_volume_0', 'prev_volume_1', 'prev_volume_2'] + trading_features
+# sentiment_features = [f'prev_{feature}_{i}' for i, feature in enumerate(['positive', 'negative','neutral'])] + sentiment_features
+# trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
 
 feature_subsets = [price,
                    price + trading_features,
@@ -144,7 +144,7 @@ configurations = [
     },
 ]
 
-n = 1000
+n = 0
 number_of_epochs = 5000
 
 for seed in range(3)[:n]:
@@ -158,8 +158,8 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-# print_folder = f'server_results/feature_search.py/2020-07-07_00.14.21/*/'
+print_folder = f'server_results/feature_search.py/2020-07-06_22.45.21/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
-# print_for_master_thesis(print_folder, ['features', 'model-type', 'layer'] )
+print_for_master_thesis(print_folder, ['features', 'model-type', 'layer'] )
 
 # print_for_master_thesis_compact(print_folder, ['features', 'layer', 'model-type'])

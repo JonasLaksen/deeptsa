@@ -1,4 +1,3 @@
-import itertools
 import os
 import random
 from datetime import datetime
@@ -7,9 +6,11 @@ import numpy as np
 import pandas
 import tensorflow as tf
 
-from src.lstm_one_output import LSTMOneOutput
+from src.models.bidir import BidirLSTM
+from src.models.stacked_lstm import StackedLSTM
 from src.models.stacked_lstm_modified import StackedLSTM_Modified
-from src.utils import load_data, get_features, plot_one, write_to_json_file, predict_plots
+from src.pretty_print import print_for_master_thesis
+from src.utils import load_data, plot_one, predict_plots, write_to_json_file
 
 seed = 0
 os.environ['PYTHONHASHSEED'] = str(seed)
@@ -35,52 +36,44 @@ experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
 experiment_results_directory = f'results/{os.path.basename(__file__)}/{experiment_timestamp}'
 
 
-def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_function, epochs, y_features, feature_list):
+def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_function, epochs, y_features, feature_list,
+                                     model_generator):
     set_seed(seed)
     print(feature_list)
     sub_experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
-    directory = f'{experiment_results_directory}/{sub_experiment_timestamp}'
+    directory = f'{experiment_results_directory}/{model_generator.__name__}-{"-".join([str(x) for x in layer_sizes])}-{sub_experiment_timestamp}'
 
-    description = 'Hyperparameter søk'
     train_portion, validation_portion, test_portion = .8, .1, .1
-    X_train, y_train, X_val, y_val, X_stocks, scaler_y = load_data(feature_list, y_features, train_portion,
+    X_train, y_train, X_val, y_val, X_stocks, scaler_y = load_data(feature_list, y_features,
+                                                                   train_portion,
                                                                    test_portion,
                                                                    True)
 
-    X = np.append(X_train, X_val, axis=1)
-    y = np.append(y_train, y_val, axis=1)
-    stock_list = [np.arange(len(X)).reshape((len(X), 1, 1))]
-
     n_features, batch_size = calculate_n_features_and_batch_size(X_train)
-    batch_size = X_train.shape[0]
-    lstm = LSTMOneOutput(**{
-        'X_stocks': X_stocks,
-        'X_train': X_train,
-        'y_train': y_train,
-        'X_val': X_val,
-        'y_val': y_val,
-        'feature_list': feature_list,
+    meta = {
         'dropout': dropout_rate,
-        'optimizer': 'adam',
+        'epochs': epochs,
+        'time': sub_experiment_timestamp,
+        'features': ', '.join(feature_list),
+        'model-type': model_generator.__name__,
+        'layer-sizes': f"[{', '.join(str(x) for x in layer_sizes)}]",
         'loss': loss_function,
-        # 'loss': ,
-        'model_generator': StackedLSTM_Modified([tf.keras.layers.Dense(1, activation='linear'),
-                                                 tf.keras.layers.Dense(1, activation='sigmoid')]),
-        # 'model_generator': StackedLSTM,
-        'layer_sizes': layer_sizes,
         'seed': seed,
-        'n_features': n_features,
-        'batch_size': batch_size,
-        'stock_list': stock_list
-    })
-    model = StackedLSTM_Modified([tf.keras.layers.Dense(1, activation='linear'),
-                                  tf.keras.layers.Dense(1, activation='sigmoid')])(n_features=n_features,
-                                                                                   layer_sizes=layer_sizes,
-                                                                                   return_states=False,
-                                                                                   dropout=dropout_rate)
+        'X-train-shape': list(X_train.shape),
+        'X-val-shape': list(X_val.shape),
+        'y-train-shape': list(y_train.shape),
+        'y-val-shape': list(y_val.shape),
+        'X-stocks': list(X_stocks)
+    }
+
+    assert model_generator == StackedLSTM_Modified
+
+    model = model_generator(
+        n_features=n_features, layer_sizes=layer_sizes, return_states=False,
+        dropout=dropout_rate)
     model.compile(optimizer='adam', loss=loss_function)
-    y_train_list = [y_train[:, :, i:i + 1] for i in range(y_train.shape[2])]
-    y_val_list = [y_val[:, :, i:i + 1] for i in range(y_val.shape[2])]
+    y_train_list = [y_train[:,:,i:i+1] for i in range(y_train.shape[2])]
+    y_val_list = [y_val[:,:,i:i+1] for i in range(y_val.shape[2])]
     history = model.fit(X_train, y_train_list,
                         validation_data=([X_val, y_val_list]),
                         batch_size=batch_size, epochs=epochs, shuffle=False,
@@ -90,10 +83,8 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    evaluation = predict_plots(lstm.gen_model, X_train, y_train, X_val, y_val, scaler_y, y_features, X_stocks,
-                               directory)
-    meta = lstm.meta(description, epochs)
-    # print(scores)
+    evaluation = predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_features[0], X_stocks,
+                               directory, is_bidir=model_generator == BidirLSTM)
     plot_one('Loss history', [history.history['loss'], history.history['val_loss']], ['Training loss', 'Test loss'],
              ['Epoch', 'Loss'],
              f'{directory}/loss_history.png')
@@ -103,12 +94,6 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     write_to_json_file(meta, f'{directory}/meta.json', )
 
 
-feature_list = get_features()
-# feature_list = ['price', 'positive']
-layers = [[160], [128], [32]]
-dropout_rates = [.5, .2, 0]
-loss_functions = ['mse', 'mae']
-
 price = ['price']
 trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
 trading_features_with_price = ['price'] + trading_features
@@ -116,12 +101,20 @@ sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negat
                       'neutral_prop']  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = ['trendscore']
 
+# feature_subsets = [
+#     trading_features_with_price,
+#     sentiment_features,
+#     trendscore_features,
+#     trading_features_with_price + sentiment_features,
+#     trading_features_with_price + trendscore_features,
+#     sentiment_features + trendscore_features,
+#     trading_features_with_price + sentiment_features + trendscore_features
+# ]
 
-def powerset(iterable):
-    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
-    # s = list(iterable)
-    return itertools.chain.from_iterable(itertools.combinations(iterable, r) for r in range(len(iterable) + 1))
-
+# price = ['prev_price_0', 'prev_price_1', 'prev_price_2'] + ['price']
+# trading_features = ['prev_volume_0', 'prev_volume_1', 'prev_volume_2'] + trading_features
+# sentiment_features = [f'prev_{feature}_{i}' for i, feature in enumerate(['positive', 'negative','neutral'])] + sentiment_features
+# trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
 
 feature_subsets = [price,
                    price + trading_features,
@@ -130,14 +123,21 @@ feature_subsets = [price,
                    price + trading_features + sentiment_features + trendscore_features
                    ]
 
-n = 1000
+n = 100
 number_of_epochs = 5000
+
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
-        experiment_hyperparameter_search(seed=seed, layer_sizes=[160], dropout_rate=0,
-                                         loss_function=['mae', 'binary_crossentropy'],
-                                         epochs=number_of_epochs, y_features=['next_price', 'next_direction'],
-                                         feature_list=features)
+        experiment_hyperparameter_search(seed=seed, layer_sizes=[160],
+                                         dropout_rate=.0,
+                                         loss_function='mae',
+                                         epochs=number_of_epochs,
+                                         y_features=['next_price', 'next_direction'],
+                                         feature_list=features,
+                                         model_generator=StackedLSTM_Modified)
 
-# print_folder = f'server_results/{os.path.basename(__file__)}/2020-06-26_01.31.38/*/'
-# print_for_master_thesis(print_folder, ['features'])
+print_folder = f'server_results/feature_search.py/2020-07-06_22.45.21/*/'
+# print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
+# print_for_master_thesis(print_folder, ['features', 'model-type', 'layer'])
+
+# print_for_master_thesis_compact(print_folder, ['features', 'layer', 'model-type'])
