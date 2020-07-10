@@ -118,3 +118,11 @@ def print_for_master_thesis(path, group_fields, sort_by=['sum_ranks']):
         \midrule '''
 
         print(output.replace("_", "\\_"))
+
+def pretty_print_evaluate(arr1, arr2):
+    newline = '\\newline'
+    return " \\\\ \\hline \n".join([
+        f'{ev1["stock"]} & Baseline{newline} LSTM & {ev1["MAPE"]:.4}\%{newline}{ev2["MAPE"]:.4}\% & {ev1["MAE"]:.4}{newline}{ev2["MAE"]:.4} & {ev1["MSE"]:.4}{newline}{ev2["MSE"]:.4} & {ev1["DA"] * 100:.4}\%{newline}{ev2["DA"] * 100:.4}\%'
+        for ev1, ev2 in zip(arr1, arr2)])
+
+

@@ -10,7 +10,6 @@ import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 
-from src.baseline_models import naive_model
 from src.scaler import Scaler
 
 
@@ -20,13 +19,6 @@ def expand(x): return np.expand_dims(x, axis=0)
 def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return np.mean(np.abs((y_true - y_pred) / (y_true + .0001))) * 100
-
-
-def pretty_print_evaluate(arr1, arr2):
-    newline = '\\newline'
-    return " \\\\ \\hline \n".join([
-        f'{ev1["stock"]} & Baseline{newline} LSTM & {ev1["MAPE"]:.4}\%{newline}{ev2["MAPE"]:.4}\% & {ev1["MAE"]:.4}{newline}{ev2["MAE"]:.4} & {ev1["MSE"]:.4}{newline}{ev2["MSE"]:.4} & {ev1["DA"] * 100:.4}\%{newline}{ev2["DA"] * 100:.4}\%'
-        for ev1, ev2 in zip(arr1, arr2)])
 
 
 def evaluate(result, y, y_type='next_change', individual_stocks=True):
@@ -282,6 +274,7 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
     print('Training:', train_evaluation)
     y_axis_label = 'Change $' if y_type == 'next_change' else 'Price $'
 
+    from src.baseline_models import naive_model
     naive_predictions, _ = naive_model(y_train, y_val, scaler_y, y_type)
     plot(directory, f'Training', stocklist, [ result_train, y_train ], ['Predicted', 'True value'], ['Day', y_axis_label])
     plot(directory, 'Validation', stocklist, [ result_val[:,:25], naive_predictions[:,:25], y_val[:,:25] ], ['LSTM','Naive', 'True value'], ['Day', y_axis_label])

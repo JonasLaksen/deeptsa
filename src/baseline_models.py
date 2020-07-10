@@ -5,6 +5,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.svm import SVR
 
+from src.pretty_print import pretty_print_evaluate
+from src.utils import load_data, evaluate
 
 feature_list = ['price', 'high', 'low', 'open', 'volume', 'direction',
                 'neutral_prop', 'positive_prop', 'negative_prop', 'negative', 'positive', 'neutral',
@@ -83,7 +85,6 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
 
 def main(y_type):
-    from src.utils import load_data, evaluate, pretty_print_evaluate
 
     X_train, y_train, X_test, y_test, y_dir, scaler_y = load_data(feature_list, y_type, .8, .1)
     X = np.append(X_train, X_test, axis=1)
@@ -123,5 +124,5 @@ def naive_next_price_using_next_open():
 
 
 
-# main([ 'next_price' ])
+main([ 'next_price' ])
 # naive_next_price_using_next_open()
