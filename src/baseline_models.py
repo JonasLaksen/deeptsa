@@ -5,6 +5,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.svm import SVR
 
+from src.pretty_print import pretty_print_evaluate
+from src.utils import load_data, evaluate
 
 feature_list = ['price', 'high', 'low', 'open', 'volume', 'direction',
                 'neutral_prop', 'positive_prop', 'negative_prop', 'negative', 'positive', 'neutral',
@@ -83,7 +85,6 @@ def gaussian_process(X_train, X_test, y_train, y_test):
 
 
 def main(y_type):
-    from src.utils import load_data, evaluate, pretty_print_evaluate
 
     X_train, y_train, X_test, y_test, y_dir, scaler_y = load_data(feature_list, y_type, .8, .1)
     X = np.append(X_train, X_test, axis=1)
@@ -108,10 +109,16 @@ def main(y_type):
 
     # plot("Baseline model", stock_list, result, y)
 
-    with open('server_results/context_feature_search.py/2020-07-10_17.58.57/StackedLSTMWithState-160-2020-07-10_17.58.57/evaluation.json') as json_file:
+    evaluation = evaluate(result.reshape((result.shape[0], -1)), y.reshape((y.shape[0], -1)), y_type=y_type[0])
+    print(evaluation)
+    return result, y
+
+def compare_with_model(y_types):
+    result, y = main(y_types)
+    with open('server_results/context_feature_search.py/2020-07-10_20.29.39/StackedLSTMWithState-160-2020-07-10_20.41.37/evaluation.json') as json_file:
         json_content = json.load(json_file)
         context_search_results = json_content['validation']
-    evaluation = evaluate(result.reshape((result.shape[0], -1)), y.reshape((y.shape[0], -1)), y_type=y_type[0])
+    evaluation = evaluate(result.reshape((result.shape[0], -1)), y.reshape((y.shape[0], -1)), y_type=y_types[0])
     print(pretty_print_evaluate(evaluation, context_search_results))
 
 def naive_next_price_using_next_open():
@@ -124,4 +131,5 @@ def naive_next_price_using_next_open():
 
 
 # main([ 'next_price' ])
+compare_with_model([ 'next_price' ])
 # naive_next_price_using_next_open()

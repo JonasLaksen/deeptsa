@@ -144,7 +144,7 @@ configurations = [
     },
 ]
 
-n = 0
+n = 1000
 number_of_epochs = 5000
 
 for seed in range(3)[:n]:
@@ -158,8 +158,8 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-print_folder = f'server_results/feature_search.py/2020-07-06_22.45.21/*/'
+# print_folder = f'server_results/feature_search.py/2020-07-06_22.45.21/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
-print_for_master_thesis(print_folder, ['features', 'model-type', 'layer'] )
+# print_for_master_thesis(print_folder, ['features', 'model-type', 'layer'] )
 
 # print_for_master_thesis_compact(print_folder, ['features', 'layer', 'model-type'])

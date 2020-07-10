@@ -23,10 +23,10 @@ def print_for_master_thesis_compact(path, group_fields, sort_by=['sum_ranks'], f
                                'loss': meta['loss'],
                                'features': meta['features'],
                                'model-type': meta['model-type'],
-                               'mape': evaluation['validation']['MAPE'],
-                               'mae': evaluation['validation']['MAE'],
-                               'mse': evaluation['validation']['MSE'],
-                               'da': evaluation['validation']['DA'] * 100,
+                               'mape': evaluation['validation'][0]['MAPE'],
+                               'mae': evaluation['validation'][0]['MAE'],
+                               'mse': evaluation['validation'][0]['MSE'],
+                               'da': evaluation['validation'][0]['DA'] * 100,
                                })
 
     df = pandas.DataFrame(subexperiments)
@@ -86,10 +86,10 @@ def print_for_master_thesis(path, group_fields, sort_by=['sum_ranks']):
                                'loss': meta['loss'],
                                'features': meta['features'],
                                'model-type': meta['model-type'],
-                               'mape': evaluation['validation']['MAPE'],
-                               'mae': evaluation['validation']['MAE'],
-                               'mse': evaluation['validation']['MSE'],
-                               'da': evaluation['validation']['DA'] * 100,
+                               'mape': evaluation['validation'][0]['MAPE'],
+                               'mae': evaluation['validation'][0]['MAE'],
+                               'mse': evaluation['validation'][0]['MSE'],
+                               'da': evaluation['validation'][0]['DA'] * 100,
                                })
 
     df = pandas.DataFrame(subexperiments)
@@ -118,3 +118,11 @@ def print_for_master_thesis(path, group_fields, sort_by=['sum_ranks']):
         \midrule '''
 
         print(output.replace("_", "\\_"))
+
+def pretty_print_evaluate(arr1, arr2):
+    newline = '\\newline'
+    return " \\\\ \\hline \n".join([
+        f'{ev1["stock"]} & Baseline{newline} LSTM & {ev1["MAPE"]:.4}\%{newline}{ev2["MAPE"]:.4}\% & {ev1["MAE"]:.4}{newline}{ev2["MAE"]:.4} & {ev1["MSE"]:.4}{newline}{ev2["MSE"]:.4} & {ev1["DA"] * 100:.4}\%{newline}{ev2["DA"] * 100:.4}\%'
+        for ev1, ev2 in zip(arr1, arr2)])
+
+
