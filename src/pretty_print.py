@@ -23,10 +23,10 @@ def print_for_master_thesis_compact(path, group_fields, sort_by=['sum_ranks'], f
                                'loss': meta['loss'],
                                'features': meta['features'],
                                'model-type': meta['model-type'],
-                               'mape': evaluation['validation']['MAPE'],
-                               'mae': evaluation['validation']['MAE'],
-                               'mse': evaluation['validation']['MSE'],
-                               'da': evaluation['validation']['DA'] * 100,
+                               'mape': evaluation['validation'][0]['MAPE'],
+                               'mae': evaluation['validation'][0]['MAE'],
+                               'mse': evaluation['validation'][0]['MSE'],
+                               'da': evaluation['validation'][0]['DA'] * 100,
                                })
 
     df = pandas.DataFrame(subexperiments)
@@ -86,10 +86,10 @@ def print_for_master_thesis(path, group_fields, sort_by=['sum_ranks']):
                                'loss': meta['loss'],
                                'features': meta['features'],
                                'model-type': meta['model-type'],
-                               'mape': evaluation['validation']['MAPE'],
-                               'mae': evaluation['validation']['MAE'],
-                               'mse': evaluation['validation']['MSE'],
-                               'da': evaluation['validation']['DA'] * 100,
+                               'mape': evaluation['validation'][0]['MAPE'],
+                               'mae': evaluation['validation'][0]['MAE'],
+                               'mse': evaluation['validation'][0]['MSE'],
+                               'da': evaluation['validation'][0]['DA'] * 100,
                                })
 
     df = pandas.DataFrame(subexperiments)
