@@ -10,6 +10,7 @@ import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 
+from src.baseline_models import naive_model
 from src.scaler import Scaler
 
 
@@ -49,9 +50,9 @@ def evaluate(result, y, y_type='next_change', individual_stocks=True):
     return total_evaluation
 
 
-def plot(directory, title, stocklist, result, y, legends=['Predicted', 'True value'], axises=['Day', 'Price $'], ):
-    [plot_one(f'{title}: {stocklist[i]}', [result[i], y[i]], legends, axises, f'{directory}/{title}-{i}.svg') for i in
-     range(len(result))]
+def plot(directory, title, stocklist, graphs, legends=['Predicted', 'True value'], axises=['Day', 'Price $'], ):
+    [plot_one(f'{title}: {stocklist[i]}', [graph[i] for graph in graphs], legends, axises, f'{directory}/{title}-{i}.svg') for i in
+     range(len(graphs[0]))]
 
 
 def plot_one(title, xs, legends, axises, filename=''):
@@ -281,8 +282,9 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
     print('Training:', train_evaluation)
     y_axis_label = 'Change $' if y_type == 'next_change' else 'Price $'
 
-    plot(directory, f'Training', stocklist, result_train, y_train, ['Predicted', 'True value'], ['Day', y_axis_label])
-    plot(directory, 'Validation', stocklist, result_val, y_val, ['Predicted', 'True value'], ['Day', y_axis_label])
+    naive_predictions, _ = naive_model(y_train, y_val, scaler_y, y_type)
+    plot(directory, f'Training', stocklist, [ result_train, y_train ], ['Predicted', 'True value'], ['Day', y_axis_label])
+    plot(directory, 'Validation', stocklist, [ result_val[:,:25], naive_predictions[:,:25], y_val[:,:25] ], ['LSTM','Naive', 'True value'], ['Day', y_axis_label])
     np.savetxt(f'{directory}/y.txt', y_inverse_scaled.reshape(-1))
     np.savetxt(f"{directory}/result.txt", results_inverse_scaled.reshape(-1))
     return {'training': train_evaluation, 'validation': val_evaluation}

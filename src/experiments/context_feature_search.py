@@ -129,7 +129,7 @@ configurations = [
 ]
 
 n = 1
-number_of_epochs = 5000
+number_of_epochs = 1
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
