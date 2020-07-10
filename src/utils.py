@@ -2,18 +2,14 @@ import copy
 import csv
 import json
 from base64 import b64encode, b64decode
-from glob import glob
 from itertools import combinations
 from zlib import compress, decompress
 
 import numpy as np
-import pandas
 import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
 
-from src.models.bidir import BidirLSTM
-from src.models.bidir_state import BidirLSTMWithState
 from src.scaler import Scaler
 
 
@@ -25,14 +21,32 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / (y_true + .0001))) * 100
 
 
-def evaluate(result, y, y_type='next_change'):
-    # result = np.asarray(result).reshape((result.shape[0], -1))
-    # y = np.asarray(y).reshape((result.shape[0], -1))
+def pretty_print_evaluate(arr1, arr2):
+    newline = '\\newline'
+    return " \\\\ \\hline \n".join([
+        f'{ev1["stock"]} & Baseline{newline} LSTM & {ev1["MAPE"]:.4}\%{newline}{ev2["MAPE"]:.4}\% & {ev1["MAE"]:.4}{newline}{ev2["MAE"]:.4} & {ev1["MSE"]:.4}{newline}{ev2["MSE"]:.4} & {ev1["DA"] * 100:.4}\%{newline}{ev2["DA"] * 100:.4}\%'
+        for ev1, ev2 in zip(arr1, arr2)])
+
+
+def evaluate(result, y, y_type='next_change', individual_stocks=True):
     mape = mean_absolute_percentage_error(y, result)
     mae = mean_absolute_error(y, result)
     mse = mean_squared_error(y, result)
     accuracy_direction = mean_direction_eval(result, y, y_type)
-    return {'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
+    total_evaluation = {'stock': 'All', 'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
+    if individual_stocks:
+        evaluations = []
+        for i in range(result.shape[0]):
+            y_ind = y[i:i + 1, :]
+            result_ind = result[i:i + 1, :]
+            mape = mean_absolute_percentage_error(y_ind, result_ind)
+            mae = mean_absolute_error(y_ind, result_ind)
+            mse = mean_squared_error(y_ind, result_ind)
+            accuracy_direction = mean_direction_eval(result_ind, y_ind, y_type)
+            evaluation = {'stock': i, 'MAPE': mape, 'MAE': mae, 'MSE': mse, 'DA': accuracy_direction}
+            evaluations.append(evaluation)
+        return [total_evaluation] + evaluations
+    return total_evaluation
 
 
 def plot(directory, title, stocklist, result, y, legends=['Predicted', 'True value'], axises=['Day', 'Price $'], ):
@@ -228,7 +242,8 @@ def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
 
-def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stocklist, directory, additional_data=[], is_bidir=False):
+def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stocklist, directory, additional_data=[],
+                  is_bidir=False):
     X = np.concatenate((X_train, X_val), axis=1)
     y = np.concatenate((y_train, y_val), axis=1)
 
@@ -241,7 +256,7 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
             print(i)
             current_timestep = X_train.shape[1] + i
             current_X = X[:, : current_timestep + 1, :]
-            prediction = model.predict_on_batch([ current_X ] + additional_data).numpy()
+            prediction = model.predict_on_batch([current_X] + additional_data).numpy()
             result = np.concatenate((result, prediction[:, -1:, ]), axis=1)
     else:
         print('Stacked LSTM model')
@@ -276,5 +291,3 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
 def write_to_json_file(dictionary, filepath):
     with open(filepath, 'a+') as f:
         f.write(json.dumps(dictionary, indent=4))
-
-
