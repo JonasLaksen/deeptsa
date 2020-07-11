@@ -10,7 +10,7 @@ from tensorflow_core.python.keras.utils.vis_utils import plot_model
 from src.models.bidir import BidirLSTM
 from src.models.stacked_lstm import StackedLSTM
 from src.pretty_print import print_for_master_thesis_compact, print_for_master_thesis
-from src.utils import load_data, plot_one, predict_plots, write_to_json_file
+from src.utils import load_data, plot_one, predict_plots, write_to_json_file, get_features
 
 seed = 0
 os.environ['PYTHONHASHSEED'] = str(seed)
@@ -122,16 +122,6 @@ feature_subsets = [price,
 
 configurations = [
     {
-        'lstm_type': BidirLSTM,
-        'layers': [160]
-    }, {
-        'lstm_type': BidirLSTM,
-        'layers': [80, 80]
-    }, {
-        'lstm_type': BidirLSTM,
-        'layers': [54, 53, 53]
-    },
-    {
         'lstm_type': StackedLSTM,
         'layers': [160]
     }
@@ -142,10 +132,20 @@ configurations = [
         'lstm_type': StackedLSTM,
         'layers': [54, 53, 53]
     },
+    {
+        'lstm_type': BidirLSTM,
+        'layers': [160]
+    }, {
+        'lstm_type': BidirLSTM,
+        'layers': [80, 80]
+    }, {
+        'lstm_type': BidirLSTM,
+        'layers': [54, 53, 53]
+    },
 ]
 
-n = 1000
-number_of_epochs = 5000
+n = 1
+number_of_epochs = 1
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
@@ -158,8 +158,8 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-# print_folder = f'server_results/feature_search.py/2020-07-06_22.45.21/*/'
+print_folder = f'server_results/feature_search.py/2020-07-10_22.57.53/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
 # print_for_master_thesis(print_folder, ['features', 'model-type', 'layer'] )
 
-# print_for_master_thesis_compact(print_folder, ['features', 'layer', 'model-type'])
+print_for_master_thesis_compact(print_folder, ['features', 'layer', 'model-type'])

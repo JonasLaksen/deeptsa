@@ -128,7 +128,7 @@ configurations = [
     # }
 ]
 
-n = 0
+n = 1
 number_of_epochs = 1
 
 for seed in range(3)[:n]:

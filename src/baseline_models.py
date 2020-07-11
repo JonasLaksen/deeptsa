@@ -130,6 +130,6 @@ def naive_next_price_using_next_open():
 
 
 
-# main([ 'next_price' ])
-compare_with_model([ 'next_price' ])
+main([ 'next_price' ])
+# compare_with_model([ 'next_price' ])
 # naive_next_price_using_next_open()
