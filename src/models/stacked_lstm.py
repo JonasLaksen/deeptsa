@@ -11,15 +11,14 @@ else:
 
 
 class StackedLSTM(keras.models.Model):
-    def __init__(self, n_features, layer_sizes, dropout=.2, **_):
+    def __init__(self, n_features, layer_sizes, dropout=0, **_):
         X = tf.keras.layers.Input(shape=(None, n_features), name='X')
 
         output = X
         for i, size in enumerate(layer_sizes):
             lstm = LSTM(size, return_sequences=True, return_state=False)
             output = lstm(output)
-            if dropout > 0:
-                output = tf.keras.layers.Dropout(dropout)(output)
+            output = tf.keras.layers.Dropout(dropout)(output)
 
         next_price = tf.keras.layers.Dense(1, activation='linear')(output)
         super(StackedLSTM, self).__init__([X], [next_price],
