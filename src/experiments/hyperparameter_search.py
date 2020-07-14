@@ -6,10 +6,6 @@ import pandas
 import tensorflow as tf
 
 from datetime import datetime
-
-from tensorflow_core.python.keras.utils.vis_utils import plot_model
-
-from src.lstm_one_output import LSTMOneOutput
 from src.models.stacked_lstm import StackedLSTM
 from src.pretty_print import print_for_master_thesis_compact, print_for_master_thesis
 from src.utils import load_data, get_features, plot_one, plot, evaluate, predict_plots, write_to_json_file
@@ -67,7 +63,6 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     model = StackedLSTM(n_features=n_features, layer_sizes=layer_sizes, return_states=False,
                             dropout=dropout_rate)
     model.compile(optimizer='adam', loss=loss_function)
-    plot_model(model, 'wtf.svg')
     history = model.fit(X_train, y_train,
                         validation_data=([X_val, y_val]),
                         batch_size=batch_size, epochs=epochs, shuffle=False,
@@ -101,13 +96,13 @@ dropout_rates = [.5, .2, 0]
 loss_functions = ['mae', 'mse']
 
 n = 0
-number_of_epochs = 5000
+number_of_epochs = 1
 for seed in range(3)[:n]:
     for layer in layers[:n]:
         for dropout_rate in dropout_rates[:n]:
             for loss_function in loss_functions[:n]:
                 experiment_hyperparameter_search(seed, layer, dropout_rate, loss_function, number_of_epochs, 'next_price', feature_list)
 
-print_folder = f'server_results/hyperparameter_search.py/2020-07-11_13.14.58/*/'
-print_for_master_thesis(print_folder, ['dropout', 'layer', 'loss'] )
-# print_for_master_thesis_compact(print_folder, ['dropout', 'layer', 'loss'], fields_to_show=['dropout', 'layer', 'loss'], show_model=False)
+print_folder = f'server_results/hyperparameter_search.py/2020-07-13_23.53.16/*/'
+# print_for_master_thesis(print_folder, ['dropout', 'layer', 'loss'] )
+print_for_master_thesis_compact(print_folder, ['dropout', 'layer', 'loss'], fields_to_show=['dropout', 'layer', 'loss'], show_model=False)

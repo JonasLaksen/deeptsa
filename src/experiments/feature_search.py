@@ -113,11 +113,11 @@ trendscore_features = ['trendscore']
 # sentiment_features = [f'prev_{feature}_{i}' for i, feature in enumerate(['positive', 'negative','neutral'])] + sentiment_features
 # trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
 
-feature_subsets = [price,
-                   price + trading_features,
-                   price + sentiment_features,
+feature_subsets = [#price,
+                   #price + trading_features,
+                   #price + sentiment_features,
                    price + trendscore_features,
-                   price + trading_features + sentiment_features + trendscore_features
+                   #price + trading_features + sentiment_features + trendscore_features
                    ]
 
 configurations = [

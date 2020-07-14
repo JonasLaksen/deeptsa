@@ -18,7 +18,7 @@ class StackedLSTM(keras.models.Model):
         for i, size in enumerate(layer_sizes):
             lstm = LSTM(size, return_sequences=True, return_state=False)
             output = lstm(output)
-            output = tf.keras.layers.Dropout(dropout)(output)
+            # output = tf.keras.layers.Dropout(dropout)(output)
 
         next_price = tf.keras.layers.Dense(1, activation='linear')(output)
         super(StackedLSTM, self).__init__([X], [next_price],

@@ -10,7 +10,7 @@ from src.lstm_one_output import LSTMOneOutput
 from src.models.bidir_state import BidirLSTMWithState
 from src.models.spec_network import SpecializedNetwork
 from src.models.stacked_lstm_state import StackedLSTMWithState
-from src.pretty_print import print_for_master_thesis_compact, print_for_master_thesis
+from src.pretty_print import print_for_master_thesis_compact
 from src.utils import load_data, plot_one, predict_plots, write_to_json_file
 
 seed = 0
@@ -107,11 +107,24 @@ sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negat
                       'neutral_prop']  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = ['trendscore']
 
-feature_subsets = [#['price'],
-                   #['price'] + trading_features,
-                   #['price'] + sentiment_features,
-                   ['price'] + trendscore_features,
-                   #['price'] + trading_features + sentiment_features + trendscore_features
+# feature_subsets = [#['price'],
+# ['price'] + trading_features,
+# ['price'] + sentiment_features,
+# ['price'] + trendscore_features,
+# ['price'] + trading_features + sentiment_features + trendscore_features
+# ]
+
+price = ['prev_price_0', 'prev_price_1', 'prev_price_2'] + ['price']
+trading_features = ['prev_volume_0', 'prev_volume_1', 'prev_volume_2'] + trading_features
+sentiment_features = [f'prev_{feature}_{i}' for i, feature in
+                      enumerate(['positive', 'negative', 'neutral'])] + sentiment_features
+trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
+
+feature_subsets = [price,
+                   price + trading_features,
+                   price + sentiment_features,
+                   price + trendscore_features,
+                   price + trading_features + sentiment_features + trendscore_features
                    ]
 
 configurations = [
@@ -128,8 +141,8 @@ configurations = [
     # }
 ]
 
-n = 1
-number_of_epochs = 1
+n = 1000
+number_of_epochs = 5000
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
@@ -142,6 +155,6 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-print_folder = f'server_results/context_feature_search.py/2020-07-10_20.29.39/*/'
+# print_folder = f'server_results/context_feature_search.py/2020-07-10_20.29.39/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'])
-print_for_master_thesis_compact(print_folder, ['features', 'layer'])
+# print_for_master_thesis_compact(print_folder, ['features', 'layer'])
