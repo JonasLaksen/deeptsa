@@ -102,23 +102,17 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     write_to_json_file(meta, f'{directory}/meta.json', )
 
 
+price = ['price']
 trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
 sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
                       'neutral_prop']  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
 trendscore_features = ['trendscore']
 
-# feature_subsets = [#['price'],
-# ['price'] + trading_features,
-# ['price'] + sentiment_features,
-# ['price'] + trendscore_features,
-# ['price'] + trading_features + sentiment_features + trendscore_features
-# ]
-
-price = ['prev_price_0', 'prev_price_1', 'prev_price_2'] + ['price']
-trading_features = ['prev_volume_0', 'prev_volume_1', 'prev_volume_2'] + trading_features
-sentiment_features = [f'prev_{feature}_{i}' for i, feature in
-                      enumerate(['positive', 'negative', 'neutral'])] + sentiment_features
-trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
+# price = ['prev_price_0', 'prev_price_1', 'prev_price_2'] + ['price']
+# trading_features = ['prev_volume_0', 'prev_volume_1', 'prev_volume_2'] + trading_features
+# sentiment_features = [f'prev_{feature}_{i}' for i, feature in
+#                       enumerate(['positive', 'negative', 'neutral'])] + sentiment_features
+# trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
 
 feature_subsets = [price,
                    price + trading_features,
@@ -151,7 +145,7 @@ for seed in range(3)[:n]:
                                              dropout_rate=0,
                                              loss_function='mae',
                                              epochs=number_of_epochs,
-                                             y_features=['next_price'],
+                                             y_features=['next_change'],
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
