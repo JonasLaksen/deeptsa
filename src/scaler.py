@@ -1,5 +1,5 @@
 from sklearn.base import TransformerMixin,BaseEstimator
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransformer
 import numpy as np
 
 
@@ -9,12 +9,13 @@ class Scaler():
         self.scalers = []
 
     # (43,1660,2)
-    def fit_on_training_and_transform_on_training_and_test(self,X_train, X_test):
+    def fit_on_training_and_transform_on_training_and_test(self,X_train, X_test, feature_range=(0,1)):
         scalers = []
         X_train_transformed = []
         X_test_transformed = []
         for i in range(X_train.shape[0]):
-            scaler = MinMaxScaler()
+            scaler = MinMaxScaler(feature_range=feature_range)
+            # scaler = FunctionTransformer(lambda x: x)
             X_train_transformed.append(scaler.fit_transform(X_train[i,:,]))
             X_test_transformed.append(scaler.transform(X_test[i,:,]))
             scalers.append(scaler)

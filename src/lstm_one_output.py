@@ -45,7 +45,7 @@ class LSTMOneOutput:
         # self.spec_model.compile(optimizer=self.optimizer, loss=self.loss)
         super().__init__()
 
-    def meta(self, description, epochs):
+    def meta(self, epochs):
         dict = {
             'dropout': self.dropout,
             'epochs': epochs,
@@ -55,7 +55,6 @@ class LSTMOneOutput:
             'layer-sizes': f"[{', '.join(str(x) for x in self.layer_sizes)}]",
             'loss': self.loss,
             'seed': self.seed,
-            'description': description,
             'X-train-shape': list(self.X_train.shape),
             'X-val-shape': list(self.X_val.shape),
             'y-train-shape': list(self.y_train.shape),

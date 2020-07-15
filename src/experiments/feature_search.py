@@ -113,11 +113,11 @@ trendscore_features = ['trendscore']
 # sentiment_features = [f'prev_{feature}_{i}' for i, feature in enumerate(['positive', 'negative','neutral'])] + sentiment_features
 # trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
 
-feature_subsets = [#price,
-                   #price + trading_features,
-                   #price + sentiment_features,
+feature_subsets = [price,
+                   price + trading_features,
+                   price + sentiment_features,
                    price + trendscore_features,
-                   #price + trading_features + sentiment_features + trendscore_features
+                   price + trading_features + sentiment_features + trendscore_features
                    ]
 
 configurations = [
@@ -125,27 +125,27 @@ configurations = [
         'lstm_type': StackedLSTM,
         'layers': [160]
     }
-    , {
-        'lstm_type': StackedLSTM,
-        'layers': [80, 80]
-    }, {
-        'lstm_type': StackedLSTM,
-        'layers': [54, 53, 53]
-    },
-    {
-        'lstm_type': BidirLSTM,
-        'layers': [160]
-    }, {
-        'lstm_type': BidirLSTM,
-        'layers': [80, 80]
-    }, {
-        'lstm_type': BidirLSTM,
-        'layers': [54, 53, 53]
-    },
+    # , {
+    #     'lstm_type': StackedLSTM,
+    #     'layers': [80, 80]
+    # }, {
+    #     'lstm_type': StackedLSTM,
+    #     'layers': [54, 53, 53]
+    # },
+    # {
+    #     'lstm_type': BidirLSTM,
+    #     'layers': [160]
+    # }, {
+    #     'lstm_type': BidirLSTM,
+    #     'layers': [80, 80]
+    # }, {
+    #     'lstm_type': BidirLSTM,
+    #     'layers': [54, 53, 53]
+    # },
 ]
 
-n = 1
-number_of_epochs = 1
+n = 100
+number_of_epochs = 5000
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
@@ -154,7 +154,7 @@ for seed in range(3)[:n]:
                                              dropout_rate=.0,
                                              loss_function='mae',
                                              epochs=number_of_epochs,
-                                             y_features=['next_price'],
+                                             y_features=['next_change'],
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 

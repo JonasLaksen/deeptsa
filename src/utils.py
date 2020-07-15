@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score
+from sklearn.preprocessing import FunctionTransformer
 
 from src.scaler import Scaler
 
@@ -18,7 +19,7 @@ def expand(x): return np.expand_dims(x, axis=0)
 
 def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
-    return np.mean(np.abs((y_true - y_pred) / (y_true + .0001))) * 100
+    return np.mean(np.abs((y_true - y_pred) / (y_true+.00000001))) * 100
 
 
 def evaluate(result, y, y_type='next_change', individual_stocks=True):
@@ -75,8 +76,8 @@ def mean_direction_eval(result, y, y_type):
 
 def direction_eval(result, y, y_type):
     if y_type == 'next_change':
-        n_same_dir = sum(list(map(lambda x, y: 1 if (x >= 0 and y >= 0) or (x < 0 and y < 0) else 0, result, y)))
-        return n_same_dir / len(result)
+        n_same_dir = sum(list(map(lambda x, y: 1 if (x >= 0 and y >= 0) or (x < 0 and y < 0) else 0, result[1:], y[1:])))
+        return n_same_dir / ( len(result)-1 )
 
     result_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], result[1:]))
     y_pair = list(map(lambda x, y: direction_value(x, y), y[:-1], y[1:]))
@@ -200,7 +201,7 @@ def load_data(feature_list, y_features, train_portion, remove_portion_at_end, sh
     y_scaler = Scaler()
     if should_scale_y:
         X_train, X_test = X_scaler.fit_on_training_and_transform_on_training_and_test(X_train, X_test)
-        y_train, y_test = y_scaler.fit_on_training_and_transform_on_training_and_test(y_train, y_test)
+        y_train, y_test = y_scaler.fit_on_training_and_transform_on_training_and_test(y_train, y_test)#, feature_range=(-1, 1))
 
     if (X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
@@ -276,12 +277,13 @@ def predict_plots(model, X_train, y_train, X_val, y_val, scaler_y, y_type, stock
 
     from src.baseline_models import naive_model
     naive_predictions, _ = naive_model(y_train, y_val, scaler_y, y_type)
+    naive_evaluation = evaluate(naive_predictions.reshape((naive_predictions.shape[0], -1)), y_val, y_type)
     plot(directory, f'Training', stocklist, [ result_train, y_train ], ['Predicted', 'True value'], ['Day', y_axis_label])
     plot(directory, 'Validation', stocklist, [ result_val[:,:25], naive_predictions[:,:25], y_val[:,:25] ], ['LSTM','Naive', 'True value'], ['Day', y_axis_label])
     plot(directory, 'Validation', stocklist, [ result_val, y_val ], ['Predicted', 'True value'], ['Day', y_axis_label])
-    np.savetxt(f'{directory}/y.txt', y_inverse_scaled.reshape(-1))
-    np.savetxt(f"{directory}/result.txt", results_inverse_scaled.reshape(-1))
-    return {'training': train_evaluation, 'validation': val_evaluation}
+    # np.savetxt(f'{directory}/y.txt', y_inverse_scaled.reshape(-1))
+    # np.savetxt(f"{directory}/result.txt", results_inverse_scaled.reshape(-1))
+    return {'training': train_evaluation, 'validation': val_evaluation, 'naive': naive_evaluation}
 
 
 def write_to_json_file(dictionary, filepath):

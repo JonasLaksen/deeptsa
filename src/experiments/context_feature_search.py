@@ -45,7 +45,6 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     sub_experiment_timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
     directory = f'{experiment_results_directory}/{model_generator.__name__}-{"-".join([str(x) for x in layer_sizes])}-{sub_experiment_timestamp}'
 
-    description = 'Hyperparameter søk'
     train_portion, validation_portion, test_portion = .8, .1, .1
     X_train, y_train, X_val, y_val, X_stocks, scaler_y = load_data(feature_list, y_features, train_portion,
                                                                    test_portion,
@@ -63,7 +62,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
         'y_val': y_val,
         'feature_list': feature_list,
         'dropout': dropout_rate,
-        'optimizer': 'adam',
+        'optimizer': tf.keras.optimizers.Adam(),
         'loss': loss_function,
         'model_generator': model_generator,
         'layer_sizes': layer_sizes,
@@ -92,7 +91,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
         os.makedirs(directory)
     evaluation = predict_plots(spec_model, X_train, y_train, X_val, y_val, scaler_y, y_features[0], X_stocks,
                                directory, [stock_list], is_bidir=is_bidir)
-    meta = lstm.meta(description, epochs)
+    meta = lstm.meta(epochs)
     plot_one('Loss history', [history.history['loss'], history.history['val_loss']], ['Training loss', 'Test loss'],
              ['Epoch', 'Loss'],
              f'{directory}/loss_history.png')
@@ -135,7 +134,7 @@ configurations = [
     # }
 ]
 
-n = 1000
+n = 100
 number_of_epochs = 5000
 
 for seed in range(3)[:n]:
@@ -149,6 +148,6 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-# print_folder = f'server_results/context_feature_search.py/2020-07-10_20.29.39/*/'
+print_folder = f'server_results/context_feature_search.py/2020-07-14_22.18.31/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'])
-# print_for_master_thesis_compact(print_folder, ['features', 'layer'])
+print_for_master_thesis_compact(print_folder, ['features', 'layer'])
