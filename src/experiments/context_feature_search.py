@@ -148,6 +148,6 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-print_folder = f'server_results/context_feature_search.py/2020-07-14_22.18.31/*/'
+#print_folder = f'server_results/context_feature_search.py/2020-07-14_22.18.31/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'])
-print_for_master_thesis_compact(print_folder, ['features', 'layer'])
+#print_for_master_thesis_compact(print_folder, ['features', 'layer'])
