@@ -107,12 +107,13 @@ def print_for_master_thesis(path, group_fields, sort_by=['sum_ranks']):
 
     backslashes = '\\\\'
     newline = '\n\t\t'
+    infinity = 'inf'
     for group in list_of_groups:
         output = f'''{', '.join([str(group[0][field]) for field in group_fields])} \\\\
-        {newline.join([f"{group[i]['seed']} & {' '.join([f'{group[i][metric]}{unit} &' for (metric, unit) in metrics])} {backslashes}"
+        {newline.join([f"{group[i]['seed']} & {' '.join([f'{infinity if float( group[i][metric] ) > 1000000 else group[i][metric]}{unit} &' for (metric, unit) in metrics])} {backslashes}"
                        for i in range(3)])}
         \midrule
-        Mean & {' '.join([f'{group[0][f"mean_{metric}"]}{unit} &' for (metric, unit) in metrics])} \\\\
+        Mean & {' '.join([f'{"inf" if float(group[0][f"mean_{metric}"]) > 1000000 else group[0][f"mean_{metric}"]}{unit} &' for (metric, unit) in metrics])} \\\\
         Mean Rank & {' '.join([f'{int(group[0][f"mean_{metric}_rank"])} &' for (metric, unit) in metrics])} \\\\
         Sum rank & {int(group[0]['sum_ranks'])} \\\\
         \midrule '''

@@ -18,6 +18,7 @@ def naive_model(y_val, y_test, scaler_y, y_type):
         result = np.append(y_val[:, -1:], y_test[:, :-1], axis=1)
     else:
         # result = scaler_y.transform(np.zeros((y_val.shape[0], y_test.shape[1], 1)))
+        # result = scaler_y.transform(np.full((y_val.shape[0], y_test.shape[1], 1), .1))
         result = np.zeros((y_val.shape[0], y_test.shape[1], 1))
 
     return result, y_test
@@ -97,16 +98,16 @@ def main(y_type):
     X_train, y_train = X[:, :training_size,], y[:, :training_size,]
     X_test, y_test = X[:, training_size:,], y[:, training_size:,]
 
-    result, y = naive_model(y_train, y_test, scaler_y, y_type[0])
-    # result, y = linear_regression(X_train, X_test, y_train, y_test)
+    # result, y = naive_model(y_train, y_test, scaler_y, y_type[0])
+    result, y = linear_regression(X_train, X_test, y_train[:,:,0], y_test[:,:,0])
     # result, y = ridge_regression(X_train, X_test, y_train, y_test)
 
     # Not in use
     # result, y = gaussian_process(X_train, X_val, y_train, y_val)
     # result, y = svm(X_train, X_test, y_train, y_test)
 
-    result = scaler_y.inverse_transform(result)
-    y = scaler_y.inverse_transform(y)
+    result = scaler_y.inverse_transform(result[:,:,np.newaxis])
+    y = scaler_y.inverse_transform(y[:,:,np.newaxis])
 
     # plot("Baseline model", stock_list, result, y)
 
@@ -131,7 +132,7 @@ def naive_next_price_using_next_open():
 
 
 
-# main([ 'next_change' ])
+main([ 'next_change' ])
 # main([ 'next_price' ])
 # compare_with_model([ 'next_price' ])
 # naive_next_price_using_next_open()

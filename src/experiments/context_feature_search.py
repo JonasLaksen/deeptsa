@@ -78,7 +78,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
     initial_states_per_layer = 4 if is_bidir else 2
     spec_model = SpecializedNetwork(n_features=n_features, num_stocks=len(stock_list), layer_sizes=layer_sizes,
                                     decoder=decoder, n_states_per_layer=initial_states_per_layer)
-    spec_model.compile(optimizer='adam', loss=loss_function)
+    spec_model.compile(optimizer=tf.optimizers.Adam(), loss=loss_function)
 
     history = spec_model.fit([X_train, stock_list], y_train,
                              validation_data=([X_val, stock_list], y_val),
@@ -102,6 +102,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
 
 
 price = ['price']
+price = ['change']
 trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
 sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
                       'neutral_prop']  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
@@ -114,10 +115,10 @@ trendscore_features = ['trendscore']
 # trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
 
 feature_subsets = [price,
-                   price + trading_features,
-                   price + sentiment_features,
-                   price + trendscore_features,
-                   price + trading_features + sentiment_features + trendscore_features
+                   # price + trading_features,
+                   # price + sentiment_features,
+                   # price + trendscore_features,
+                   # price + trading_features + sentiment_features + trendscore_features
                    ]
 
 configurations = [
@@ -134,7 +135,7 @@ configurations = [
     # }
 ]
 
-n = 100
+n = 1
 number_of_epochs = 5000
 
 for seed in range(3)[:n]:
