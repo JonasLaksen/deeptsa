@@ -12,6 +12,7 @@ from src.models.spec_network import SpecializedNetwork
 from src.models.stacked_lstm_state import StackedLSTMWithState
 from src.pretty_print import print_for_master_thesis_compact
 from src.utils import load_data, plot_one, predict_plots, write_to_json_file
+from src.pretty_print import  print_for_master_thesis_compact, print_for_master_thesis
 
 seed = 0
 os.environ['PYTHONHASHSEED'] = str(seed)
@@ -84,7 +85,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
                              validation_data=([X_val, stock_list], y_val),
                              batch_size=batch_size, epochs=epochs, shuffle=False,
                              callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                                         patience=100, restore_best_weights=True)]
+                                                                         patience=1000, restore_best_weights=True)]
                              )
 
     if not os.path.exists(directory):
@@ -102,7 +103,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
 
 
 price = ['price']
-price = ['change']
+#price = ['change']
 trading_features = ['open', 'high', 'low', 'volume', 'direction', 'change']
 sentiment_features = ['positive', 'negative', 'neutral', 'positive_prop', 'negative_prop',
                       'neutral_prop']  # , ['all_positive', 'all_negative', 'all_neutral']]#, ['all_positive', 'all_negative', 'all_neutral']]
@@ -112,14 +113,28 @@ trendscore_features = ['trendscore']
 # trading_features = ['prev_volume_0', 'prev_volume_1', 'prev_volume_2'] + trading_features
 # sentiment_features = [f'prev_{feature}_{i}' for i, feature in
 #                       enumerate(['positive', 'negative', 'neutral'])] + sentiment_features
-# trendscore_features = [f'prev_{feature}_{i}' for i, feature in enumerate(trendscore_features)] + trendscore_features
+trendscore_features = [f'prev_{feature}_{i}' for i in range(3) for feature in trendscore_features]  + trendscore_features
+volume_features = [f'prev_{feature}_{i}' for i in range(3) for feature in ['volume']]  + ['volume']
 
-feature_subsets = [price,
-                   # price + trading_features,
-                   # price + sentiment_features,
-                   # price + trendscore_features,
-                   # price + trading_features + sentiment_features + trendscore_features
-                   ]
+price_features = [f'prev_{feature}_{i}' for i in range(3) for feature in ['price']]  + ['price']
+negative_features = [f'prev_{feature}_{i}' for i in range(3) for feature in ['negative']]  + ['negative']
+best_features = ['change', 'positive', 'neutral']
+best_features_way_back = [f'prev_{feature}_{i}' for i in range(3) for feature in best_features]
+
+
+#feature_subsets = [price,
+#                   price + trading_features,
+#                   price + sentiment_features,
+#                   price + trendscore_features,
+#                   price + trading_features + sentiment_features + trendscore_features
+#                   ]
+feature_subsets = [best_features + best_features_way_back,
+                   best_features + trendscore_features,
+                   best_features + volume_features,
+                   best_features + price_features,
+                   best_features + negative_features]
+feature_subsets = [['change'], ['change', 'positive', 'negative', 'neutral','positive_prop', 'negative_prop', 'neutral_prop']]
+print(feature_subsets)
 
 configurations = [
     {
@@ -135,11 +150,11 @@ configurations = [
     # }
 ]
 
-n = 1
+n = 1000
 number_of_epochs = 5000
 
 for seed in range(3)[:n]:
-    for features in feature_subsets[:n]:
+    for features in feature_subsets:
         for configuration in configurations:
             experiment_hyperparameter_search(seed=seed, layer_sizes=configuration['layers'],
                                              dropout_rate=0,
@@ -149,6 +164,6 @@ for seed in range(3)[:n]:
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-#print_folder = f'server_results/context_feature_search.py/2020-07-14_22.18.31/*/'
-# print_for_master_thesis(print_folder, ['features', 'layer'])
+#print_folder = f'results/context_feature_search.py/2020-07-16_22.45.19//*/'
+#print_for_master_thesis(print_folder, ['features', 'layer'])
 #print_for_master_thesis_compact(print_folder, ['features', 'layer'])

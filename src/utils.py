@@ -206,9 +206,9 @@ def load_data(feature_list, y_features, train_portion, remove_portion_at_end, sh
     if (X_train.shape[2] != len(feature_list)):
         raise Exception('Lengden er feil')
 
-    return X_train.astype(np.float), y_train.astype(np.float), \
-           X_test.astype(np.float), y_test.astype(np.float), \
-           X[:, 0, 0], \
+    return X_train.astype(np.float)[:15,:,:], y_train.astype(np.float)[:15,:,:], \
+           X_test.astype(np.float)[:15,:,:], y_test.astype(np.float)[:15,:,:], \
+           X[:15, 0, 0], \
            y_scaler
 
 

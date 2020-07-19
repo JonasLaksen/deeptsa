@@ -72,7 +72,7 @@ def experiment_hyperparameter_search(seed, layer_sizes, dropout_rate, loss_funct
                         validation_data=([X_val, y_val]),
                         batch_size=batch_size, epochs=epochs, shuffle=False,
                         callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                                    patience=100, restore_best_weights=True)]
+                                                                    patience=1000, restore_best_weights=True)]
                         )
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -119,6 +119,7 @@ feature_subsets = [price,
                    price + trendscore_features,
                    price + trading_features + sentiment_features + trendscore_features
                    ]
+#feature_subsets = [['change', 'positive', 'neutral']]
 
 configurations = [
     {
@@ -144,8 +145,8 @@ configurations = [
     # },
 ]
 
-n = 0
-number_of_epochs = 5000
+n = 1000
+number_of_epochs = 100000
 
 for seed in range(3)[:n]:
     for features in feature_subsets[:n]:
@@ -154,12 +155,12 @@ for seed in range(3)[:n]:
                                              dropout_rate=.0,
                                              loss_function='mae',
                                              epochs=number_of_epochs,
-                                             y_features=['next_change'],
+                                             y_features=['next_price'],
                                              feature_list=features,
                                              model_generator=configuration['lstm_type'])
 
-print_folder = f'server_results/context_feature_search.py/2020-07-16_01.02.09/*/'
+#print_folder = f'server_results/context_feature_search.py/2020-07-16_01.02.09/*/'
 # print_for_master_thesis(print_folder, ['features', 'layer'], compact=True, fields_to_show=['features'])
-print_for_master_thesis(print_folder, ['features', 'model-type', 'layer'] )
+#print_for_master_thesis(print_folder, ['features', 'model-type', 'layer'] )
 
 # print_for_master_thesis_compact(print_folder, ['features', 'layer', 'model-type'])
